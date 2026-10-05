@@ -109,9 +109,13 @@ export function HeroSearch() {
             <Input disabled placeholder="Use project listing filters" aria-label="More filters" />
           </>
         )}
-        <Button type="submit" size="lg" className="w-full md:w-auto">
-          <Search className="h-4 w-4" aria-hidden />
-          Search
+        <Button
+          type="submit"
+          size="lg"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 md:w-auto"
+        >
+          <Search className="h-4 w-4 shrink-0" aria-hidden />
+          <span>Search</span>
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
