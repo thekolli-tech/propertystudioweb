@@ -21,6 +21,10 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-premium: hsl(var(--premium));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
   --radius-lg: var(--radius);
   --font-family-display: var(--font-display), Fraunces, Georgia, serif;
   --font-family-body: var(--font-body), 'DM Sans', sans-serif;
@@ -42,4 +46,12 @@ body {
 
 .ps-hero-surface {
   background: var(--hero-wash);
+}
+
+.text-premium {
+  color: hsl(var(--premium));
+}
+
+.bg-premium {
+  background-color: hsl(var(--premium));
 }

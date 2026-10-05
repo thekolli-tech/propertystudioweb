@@ -16,8 +16,9 @@ export default function AboutPage() {
           application shell.
         </p>
         <p>
-          This release establishes the public website, authentication experience, and design system.
-          Product domains such as catalogs, CRM, and payments are intentionally deferred.
+          This release establishes the premium public website, shared design system, Super Admin and
+          Property Admin shells, and dynamic catalog discovery. Domains such as CRM, payments, and AI
+          remain intentionally deferred.
         </p>
       </div>
     </main>

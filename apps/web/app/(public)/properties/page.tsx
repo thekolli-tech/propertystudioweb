@@ -1,57 +1,93 @@
 export const dynamic = 'force-dynamic';
 
-import { createServerApiClient } from '@/lib/api';
-import { Badge, EmptyState, PageHeader } from '@property-studio/ui';
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { EmptyState, PageHeader, PropertyCard, Skeleton } from '@property-studio/ui';
+
+import { PropertyFilterBar } from '@/components/public/property-filter-bar';
+import { createServerApiClient } from '@/lib/api';
 
 export const metadata = { title: 'Properties' };
 
-export default async function PropertiesPage() {
-  const list = await createServerApiClient().listPublicProperties({ limit: 24 });
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function PropertiesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const query = {
+    city: first(params.city),
+    locality: first(params.locality),
+    propertyType: first(params.propertyType) as
+      | 'APARTMENT'
+      | 'VILLA'
+      | 'PLOT'
+      | 'OFFICE'
+      | 'SHOP'
+      | 'WAREHOUSE'
+      | 'OTHER'
+      | undefined,
+    configuration: first(params.configuration) as
+      | 'STUDIO'
+      | 'ONE_BHK'
+      | 'TWO_BHK'
+      | 'THREE_BHK'
+      | 'FOUR_BHK'
+      | 'FIVE_BHK_PLUS'
+      | 'OTHER'
+      | undefined,
+    bedrooms: first(params.bedrooms) ? Number(first(params.bedrooms)) : undefined,
+    maxPriceMinor: first(params.maxPriceMinor) ? BigInt(first(params.maxPriceMinor)!) : undefined,
+    availabilityStatus: first(params.availabilityStatus) as
+      | 'AVAILABLE'
+      | 'UNDER_OFFER'
+      | 'SOLD'
+      | 'UNAVAILABLE'
+      | undefined,
+    limit: 24,
+  };
+
+  const list = await createServerApiClient()
+    .listPublicProperties(query)
+    .catch(() => ({ properties: [], nextCursor: null }));
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-10 sm:px-6">
       <PageHeader
         title="Properties"
-        description="Published property listings available for discovery."
+        description="Discover published listings with live filters. Empty catalogs stay empty — no fabricated inventory."
       />
+      <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+        <PropertyFilterBar />
+      </Suspense>
       {list.properties.length === 0 ? (
         <EmptyState
-          title="No published properties yet"
-          description="Listings appear here after a developer organization publishes them."
+          title="No properties found"
+          description="Try adjusting filters, or check back when developers publish listings."
         />
       ) : (
-        <ul className="divide-y divide-border border-y border-border">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.properties.map((property) => (
-            <li key={property.publicId} className="py-5">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-                <div className="space-y-1">
-                  <Link
-                    href={`/properties/${property.publicId}`}
-                    className="text-lg font-semibold text-foreground hover:underline"
-                  >
-                    {property.title}
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {new Intl.NumberFormat('en-IN', {
-                      style: 'currency',
-                      currency: property.currency,
-                      maximumFractionDigits: 0,
-                    }).format(Number(property.priceMinor) / 100)}
-                    {property.city ? ` · ${property.city}` : ''}
-                    {property.developerDisplayName ? ` · ${property.developerDisplayName}` : ''}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">{property.publicId}</Badge>
-                  <Badge variant="outline">
-                    {property.availabilityStatus.replaceAll('_', ' ')}
-                  </Badge>
-                </div>
-              </div>
-            </li>
+            <PropertyCard
+              key={property.publicId}
+              linkComponent={Link}
+              href={`/properties/${property.publicId}`}
+              title={property.title}
+              publicId={property.publicId}
+              location={[property.locality, property.city].filter(Boolean).join(', ')}
+              projectLabel={property.projectPublicId}
+              configuration={property.configuration}
+              bedrooms={property.bedrooms}
+              priceMinor={property.priceMinor}
+              currency={property.currency}
+              availabilityStatus={property.availabilityStatus}
+            />
           ))}
-        </ul>
+        </div>
       )}
     </main>
   );

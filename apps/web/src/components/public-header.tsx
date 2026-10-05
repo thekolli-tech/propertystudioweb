@@ -9,6 +9,7 @@ import { Button, cn } from '@property-studio/ui';
 const NAV = [
   { href: '/projects', label: 'Projects' },
   { href: '/properties', label: 'Properties' },
+  { href: '/communities', label: 'Communities' },
   { href: '/media', label: 'Media' },
   { href: '/requirements', label: 'Requirements' },
   { href: '/about', label: 'About' },
@@ -25,21 +26,18 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          className="font-display text-xl font-semibold tracking-tight text-foreground"
-        >
-          Property Studio
+        <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
+          Property <span className="text-premium">Studio</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-6 lg:flex" aria-label="Primary">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
                 'text-sm transition-colors hover:text-foreground',
-                pathname.startsWith(item.href)
+                pathname === item.href || pathname.startsWith(`${item.href}/`)
                   ? 'font-medium text-foreground'
                   : 'text-muted-foreground',
               )}
@@ -60,7 +58,7 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
                 <Link href="/login">Sign in</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">Create account</Link>
+                <Link href="/register">Get started</Link>
               </Button>
             </>
           )}
@@ -70,7 +68,7 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="lg:hidden"
           aria-label={open ? 'Close menu' : 'Open menu'}
           onClick={() => setOpen((value) => !value)}
         >
@@ -79,7 +77,7 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
       </div>
 
       {open ? (
-        <div className="border-t border-border bg-background px-4 py-4 md:hidden">
+        <div className="border-t border-border bg-background px-4 py-4 lg:hidden">
           <nav className="flex flex-col gap-3" aria-label="Mobile">
             {NAV.map((item) => (
               <Link
@@ -102,7 +100,7 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
                     <Link href="/login">Sign in</Link>
                   </Button>
                   <Button asChild>
-                    <Link href="/register">Create account</Link>
+                    <Link href="/register">Get started</Link>
                   </Button>
                 </>
               )}

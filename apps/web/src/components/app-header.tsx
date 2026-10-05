@@ -26,12 +26,18 @@ export type AppHeaderProps = {
 export function AppHeader({ user, organizations }: AppHeaderProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const showAdmin =
+  const isPropertyAdminOnly =
+    user.platformRoles.includes('PROPERTY_ADMIN') &&
+    !user.platformRoles.includes('SUPER_ADMIN') &&
+    !user.platformRoles.includes('ADMIN');
+  const showSuperAdmin =
     user.platformRoles.includes('SUPER_ADMIN') ||
     user.platformRoles.includes('ADMIN') ||
-    user.platformRoles.includes('PROPERTY_ADMIN') ||
     user.platformRoles.includes('MODERATOR') ||
     user.platformRoles.includes('CONTENT_EDITOR');
+  const consoleHref = isPropertyAdminOnly ? '/app/property-admin' : '/admin';
+  const consoleLabel = isPropertyAdminOnly ? 'Property Admin' : 'Admin';
+  const showConsole = isPropertyAdminOnly || showSuperAdmin;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
@@ -59,17 +65,17 @@ export function AppHeader({ user, organizations }: AppHeaderProps) {
               </Link>
             );
           })}
-          {showAdmin ? (
+          {showConsole ? (
             <Link
-              href="/admin"
+              href={consoleHref}
               className={cn(
                 'text-sm transition-colors hover:text-foreground',
-                pathname.startsWith('/admin')
+                pathname.startsWith(consoleHref)
                   ? 'font-medium text-foreground'
                   : 'text-muted-foreground',
               )}
             >
-              Admin
+              {consoleLabel}
             </Link>
           ) : null}
         </nav>
@@ -119,9 +125,9 @@ export function AppHeader({ user, organizations }: AppHeaderProps) {
                 {item.label}
               </Link>
             ))}
-            {showAdmin ? (
-              <Link href="/admin" onClick={() => setOpen(false)} className="text-sm">
-                Admin
+            {showConsole ? (
+              <Link href={consoleHref} onClick={() => setOpen(false)} className="text-sm">
+                {consoleLabel}
               </Link>
             ) : null}
           </nav>

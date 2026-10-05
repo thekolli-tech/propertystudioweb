@@ -27,16 +27,16 @@ export default async function PublicAgentPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-10 sm:px-6">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
             linkComponent={Link}
-            items={[{ label: 'Agents', href: '/' }, { label: profile.displayName }]}
+            items={[{ label: 'Home', href: '/' }, { label: profile.displayName }]}
           />
         }
         title={profile.displayName}
-        description="Public agency profile. Properties and requirements will appear here when published."
+        description="Public agency profile. Private contact fields are never exposed."
       />
       <section className="space-y-6">
         <div className="flex flex-wrap gap-2">
@@ -80,7 +80,7 @@ export default async function PublicAgentPage({ params }: PageProps) {
         </dl>
         <EmptyState
           title="No public listings yet"
-          description="Agency properties and requirements stay empty until those domains ship. Verified Expert badges are never shown without a real verification record."
+          description="Agency property assignment and requirement matching stay empty until those domains ship. Verified Expert badges are never shown without a real verification record."
         />
       </section>
     </main>
