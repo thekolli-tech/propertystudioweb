@@ -54,6 +54,12 @@ describe('Phase 2 security kernel', () => {
     await prisma.$executeRawUnsafe(
       'ALTER TABLE audit_events ENABLE TRIGGER audit_events_no_delete',
     );
+    await prisma.$executeRawUnsafe('DELETE FROM media_assets');
+    await prisma.$executeRawUnsafe('DELETE FROM document_assets');
+    await prisma.$executeRawUnsafe('DELETE FROM resource_assignments');
+    await prisma.$executeRawUnsafe('DELETE FROM communities');
+    await prisma.$executeRawUnsafe('DELETE FROM properties');
+    await prisma.$executeRawUnsafe('DELETE FROM projects');
     await prisma.$executeRawUnsafe('DELETE FROM idempotency_keys');
     await prisma.$executeRawUnsafe('DELETE FROM refresh_tokens');
     await prisma.$executeRawUnsafe('DELETE FROM sessions');

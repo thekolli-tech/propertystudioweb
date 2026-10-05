@@ -1,25 +1,58 @@
-import { EmptyState, PageHeader } from '@property-studio/ui';
+export const dynamic = 'force-dynamic';
+
+import { createServerApiClient } from '@/lib/api';
+import { Badge, EmptyState, PageHeader } from '@property-studio/ui';
 import Link from 'next/link';
-import { Button } from '@property-studio/ui';
 
 export const metadata = { title: 'Properties' };
 
-export default function PropertiesPage() {
+export default async function PropertiesPage() {
+  const list = await createServerApiClient().listPublicProperties({ limit: 24 });
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <PageHeader
         title="Properties"
-        description="Public property catalog. Listings will appear here when the catalog domain is available."
+        description="Published property listings available for discovery."
       />
-      <EmptyState
-        title="No properties listed yet"
-        description="The property catalog is not populated in this phase. Public listing pages are ready for future API data."
-        action={
-          <Button asChild variant="outline">
-            <Link href="/requirements">Post a requirement</Link>
-          </Button>
-        }
-      />
+      {list.properties.length === 0 ? (
+        <EmptyState
+          title="No published properties yet"
+          description="Listings appear here after a developer organization publishes them."
+        />
+      ) : (
+        <ul className="divide-y divide-border border-y border-border">
+          {list.properties.map((property) => (
+            <li key={property.publicId} className="py-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                <div className="space-y-1">
+                  <Link
+                    href={`/properties/${property.publicId}`}
+                    className="text-lg font-semibold text-foreground hover:underline"
+                  >
+                    {property.title}
+                  </Link>
+                  <p className="text-sm text-muted-foreground">
+                    {new Intl.NumberFormat('en-IN', {
+                      style: 'currency',
+                      currency: property.currency,
+                      maximumFractionDigits: 0,
+                    }).format(Number(property.priceMinor) / 100)}
+                    {property.city ? ` · ${property.city}` : ''}
+                    {property.developerDisplayName ? ` · ${property.developerDisplayName}` : ''}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">{property.publicId}</Badge>
+                  <Badge variant="outline">
+                    {property.availabilityStatus.replaceAll('_', ' ')}
+                  </Badge>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

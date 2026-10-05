@@ -3,6 +3,8 @@ import { PUBLIC_ID_SEQUENCES, formatPublicId } from '@property-studio/public-id'
 
 import { PrismaService } from '../prisma/prisma.module';
 
+type PublicIdKind = keyof typeof PUBLIC_ID_SEQUENCES;
+
 @Injectable()
 export class PublicIdService {
   constructor(private readonly prisma: PrismaService) {}
@@ -23,7 +25,27 @@ export class PublicIdService {
     return this.next('AGT');
   }
 
-  private async next(kind: 'USER' | 'ORG' | 'DEV' | 'AGT'): Promise<string> {
+  async nextProjectPublicId(): Promise<string> {
+    return this.next('PROJ');
+  }
+
+  async nextPropertyPublicId(): Promise<string> {
+    return this.next('PROP');
+  }
+
+  async nextCommunityPublicId(): Promise<string> {
+    return this.next('COM');
+  }
+
+  async nextMediaPublicId(): Promise<string> {
+    return this.next('MED');
+  }
+
+  async nextDocumentPublicId(): Promise<string> {
+    return this.next('DOC');
+  }
+
+  private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(
       `SELECT nextval('${sequence}') AS n`,

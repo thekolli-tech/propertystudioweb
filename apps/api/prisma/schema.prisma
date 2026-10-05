@@ -65,6 +65,90 @@ enum AgencyVerificationStatus {
   VERIFIED
 }
 
+enum ProjectType {
+  RESIDENTIAL
+  COMMERCIAL
+  MIXED_USE
+  PLOTTED
+  OTHER
+}
+
+enum ProjectLifecycleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PropertyType {
+  APARTMENT
+  VILLA
+  PLOT
+  OFFICE
+  SHOP
+  WAREHOUSE
+  OTHER
+}
+
+enum ListingType {
+  SALE
+  RENT
+}
+
+enum PropertyConfiguration {
+  STUDIO
+  ONE_BHK
+  TWO_BHK
+  THREE_BHK
+  FOUR_BHK
+  FIVE_BHK_PLUS
+  OTHER
+}
+
+enum PropertyPublicationStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PropertyAvailabilityStatus {
+  AVAILABLE
+  UNDER_OFFER
+  SOLD
+  UNAVAILABLE
+}
+
+enum CommunityStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum CommunityVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum CatalogEntityType {
+  PROJECT
+  PROPERTY
+  COMMUNITY
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  FLOOR_PLAN
+  OTHER
+}
+
+enum AssetVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum ResourceAssignmentType {
+  PROPERTY
+  PROJECT
+}
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -146,10 +230,16 @@ model Organization {
   createdBy String?            @map("created_by") @db.Uuid
   updatedBy String?            @map("updated_by") @db.Uuid
 
-  memberships      OrganizationMembership[]
-  sessions         Session[]
-  developerProfile DeveloperProfile?
-  agencyProfile    AgencyProfile?
+  memberships         OrganizationMembership[]
+  sessions            Session[]
+  developerProfile    DeveloperProfile?
+  agencyProfile       AgencyProfile?
+  projects            Project[]
+  properties          Property[]
+  communities         Community[]
+  mediaAssets         MediaAsset[]
+  documentAssets      DocumentAsset[]
+  resourceAssignments ResourceAssignment[]
 
   @@map("organizations")
 }
@@ -295,4 +385,207 @@ model IdempotencyKey {
   @@unique([key, scope, userId, organizationId])
   @@index([expiresAt])
   @@map("idempotency_keys")
+}
+
+model Project {
+  id               String                @id @db.Uuid
+  publicId         String                @unique @map("public_id") @db.VarChar(32)
+  organizationId   String                @map("organization_id") @db.Uuid
+  createdBy        String?               @map("created_by") @db.Uuid
+  updatedBy        String?               @map("updated_by") @db.Uuid
+  name             String                @db.VarChar(160)
+  slug             String                @db.VarChar(180)
+  description      String?               @db.VarChar(5000)
+  projectType      ProjectType           @map("project_type")
+  lifecycleStatus  ProjectLifecycleStatus @default(DRAFT) @map("lifecycle_status")
+  addressLine1     String?               @map("address_line1") @db.VarChar(200)
+  addressLine2     String?               @map("address_line2") @db.VarChar(200)
+  locality         String?               @db.VarChar(120)
+  microMarket      String?               @map("micro_market") @db.VarChar(120)
+  city             String?               @db.VarChar(80)
+  state            String?               @db.VarChar(80)
+  postalCode       String?               @map("postal_code") @db.VarChar(20)
+  countryCode      String                @default("IN") @map("country_code") @db.VarChar(2)
+  latitude         Decimal?              @db.Decimal(10, 7)
+  longitude        Decimal?              @db.Decimal(10, 7)
+  totalAreaSqft    Decimal?              @map("total_area_sqft") @db.Decimal(14, 2)
+  totalUnits       Int?                  @map("total_units")
+  startingPriceMinor BigInt?             @map("starting_price_minor")
+  currency         String                @default("INR") @db.VarChar(3)
+  possessionDate   DateTime?             @map("possession_date") @db.Date
+  publishedAt      DateTime?             @map("published_at") @db.Timestamptz(3)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime?             @map("deleted_at") @db.Timestamptz(3)
+  version          Int                   @default(1)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  properties   Property[]
+  communities  Community[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([lifecycleStatus])
+  @@index([city])
+  @@index([locality])
+  @@index([microMarket])
+  @@index([projectType])
+  @@index([publishedAt])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model Property {
+  id                 String                     @id @db.Uuid
+  publicId           String                     @unique @map("public_id") @db.VarChar(32)
+  organizationId     String                     @map("organization_id") @db.Uuid
+  projectId          String?                    @map("project_id") @db.Uuid
+  createdBy          String?                    @map("created_by") @db.Uuid
+  updatedBy          String?                    @map("updated_by") @db.Uuid
+  title              String                     @db.VarChar(200)
+  propertyType       PropertyType               @map("property_type")
+  listingType        ListingType                @default(SALE) @map("listing_type")
+  configuration      PropertyConfiguration?
+  bedrooms           Int?
+  bathrooms          Int?
+  carpetAreaSqft     Decimal?                   @map("carpet_area_sqft") @db.Decimal(12, 2)
+  builtUpAreaSqft    Decimal?                   @map("built_up_area_sqft") @db.Decimal(12, 2)
+  plotAreaSqft       Decimal?                   @map("plot_area_sqft") @db.Decimal(12, 2)
+  floorNumber        Int?                       @map("floor_number")
+  totalFloors        Int?                       @map("total_floors")
+  facing             String?                    @db.VarChar(40)
+  priceMinor         BigInt                     @map("price_minor")
+  currency           String                     @default("INR") @db.VarChar(3)
+  availabilityStatus PropertyAvailabilityStatus @default(AVAILABLE) @map("availability_status")
+  publicationStatus  PropertyPublicationStatus  @default(DRAFT) @map("publication_status")
+  description        String?                    @db.VarChar(5000)
+  addressLine1       String?                    @map("address_line1") @db.VarChar(200)
+  addressLine2       String?                    @map("address_line2") @db.VarChar(200)
+  locality           String?                    @db.VarChar(120)
+  city               String?                    @db.VarChar(80)
+  state              String?                    @db.VarChar(80)
+  postalCode         String?                    @map("postal_code") @db.VarChar(20)
+  countryCode        String                     @default("IN") @map("country_code") @db.VarChar(2)
+  latitude           Decimal?                   @db.Decimal(10, 7)
+  longitude          Decimal?                   @db.Decimal(10, 7)
+  publishedAt        DateTime?                  @map("published_at") @db.Timestamptz(3)
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt          DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+  version            Int                        @default(1)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([publicationStatus])
+  @@index([availabilityStatus])
+  @@index([city])
+  @@index([locality])
+  @@index([propertyType])
+  @@index([configuration])
+  @@index([bedrooms])
+  @@index([priceMinor])
+  @@index([publishedAt])
+  @@index([deletedAt])
+  @@map("properties")
+}
+
+model Community {
+  id             String              @id @db.Uuid
+  publicId       String              @unique @map("public_id") @db.VarChar(32)
+  organizationId String              @map("organization_id") @db.Uuid
+  projectId      String?             @map("project_id") @db.Uuid
+  createdBy      String?             @map("created_by") @db.Uuid
+  updatedBy      String?             @map("updated_by") @db.Uuid
+  name           String              @db.VarChar(160)
+  description    String?             @db.VarChar(2000)
+  status         CommunityStatus     @default(ACTIVE)
+  visibility     CommunityVisibility @default(PRIVATE)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?           @map("deleted_at") @db.Timestamptz(3)
+  version        Int                 @default(1)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("communities")
+}
+
+model MediaAsset {
+  id             String           @id @db.Uuid
+  publicId       String           @unique @map("public_id") @db.VarChar(32)
+  organizationId String           @map("organization_id") @db.Uuid
+  entityType     CatalogEntityType @map("entity_type")
+  entityId       String           @map("entity_id") @db.Uuid
+  storageKey     String           @map("storage_key") @db.VarChar(512)
+  mimeType       String           @map("mime_type") @db.VarChar(120)
+  mediaType      MediaType        @map("media_type")
+  fileSizeBytes  BigInt           @map("file_size_bytes")
+  sortOrder      Int              @default(0) @map("sort_order")
+  altText        String?          @map("alt_text") @db.VarChar(240)
+  visibility     AssetVisibility  @default(PRIVATE)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?          @map("created_by") @db.Uuid
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("media_assets")
+}
+
+model DocumentAsset {
+  id             String            @id @db.Uuid
+  publicId       String            @unique @map("public_id") @db.VarChar(32)
+  organizationId String            @map("organization_id") @db.Uuid
+  entityType     CatalogEntityType @map("entity_type")
+  entityId       String            @map("entity_id") @db.Uuid
+  storageKey     String            @map("storage_key") @db.VarChar(512)
+  mimeType       String            @map("mime_type") @db.VarChar(120)
+  documentType   String            @map("document_type") @db.VarChar(80)
+  title          String            @db.VarChar(200)
+  fileSizeBytes  BigInt            @map("file_size_bytes")
+  visibility     AssetVisibility   @default(PRIVATE)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?           @map("created_by") @db.Uuid
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("document_assets")
+}
+
+model ResourceAssignment {
+  id             String                 @id @db.Uuid
+  userId         String                 @map("user_id") @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  resourceType   ResourceAssignmentType @map("resource_type")
+  resourceId     String                 @map("resource_id") @db.Uuid
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      String?                @map("created_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([resourceType, resourceId])
+  @@map("resource_assignments")
 }
