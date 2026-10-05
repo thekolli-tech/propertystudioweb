@@ -1,0 +1,35 @@
+{
+  "name": "@property-studio/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Property Studio Next.js web application",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint \"app/**/*.{ts,tsx}\" --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts --passWithNoTests",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@property-studio/api-client": "workspace:*",
+    "@property-studio/contracts": "workspace:*",
+    "@property-studio/permissions": "workspace:*",
+    "@property-studio/public-id": "workspace:*",
+    "@property-studio/ui": "workspace:*",
+    "next": "16.3.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@property-studio/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}

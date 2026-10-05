@@ -1,0 +1,62 @@
+name: property-studio
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: ps-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: property_studio
+      POSTGRES_PASSWORD: property_studio
+      POSTGRES_DB: property_studio
+    ports:
+      - '5432:5432'
+    volumes:
+      - ps_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U property_studio -d property_studio']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ps-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - ps_redis_data:/data
+    command: ['redis-server', '--appendonly', 'yes']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    # Official minio/minio is unavailable on Docker Hub in some environments.
+    # insectai/minio provides a MinIO-compatible S3 server with the same entrypoint.
+    image: insectai/minio:latest
+    container_name: ps-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - ps_minio_data:/data
+    command: ['server', '/data', '--console-address', ':9001']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:9000/minio/health/live || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  ps_postgres_data:
+  ps_redis_data:
+  ps_minio_data:

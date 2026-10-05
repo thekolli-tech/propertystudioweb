@@ -1,0 +1,12 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Phase 1: no business models.
+// Kernel tables (users, sessions, organizations, audit) begin in Phase 2.

@@ -1,0 +1,33 @@
+{
+  "name": "@property-studio/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed HTTP client for Property Studio API consumers",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run --config vitest.config.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@property-studio/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@property-studio/tsconfig": "workspace:*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}
