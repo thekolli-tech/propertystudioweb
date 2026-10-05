@@ -1,0 +1,45 @@
+{
+  "name": "property-studio",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Property Studio V3 — Property Intelligence, Real Estate Marketplace, Community, CRM, Media and AI Platform",
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=24.11.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:api": "turbo run dev --filter=@property-studio/api",
+    "dev:web": "turbo run dev --filter=@property-studio/web",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-boundaries": "^5.3.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.8.20",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1",
+    "vitest": "^4.1.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/engines",
+      "@nestjs/core",
+      "esbuild",
+      "argon2"
+    ]
+  }
+}

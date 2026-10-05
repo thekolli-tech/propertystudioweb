@@ -1,0 +1,16 @@
+{
+  "extends": "@property-studio/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [{ "name": "next" }],
+    "verbatimModuleSyntax": false,
+    "allowJs": true,
+    "incremental": true,
+    "noEmit": true
+  },
+  "include": ["next-env.d.ts", "app/**/*", "src/**/*", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}
