@@ -1,97 +1,42 @@
-import { createApiClient, ApiClientError } from '@property-studio/api-client';
-import type { HealthResponse } from '@property-studio/contracts';
+import Link from 'next/link';
 import { Button } from '@property-studio/ui';
 
-export const dynamic = 'force-dynamic';
-
-type HealthView = { state: 'ok'; data: HealthResponse } | { state: 'error'; message: string };
-
-async function loadHealth(): Promise<HealthView> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (!baseUrl) {
-    return {
-      state: 'error',
-      message: 'NEXT_PUBLIC_API_BASE_URL is not configured.',
-    };
-  }
-
-  try {
-    const client = createApiClient({ baseUrl });
-    const data = await client.getHealth();
-    return { state: 'ok', data };
-  } catch (error) {
-    if (error instanceof ApiClientError) {
-      return { state: 'error', message: `${error.code}: ${error.message}` };
-    }
-    return {
-      state: 'error',
-      message: error instanceof Error ? error.message : 'Unable to reach the API.',
-    };
-  }
-}
+import { PublicFooter } from '@/components/public-footer';
+import { PublicHeader } from '@/components/public-header';
+import { getSessionUser } from '@/lib/auth';
 
 export default async function HomePage() {
-  const health = await loadHealth();
+  const user = await getSessionUser();
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_#d9f1f7,_transparent_40%),radial-gradient(circle_at_bottom_right,_#f3e7d3,_#f7f4ee_55%)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6 py-16">
-        <p
-          className="text-sm font-medium tracking-[0.24em] text-[hsl(var(--primary))] uppercase"
-          style={{ fontFamily: 'var(--font-body), sans-serif' }}
-        >
-          Property Studio
-        </p>
-        <h1
-          className="mt-4 max-w-3xl text-5xl leading-tight text-[hsl(var(--foreground))] md:text-6xl"
-          style={{ fontFamily: 'var(--font-display), serif' }}
-        >
-          Platform skeleton
-        </h1>
-        <p
-          className="mt-5 max-w-2xl text-lg text-[hsl(var(--muted-foreground))]"
-          style={{ fontFamily: 'var(--font-body), sans-serif' }}
-        >
-          Phase 1 verifies monorepo tooling, API health, and the web placeholder. Product domains
-          are intentionally deferred.
-        </p>
-
-        <section className="mt-10 max-w-xl border-t border-[hsl(var(--border))] pt-8">
-          <h2
-            className="text-sm font-semibold tracking-wide text-[hsl(var(--foreground))] uppercase"
-            style={{ fontFamily: 'var(--font-body), sans-serif' }}
-          >
-            API health
-          </h2>
-
-          {health.state === 'ok' ? (
-            <div className="mt-4 space-y-2" style={{ fontFamily: 'var(--font-body), sans-serif' }}>
-              <p className="text-base text-[hsl(var(--foreground))]">
-                Status: <span className="font-semibold text-emerald-700">{health.data.status}</span>
-              </p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                Service: {health.data.service}
-              </p>
-              <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                Timestamp: {health.data.timestamp}
-              </p>
-            </div>
-          ) : (
-            <p
-              className="mt-4 text-base text-red-700"
-              style={{ fontFamily: 'var(--font-body), sans-serif' }}
-            >
-              {health.message}
-            </p>
-          )}
-
-          <div className="mt-6">
-            <Button type="button" disabled>
-              Product UI deferred
+    <div className="flex min-h-screen flex-col">
+      <PublicHeader authenticated={Boolean(user)} />
+      <main className="ps-hero-surface relative flex-1 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,hsl(var(--background))_100%)]" />
+        <div className="relative mx-auto flex min-h-[70vh] w-full max-w-7xl flex-col justify-center px-4 py-20 sm:px-6">
+          <p className="text-sm font-medium tracking-[0.22em] text-primary uppercase">
+            Property Studio
+          </p>
+          <h1 className="mt-4 max-w-3xl font-display text-5xl leading-[1.05] tracking-tight text-foreground md:text-6xl lg:text-7xl">
+            Property intelligence for India
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+            Discover properties, follow communities, and run professional workflows — built for INR,
+            Asia/Kolkata, and the Indian market.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href={user ? '/app' : '/register'}>
+                {user ? 'Open application' : 'Get started'}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/properties">Browse properties</Link>
             </Button>
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </main>
+      <PublicFooter />
+    </div>
   );
 }

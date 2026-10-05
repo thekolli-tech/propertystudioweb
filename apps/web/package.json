@@ -7,9 +7,9 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
-    "lint": "eslint \"app/**/*.{ts,tsx}\" --max-warnings=0",
+    "lint": "eslint \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\" \"middleware.ts\" --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --config vitest.config.ts --passWithNoTests",
+    "test": "vitest run --config vitest.config.ts",
     "clean": "rm -rf .next"
   },
   "dependencies": {
@@ -18,16 +18,23 @@
     "@property-studio/permissions": "workspace:*",
     "@property-studio/public-id": "workspace:*",
     "@property-studio/ui": "workspace:*",
+    "lucide-react": "^0.544.0",
     "next": "16.3.8",
+    "next-themes": "^0.4.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@property-studio/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "^4.1.13",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.2",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"

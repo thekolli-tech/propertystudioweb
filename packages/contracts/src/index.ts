@@ -167,6 +167,8 @@ export const organizationListResponseSchema = z.object({
   organizations: z.array(organizationSummarySchema),
 });
 
+export type OrganizationListResponse = z.infer<typeof organizationListResponseSchema>;
+
 export const organizationMemberSchema = z.object({
   userPublicId: z.string(),
   email: z.string(),
@@ -179,3 +181,15 @@ export const organizationMembersResponseSchema = z.object({
 });
 
 export type OrganizationMembersResponse = z.infer<typeof organizationMembersResponseSchema>;
+
+export const okResponseSchema = z.object({
+  ok: z.literal(true),
+});
+
+export type OkResponse = z.infer<typeof okResponseSchema>;
+
+export const switchOrganizationResponseSchema = z.object({
+  activeOrganizationPublicId: z.string().min(1),
+});
+
+export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;

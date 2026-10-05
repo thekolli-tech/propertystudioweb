@@ -9,6 +9,9 @@ Community, CRM, Media and AI Platform.
 - **Phase 2:** identity, Argon2id credentials, opaque sessions, organizations,
   memberships, platform roles, personas, tenant isolation foundation,
   append-only audit log, idempotency keys, security tests
+- **Phase 3:** public website routes, authentication UI, session-aware `/app`
+  shell, organization and admin shells, typed API client auth/org methods,
+  shared design system, Broadcast Mode foundation
 
 Business domains remain intentionally deferred.
 
