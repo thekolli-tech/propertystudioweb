@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { EmptyState, PageHeader, Badge } from '@property-studio/ui';

@@ -4,7 +4,13 @@ import {
   apiErrorBodySchema,
   authSuccessResponseSchema,
   changePasswordRequestSchema,
+  communityListQuerySchema,
+  communityListResponseSchema,
+  communitySummarySchema,
+  createCommunityRequestSchema,
   createOrganizationRequestSchema,
+  createProjectRequestSchema,
+  createPropertyRequestSchema,
   developerProfileSchema,
   healthResponseSchema,
   loginRequestSchema,
@@ -15,8 +21,20 @@ import {
   organizationListResponseSchema,
   organizationMembersResponseSchema,
   organizationSummarySchema,
+  projectDetailSchema,
+  projectListQuerySchema,
+  projectListResponseSchema,
+  propertyDetailSchema,
+  propertyListQuerySchema,
+  propertyListResponseSchema,
   publicAgencyProfileSchema,
   publicDeveloperProfileSchema,
+  publicProjectDetailSchema,
+  publicProjectListQuerySchema,
+  publicProjectListResponseSchema,
+  publicPropertyDetailSchema,
+  publicPropertyListQuerySchema,
+  publicPropertyListResponseSchema,
   readyResponseSchema,
   registerRequestSchema,
   switchOrganizationResponseSchema,
@@ -24,11 +42,19 @@ import {
   updateDeveloperProfileRequestSchema,
   updateOrganizationMemberRequestSchema,
   updateOrganizationRequestSchema,
+  updateProjectRequestSchema,
+  updatePropertyRequestSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
   type ChangePasswordRequest,
+  type CommunityListQuery,
+  type CommunityListResponse,
+  type CommunitySummary,
+  type CreateCommunityRequest,
   type CreateOrganizationRequest,
+  type CreateProjectRequest,
+  type CreatePropertyRequest,
   type DeveloperProfile,
   type HealthResponse,
   type LoginRequest,
@@ -39,8 +65,20 @@ import {
   type OrganizationListResponse,
   type OrganizationMembersResponse,
   type OrganizationSummary,
+  type ProjectDetail,
+  type ProjectListQuery,
+  type ProjectListResponse,
+  type PropertyDetail,
+  type PropertyListQuery,
+  type PropertyListResponse,
   type PublicAgencyProfile,
   type PublicDeveloperProfile,
+  type PublicProjectDetail,
+  type PublicProjectListQuery,
+  type PublicProjectListResponse,
+  type PublicPropertyDetail,
+  type PublicPropertyListQuery,
+  type PublicPropertyListResponse,
   type ReadyResponse,
   type RegisterRequest,
   type SwitchOrganizationResponse,
@@ -48,6 +86,8 @@ import {
   type UpdateDeveloperProfileRequest,
   type UpdateOrganizationMemberRequest,
   type UpdateOrganizationRequest,
+  type UpdateProjectRequest,
+  type UpdatePropertyRequest,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -272,6 +312,141 @@ export class ApiClient {
       `/api/v1/agents/${encodeURIComponent(publicId)}`,
       publicAgencyProfileSchema,
     );
+  }
+
+  async createProject(input: CreateProjectRequest): Promise<ProjectDetail> {
+    const body = createProjectRequestSchema.parse(input);
+    return this.request('/api/v1/projects', projectDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async listProjects(query: ProjectListQuery): Promise<ProjectListResponse> {
+    const parsed = projectListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/projects?${params.toString()}`, projectListResponseSchema);
+  }
+
+  async getProject(publicId: string): Promise<ProjectDetail> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(publicId)}`, projectDetailSchema);
+  }
+
+  async updateProject(publicId: string, input: UpdateProjectRequest): Promise<ProjectDetail> {
+    const body = updateProjectRequestSchema.parse(input);
+    return this.request(`/api/v1/projects/${encodeURIComponent(publicId)}`, projectDetailSchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async deleteProject(publicId: string): Promise<OkResponse> {
+    return this.request(`/api/v1/projects/${encodeURIComponent(publicId)}`, okResponseSchema, {
+      method: 'DELETE',
+    });
+  }
+
+  async createProperty(input: CreatePropertyRequest): Promise<PropertyDetail> {
+    const body = createPropertyRequestSchema.parse(input);
+    return this.request('/api/v1/properties', propertyDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async listProperties(query: PropertyListQuery): Promise<PropertyListResponse> {
+    const parsed = propertyListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/properties?${params.toString()}`, propertyListResponseSchema);
+  }
+
+  async getProperty(publicId: string): Promise<PropertyDetail> {
+    return this.request(`/api/v1/properties/${encodeURIComponent(publicId)}`, propertyDetailSchema);
+  }
+
+  async updateProperty(publicId: string, input: UpdatePropertyRequest): Promise<PropertyDetail> {
+    const body = updatePropertyRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/properties/${encodeURIComponent(publicId)}`,
+      propertyDetailSchema,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+      },
+    );
+  }
+
+  async deleteProperty(publicId: string): Promise<OkResponse> {
+    return this.request(`/api/v1/properties/${encodeURIComponent(publicId)}`, okResponseSchema, {
+      method: 'DELETE',
+    });
+  }
+
+  async listPublicProjects(
+    query: Partial<PublicProjectListQuery> = {},
+  ): Promise<PublicProjectListResponse> {
+    const parsed = publicProjectListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/public/projects${qs ? `?${qs}` : ''}`,
+      publicProjectListResponseSchema,
+    );
+  }
+
+  async getPublicProject(publicId: string): Promise<PublicProjectDetail> {
+    return this.request(
+      `/api/v1/public/projects/${encodeURIComponent(publicId)}`,
+      publicProjectDetailSchema,
+    );
+  }
+
+  async listPublicProperties(
+    query: Partial<PublicPropertyListQuery> = {},
+  ): Promise<PublicPropertyListResponse> {
+    const parsed = publicPropertyListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/public/properties${qs ? `?${qs}` : ''}`,
+      publicPropertyListResponseSchema,
+    );
+  }
+
+  async getPublicProperty(publicId: string): Promise<PublicPropertyDetail> {
+    return this.request(
+      `/api/v1/public/properties/${encodeURIComponent(publicId)}`,
+      publicPropertyDetailSchema,
+    );
+  }
+
+  async listCommunities(query: CommunityListQuery): Promise<CommunityListResponse> {
+    const parsed = communityListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/communities?${params.toString()}`, communityListResponseSchema);
+  }
+
+  async createCommunity(input: CreateCommunityRequest): Promise<CommunitySummary> {
+    const body = createCommunityRequestSchema.parse(input);
+    return this.request('/api/v1/communities', communitySummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   }
 
   private async request<T>(

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button, cn } from '@property-studio/ui';
 
 const NAV = [
+  { href: '/projects', label: 'Projects' },
   { href: '/properties', label: 'Properties' },
   { href: '/media', label: 'Media' },
   { href: '/requirements', label: 'Requirements' },
