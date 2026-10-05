@@ -17,7 +17,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect('/login?next=/admin');
   }
 
-  if (user.platformRoles.includes('PROPERTY_ADMIN') && !canAccessSuperAdminShell(user.platformRoles)) {
+  if (
+    user.platformRoles.includes('PROPERTY_ADMIN') &&
+    !canAccessSuperAdminShell(user.platformRoles)
+  ) {
     redirect('/app/property-admin');
   }
 

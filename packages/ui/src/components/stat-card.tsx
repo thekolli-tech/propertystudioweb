@@ -28,9 +28,13 @@ export function StatCard({ label, value, hint, unavailable, icon, className }: S
             )}
           </CardTitle>
         </div>
-        {icon ? <div className="rounded-lg bg-secondary p-2 text-secondary-foreground">{icon}</div> : null}
+        {icon ? (
+          <div className="rounded-lg bg-secondary p-2 text-secondary-foreground">{icon}</div>
+        ) : null}
       </CardHeader>
-      {hint ? <CardContent className="pt-0 text-sm text-muted-foreground">{hint}</CardContent> : null}
+      {hint ? (
+        <CardContent className="pt-0 text-sm text-muted-foreground">{hint}</CardContent>
+      ) : null}
     </Card>
   );
 }

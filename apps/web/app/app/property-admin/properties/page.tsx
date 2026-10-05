@@ -1,10 +1,5 @@
 import Link from 'next/link';
-import {
-  EmptyState,
-  PageHeader,
-  PropertyCard,
-  StatusBadge,
-} from '@property-studio/ui';
+import { EmptyState, PageHeader, PropertyCard, StatusBadge } from '@property-studio/ui';
 
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { getRequestCookieHeader } from '@/lib/auth';
@@ -46,7 +41,8 @@ export default async function PropertyAdminPropertiesPage() {
           <div className="flex flex-wrap gap-2">
             <StatusBadge tone="info">{properties.length} assigned</StatusBadge>
             <StatusBadge tone="success">
-              {properties.filter((item) => item.availabilityStatus === 'AVAILABLE').length} available
+              {properties.filter((item) => item.availabilityStatus === 'AVAILABLE').length}{' '}
+              available
             </StatusBadge>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

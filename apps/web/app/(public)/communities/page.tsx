@@ -16,7 +16,10 @@ export default function CommunitiesPage() {
         title="No communities to discover yet"
         description="Community records can be created by developer organizations. A public discovery endpoint will unlock this grid without fake cards."
         action={
-          <Link href="/projects" className="text-sm font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/projects"
+            className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Browse published projects
           </Link>
         }

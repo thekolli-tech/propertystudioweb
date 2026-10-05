@@ -26,12 +26,7 @@ export default async function PublicProjectsPage({ searchParams }: PageProps) {
       locality: first(params.locality),
       microMarket: first(params.microMarket),
       projectType: first(params.projectType) as
-        | 'RESIDENTIAL'
-        | 'COMMERCIAL'
-        | 'MIXED_USE'
-        | 'PLOTTED'
-        | 'OTHER'
-        | undefined,
+        'RESIDENTIAL' | 'COMMERCIAL' | 'MIXED_USE' | 'PLOTTED' | 'OTHER' | undefined,
       limit: 24,
     })
     .catch(() => ({ projects: [], nextCursor: null }));

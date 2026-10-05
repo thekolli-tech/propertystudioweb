@@ -28,10 +28,7 @@ export function Pagination({
   linkComponent: LinkComponent = 'a',
 }: PaginationProps) {
   return (
-    <nav
-      aria-label={label}
-      className={cn('flex items-center justify-between gap-3', className)}
-    >
+    <nav aria-label={label} className={cn('flex items-center justify-between gap-3', className)}>
       {previousHref ? (
         <Button asChild variant="outline" size="sm" disabled={!hasPrevious}>
           <LinkComponent href={previousHref} aria-disabled={!hasPrevious}>
@@ -40,7 +37,13 @@ export function Pagination({
           </LinkComponent>
         </Button>
       ) : (
-        <Button type="button" variant="outline" size="sm" disabled={!hasPrevious} onClick={onPrevious}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!hasPrevious}
+          onClick={onPrevious}
+        >
           <ChevronLeft className="h-4 w-4" aria-hidden />
           Previous
         </Button>

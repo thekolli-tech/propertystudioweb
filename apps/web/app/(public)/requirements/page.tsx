@@ -1,7 +1,18 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Button, EmptyState, Input, Label, PageHeader, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@property-studio/ui';
+import {
+  Button,
+  EmptyState,
+  Input,
+  Label,
+  PageHeader,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@property-studio/ui';
 
 export const metadata = { title: 'Requirements' };
 
@@ -12,7 +23,10 @@ export default function RequirementsPage() {
         title="Post a requirement"
         description="Share what you are looking for. Lead marketplace submission is not live yet — this form is a UI foundation only."
       />
-      <form className="space-y-4 rounded-2xl border border-border bg-card p-6 ps-card-elevated" aria-disabled>
+      <form
+        className="space-y-4 rounded-2xl border border-border bg-card p-6 ps-card-elevated"
+        aria-disabled
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Property type</Label>

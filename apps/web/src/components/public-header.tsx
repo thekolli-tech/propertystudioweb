@@ -26,7 +26,10 @@ export function PublicHeader({ authenticated = false }: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
+        <Link
+          href="/"
+          className="font-display text-xl font-semibold tracking-tight text-foreground"
+        >
           Property <span className="text-premium">Studio</span>
         </Link>
 

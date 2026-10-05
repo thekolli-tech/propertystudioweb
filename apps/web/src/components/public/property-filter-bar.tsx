@@ -45,9 +45,7 @@ export function PropertyFilterBar() {
   const [propertyType, setPropertyType] = useState(searchParams.get('propertyType') ?? 'any');
   const [configuration, setConfiguration] = useState(searchParams.get('configuration') ?? 'any');
   const [bedrooms, setBedrooms] = useState(searchParams.get('bedrooms') ?? '');
-  const [availability, setAvailability] = useState(
-    searchParams.get('availabilityStatus') ?? 'any',
-  );
+  const [availability, setAvailability] = useState(searchParams.get('availabilityStatus') ?? 'any');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPriceMinor') ?? '');
 
   function applyFilters(event: React.FormEvent) {

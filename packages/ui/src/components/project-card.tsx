@@ -79,7 +79,9 @@ export function ProjectCard({
             <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
               {publicId}
             </p>
-            {projectType ? <Badge variant="secondary">{projectType.replaceAll('_', ' ')}</Badge> : null}
+            {projectType ? (
+              <Badge variant="secondary">{projectType.replaceAll('_', ' ')}</Badge>
+            ) : null}
           </div>
           <h3 className="line-clamp-2 text-base font-semibold leading-snug text-foreground">
             {name}

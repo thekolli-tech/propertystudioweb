@@ -64,7 +64,11 @@ export function SidebarNav({
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={() => setCollapsed((value) => !value)}
         >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
         </Button>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto px-2 py-4" aria-label="Sidebar">

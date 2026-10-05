@@ -70,12 +70,14 @@ export { ImagePlaceholder, type ImagePlaceholderProps } from './components/image
 export { PropertyCard, type PropertyCardProps } from './components/property-card';
 export { ProjectCard, type ProjectCardProps } from './components/project-card';
 export { StatCard, type StatCardProps } from './components/stat-card';
-export { FilterBar, FilterField, type FilterBarProps, type FilterFieldProps } from './components/filter-bar';
-export { Avatar, type AvatarProps } from './components/avatar';
 export {
-  DashboardSection,
-  type DashboardSectionProps,
-} from './components/dashboard-section';
+  FilterBar,
+  FilterField,
+  type FilterBarProps,
+  type FilterFieldProps,
+} from './components/filter-bar';
+export { Avatar, type AvatarProps } from './components/avatar';
+export { DashboardSection, type DashboardSectionProps } from './components/dashboard-section';
 export {
   SidebarNav,
   type SidebarNavProps,

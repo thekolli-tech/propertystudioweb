@@ -18,7 +18,8 @@ export default function MediaPage() {
       <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
         <Badge variant="outline">Object storage foundation</Badge>
         <p className="mt-2">
-          Signed delivery and a full media CMS remain deferred. This UI never hardcodes property photography.
+          Signed delivery and a full media CMS remain deferred. This UI never hardcodes property
+          photography.
         </p>
       </div>
     </main>

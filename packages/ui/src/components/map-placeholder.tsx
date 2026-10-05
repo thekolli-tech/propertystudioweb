@@ -9,10 +9,7 @@ export type MapPlaceholderProps = {
 };
 
 /** Visual map foundation — no fabricated pins or third-party map tiles in Phase 6. */
-export function MapPlaceholder({
-  label = 'Map foundation',
-  className,
-}: MapPlaceholderProps) {
+export function MapPlaceholder({ label = 'Map foundation', className }: MapPlaceholderProps) {
   return (
     <div
       className={cn(
@@ -34,7 +31,8 @@ export function MapPlaceholder({
       <MapPinned className="relative h-8 w-8 opacity-70" aria-hidden />
       <p className="relative mt-2 text-sm font-medium">{label}</p>
       <p className="relative mt-1 max-w-xs text-center text-xs">
-        Interactive maps ship when a mapping provider is integrated. Location text remains the source of truth.
+        Interactive maps ship when a mapping provider is integrated. Location text remains the
+        source of truth.
       </p>
     </div>
   );

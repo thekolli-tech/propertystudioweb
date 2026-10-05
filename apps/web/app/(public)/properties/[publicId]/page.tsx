@@ -32,9 +32,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
     notFound();
   }
 
-  let property: Awaited<
-    ReturnType<ReturnType<typeof createServerApiClient>['getPublicProperty']>
-  >;
+  let property: Awaited<ReturnType<ReturnType<typeof createServerApiClient>['getPublicProperty']>>;
   try {
     property = await createServerApiClient().getPublicProperty(publicId);
   } catch (error) {
@@ -76,7 +74,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
                     ratio="square"
                     label={
                       property.media[index]
-                        ? property.media[index]!.altText ?? 'Media'
+                        ? (property.media[index]!.altText ?? 'Media')
                         : 'No image'
                     }
                   />
@@ -104,14 +102,16 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             </TabsList>
             <TabsContent value="overview" className="space-y-4 pt-4">
               <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {property.description ?? 'No public description has been published for this listing.'}
+                {property.description ??
+                  'No public description has been published for this listing.'}
               </p>
               <dl className="grid gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted-foreground">Location</dt>
                   <dd className="font-medium">
-                    {[property.locality, property.city, property.state].filter(Boolean).join(', ') ||
-                      'Not published'}
+                    {[property.locality, property.city, property.state]
+                      .filter(Boolean)
+                      .join(', ') || 'Not published'}
                   </dd>
                 </div>
                 <div>
@@ -188,7 +188,10 @@ export default async function PublicPropertyPage({ params }: PageProps) {
               ) : (
                 <ul className="divide-y divide-border rounded-xl border border-border">
                   {property.documents.map((doc) => (
-                    <li key={doc.publicId} className="flex items-center justify-between px-4 py-3 text-sm">
+                    <li
+                      key={doc.publicId}
+                      className="flex items-center justify-between px-4 py-3 text-sm"
+                    >
                       <span className="font-medium">{doc.title}</span>
                       <Badge variant="outline">{doc.documentType}</Badge>
                     </li>
@@ -233,7 +236,11 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
               Price
             </p>
-            <PriceDisplay amountMinor={property.priceMinor} currency={property.currency} size="lg" />
+            <PriceDisplay
+              amountMinor={property.priceMinor}
+              currency={property.currency}
+              size="lg"
+            />
           </div>
           <StatusBadge tone={availabilityTone(property.availabilityStatus)}>
             {property.availabilityStatus.replaceAll('_', ' ')}

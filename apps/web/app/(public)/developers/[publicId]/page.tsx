@@ -45,11 +45,13 @@ export default async function PublicDeveloperPage({ params }: PageProps) {
   );
   const properties = matchedProjects.length
     ? await Promise.all(
-        matchedProjects.slice(0, 3).map((project) =>
-          client
-            .listPublicProperties({ projectPublicId: project.publicId, limit: 4 })
-            .catch(() => ({ properties: [], nextCursor: null })),
-        ),
+        matchedProjects
+          .slice(0, 3)
+          .map((project) =>
+            client
+              .listPublicProperties({ projectPublicId: project.publicId, limit: 4 })
+              .catch(() => ({ properties: [], nextCursor: null })),
+          ),
       ).then((lists) => lists.flatMap((list) => list.properties))
     : [];
 

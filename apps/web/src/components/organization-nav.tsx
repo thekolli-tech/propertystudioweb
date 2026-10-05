@@ -73,7 +73,9 @@ export function OrganizationNav({ orgPublicId, organizationType }: OrganizationN
             >
               {item.icon}
               <span>{item.label}</span>
-              <span className="ml-auto hidden text-[10px] uppercase tracking-wide lg:inline">Soon</span>
+              <span className="ml-auto hidden text-[10px] uppercase tracking-wide lg:inline">
+                Soon
+              </span>
             </span>
           );
         }

@@ -51,7 +51,9 @@ export function PriceDisplay({
       {formatted ? (
         <>
           {formatted}
-          {suffix ? <span className="ml-1 text-sm font-normal text-muted-foreground">{suffix}</span> : null}
+          {suffix ? (
+            <span className="ml-1 text-sm font-normal text-muted-foreground">{suffix}</span>
+          ) : null}
         </>
       ) : (
         <span className="font-medium text-muted-foreground">{emptyLabel}</span>

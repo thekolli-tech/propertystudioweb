@@ -17,8 +17,8 @@ export default function AboutPage() {
         </p>
         <p>
           This release establishes the premium public website, shared design system, Super Admin and
-          Property Admin shells, and dynamic catalog discovery. Domains such as CRM, payments, and AI
-          remain intentionally deferred.
+          Property Admin shells, and dynamic catalog discovery. Domains such as CRM, payments, and
+          AI remain intentionally deferred.
         </p>
       </div>
     </main>

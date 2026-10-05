@@ -23,14 +23,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
     city: first(params.city),
     locality: first(params.locality),
     propertyType: first(params.propertyType) as
-      | 'APARTMENT'
-      | 'VILLA'
-      | 'PLOT'
-      | 'OFFICE'
-      | 'SHOP'
-      | 'WAREHOUSE'
-      | 'OTHER'
-      | undefined,
+      'APARTMENT' | 'VILLA' | 'PLOT' | 'OFFICE' | 'SHOP' | 'WAREHOUSE' | 'OTHER' | undefined,
     configuration: first(params.configuration) as
       | 'STUDIO'
       | 'ONE_BHK'
@@ -43,11 +36,7 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
     bedrooms: first(params.bedrooms) ? Number(first(params.bedrooms)) : undefined,
     maxPriceMinor: first(params.maxPriceMinor) ? BigInt(first(params.maxPriceMinor)!) : undefined,
     availabilityStatus: first(params.availabilityStatus) as
-      | 'AVAILABLE'
-      | 'UNDER_OFFER'
-      | 'SOLD'
-      | 'UNAVAILABLE'
-      | undefined,
+      'AVAILABLE' | 'UNDER_OFFER' | 'SOLD' | 'UNAVAILABLE' | undefined,
     limit: 24,
   };
 

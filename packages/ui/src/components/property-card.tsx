@@ -44,11 +44,7 @@ export function PropertyCard({
   linkComponent: LinkComponent = 'a',
 }: PropertyCardProps) {
   const configLabel =
-    configuration != null
-      ? humanize(configuration)
-      : bedrooms != null
-        ? `${bedrooms} BHK`
-        : null;
+    configuration != null ? humanize(configuration) : bedrooms != null ? `${bedrooms} BHK` : null;
 
   return (
     <LinkComponent

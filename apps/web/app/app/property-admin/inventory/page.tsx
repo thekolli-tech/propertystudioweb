@@ -45,7 +45,10 @@ export default async function PropertyAdminInventoryPage() {
               ['UNAVAILABLE', 'danger', byStatus.UNAVAILABLE],
             ] as const
           ).map(([label, tone, count]) => (
-            <div key={label} className="rounded-xl border border-border bg-card p-5 ps-card-elevated">
+            <div
+              key={label}
+              className="rounded-xl border border-border bg-card p-5 ps-card-elevated"
+            >
               <StatusBadge tone={tone}>{label.replaceAll('_', ' ')}</StatusBadge>
               <p className="mt-4 font-display text-3xl font-semibold">{count}</p>
             </div>

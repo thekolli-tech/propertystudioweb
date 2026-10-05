@@ -38,7 +38,9 @@ export default async function PropertyAdminDashboardPage() {
   const underOffer = properties.filter((item) => item.availabilityStatus === 'UNDER_OFFER').length;
   const sold = properties.filter((item) => item.availabilityStatus === 'SOLD').length;
   const projectIds = new Set(
-    properties.map((item) => item.projectPublicId).filter((value): value is string => Boolean(value)),
+    properties
+      .map((item) => item.projectPublicId)
+      .filter((value): value is string => Boolean(value)),
   );
 
   return (
@@ -118,7 +120,10 @@ export default async function PropertyAdminDashboardPage() {
             )}
           </DashboardSection>
 
-          <DashboardSection title="Inventory summary" description="Availability mix of assigned stock.">
+          <DashboardSection
+            title="Inventory summary"
+            description="Availability mix of assigned stock."
+          >
             {properties.length === 0 ? (
               <EmptyState
                 title="No inventory to summarize"

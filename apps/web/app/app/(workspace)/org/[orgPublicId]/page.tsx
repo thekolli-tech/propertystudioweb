@@ -253,12 +253,7 @@ export default async function OrganizationOverviewPage({ params }: PageProps) {
           unavailable
           hint="Requirement marketplace APIs are not available yet."
         />
-        <StatCard
-          label="Leads"
-          value={null}
-          unavailable
-          hint="Lead APIs are not available yet."
-        />
+        <StatCard label="Leads" value={null} unavailable hint="Lead APIs are not available yet." />
       </div>
       <section className="rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm">
         <p className="font-medium text-foreground">Professional verification required</p>

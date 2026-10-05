@@ -87,7 +87,10 @@ export function PropertyAdminNav() {
       pathname={pathname}
       linkComponent={Link}
       brand={
-        <Link href="/app/property-admin" className="font-display text-lg font-semibold text-foreground">
+        <Link
+          href="/app/property-admin"
+          className="font-display text-lg font-semibold text-foreground"
+        >
           Property <span className="text-premium">Admin</span>
         </Link>
       }

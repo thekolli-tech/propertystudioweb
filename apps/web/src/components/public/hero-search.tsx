@@ -115,10 +115,14 @@ export function HeroSearch() {
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        Results come from live catalog APIs. Empty catalogs show empty states — never fabricated listings.
+        Results come from live catalog APIs. Empty catalogs show empty states — never fabricated
+        listings.
       </p>
       <div className="mt-2 flex flex-wrap gap-2 text-xs">
-        <Link href="/properties" className="text-muted-foreground underline-offset-2 hover:underline">
+        <Link
+          href="/properties"
+          className="text-muted-foreground underline-offset-2 hover:underline"
+        >
           Browse all properties
         </Link>
         <span className="text-border">·</span>

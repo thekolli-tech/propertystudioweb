@@ -87,7 +87,8 @@ export default async function PublicProjectPage({ params }: PageProps) {
             </TabsList>
             <TabsContent value="overview" className="space-y-4 pt-4">
               <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {project.description ?? 'No public description has been published for this project.'}
+                {project.description ??
+                  'No public description has been published for this project.'}
               </p>
               <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
                 <div>
@@ -165,7 +166,10 @@ export default async function PublicProjectPage({ params }: PageProps) {
               ) : (
                 <ul className="divide-y divide-border rounded-xl border border-border">
                   {project.documents.map((doc) => (
-                    <li key={doc.publicId} className="flex items-center justify-between px-4 py-3 text-sm">
+                    <li
+                      key={doc.publicId}
+                      className="flex items-center justify-between px-4 py-3 text-sm"
+                    >
                       <span className="font-medium">{doc.title}</span>
                       <Badge variant="outline">{doc.documentType}</Badge>
                     </li>

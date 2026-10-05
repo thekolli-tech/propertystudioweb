@@ -42,7 +42,12 @@
   --broadcast-contrast: 1;
   --surface-elevated: 0 0% 100%;
   --hero-wash:
-    linear-gradient(180deg, hsl(222 35% 14% / 0.55) 0%, hsl(222 35% 10% / 0.35) 45%, hsl(40 24% 97% / 0.92) 100%),
+    linear-gradient(
+      180deg,
+      hsl(222 35% 14% / 0.55) 0%,
+      hsl(222 35% 10% / 0.35) 45%,
+      hsl(40 24% 97% / 0.92) 100%
+    ),
     radial-gradient(ellipse 70% 55% at 80% 20%, hsl(38 50% 70% / 0.25), transparent 60%),
     hsl(222 20% 22%);
 }
