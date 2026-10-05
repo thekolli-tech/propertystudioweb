@@ -16,3 +16,4 @@ Approved architecture decisions for Property Studio V3.
 | [0010](0010-object-storage.md) | Private object storage with signed URLs |
 | [0011](0011-market-locale-payments.md) | India market defaults and Razorpay interface |
 | [0012](0012-phase-1-scope.md) | Phase 1 scope boundaries |
+| [0013](0013-phase-2-security-kernel.md) | Phase 2 security kernel |

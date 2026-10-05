@@ -4,7 +4,8 @@ import { formatPublicId, isValidPublicId, parsePublicId } from './index';
 
 describe('formatPublicId', () => {
   it('pads numbers to at least 6 digits', () => {
-    expect(formatPublicId('PROJ', 1)).toBe('PS-PROJ-000001');
+    expect(formatPublicId('USER', 1)).toBe('PS-USER-000001');
+    expect(formatPublicId('ORG', 1)).toBe('PS-ORG-000001');
   });
 
   it('does not truncate numbers beyond 6 digits', () => {
@@ -18,15 +19,15 @@ describe('formatPublicId', () => {
 
 describe('parsePublicId', () => {
   it('parses a valid public id', () => {
-    expect(parsePublicId('PS-PROP-000042')).toEqual({
-      prefix: 'PROP',
+    expect(parsePublicId('PS-USER-000042')).toEqual({
+      prefix: 'USER',
       number: 42,
-      formatted: 'PS-PROP-000042',
+      formatted: 'PS-USER-000042',
     });
   });
 
   it('rejects malformed values', () => {
-    expect(isValidPublicId('PROP-1')).toBe(false);
-    expect(() => parsePublicId('PROP-1')).toThrow(/Invalid public ID/);
+    expect(isValidPublicId('USER-1')).toBe(false);
+    expect(() => parsePublicId('USER-1')).toThrow(/Invalid public ID/);
   });
 });

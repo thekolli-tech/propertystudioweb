@@ -15,6 +15,8 @@ Internal joins need opaque stable IDs. Humans and support tooling need readable 
 - One PostgreSQL sequence per prefix
 - Public IDs never authorize access by themselves
 
+User public IDs use prefix `USER` (`PS-USER-000001`) as confirmed in Phase 2 / ADR 0013.
+
 ## Consequences
 
 - URLs and support tickets can use public IDs

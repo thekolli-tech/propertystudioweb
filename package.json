@@ -38,7 +38,8 @@
       "prisma",
       "@prisma/engines",
       "@nestjs/core",
-      "esbuild"
+      "esbuild",
+      "argon2"
     ]
   }
 }

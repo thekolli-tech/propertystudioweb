@@ -28,6 +28,16 @@ export const envSchema = z.object({
   S3_FORCE_PATH_STYLE: booleanFromString.default(true),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  AUTH_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(20),
+  SESSION_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(60 * 60 * 24 * 14),
+  ARGON2_MEMORY_COST: z.coerce.number().int().positive().default(65536),
+  ARGON2_TIME_COST: z.coerce.number().int().positive().default(3),
+  ARGON2_PARALLELISM: z.coerce.number().int().positive().default(1),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

@@ -23,6 +23,12 @@ const validEnv = {
   S3_FORCE_PATH_STYLE: 'true',
   RATE_LIMIT_WINDOW_MS: '60000',
   RATE_LIMIT_MAX_REQUESTS: '120',
+  AUTH_RATE_LIMIT_WINDOW_MS: '60000',
+  AUTH_RATE_LIMIT_MAX_REQUESTS: '20',
+  SESSION_TTL_SECONDS: '1209600',
+  ARGON2_MEMORY_COST: '65536',
+  ARGON2_TIME_COST: '3',
+  ARGON2_PARALLELISM: '1',
 } as NodeJS.ProcessEnv;
 
 describe('validateEnv', () => {
@@ -30,6 +36,7 @@ describe('validateEnv', () => {
     const env = validateEnv(validEnv);
     expect(env.APP_CURRENCY).toBe('INR');
     expect(env.API_PORT).toBe(3001);
+    expect(env.SESSION_TTL_SECONDS).toBe(1_209_600);
   });
 
   it('rejects a missing DATABASE_URL', () => {

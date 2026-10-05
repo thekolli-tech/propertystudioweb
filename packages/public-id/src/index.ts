@@ -1,6 +1,6 @@
 export const PUBLIC_ID_PREFIXES = {
   ORG: 'ORG',
-  USR: 'USR',
+  USER: 'USER',
   PROJ: 'PROJ',
   PROP: 'PROP',
   COM: 'COM',
@@ -71,3 +71,9 @@ export function isValidPublicId(publicId: string): boolean {
     return false;
   }
 }
+
+/** Sequence names used by the API for concurrency-safe public ID allocation. */
+export const PUBLIC_ID_SEQUENCES: Record<'USER' | 'ORG', string> = {
+  USER: 'public_id_user_seq',
+  ORG: 'public_id_org_seq',
+};

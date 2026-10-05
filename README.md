@@ -3,18 +3,14 @@
 Property Studio — Property Intelligence, Real Estate Marketplace,
 Community, CRM, Media and AI Platform.
 
-## Phase 1 status
+## Phase status
 
-Phase 1 delivers the production monorepo skeleton only:
+- **Phase 1:** monorepo skeleton, health/ready, packages, Compose, CI, ADRs
+- **Phase 2:** identity, Argon2id credentials, opaque sessions, organizations,
+  memberships, platform roles, personas, tenant isolation foundation,
+  append-only audit log, idempotency keys, security tests
 
-- pnpm + Turborepo workspaces
-- NestJS API with `/health` and `/ready`
-- Next.js web placeholder that displays API health
-- Prisma 7 (no business tables)
-- Docker Compose for PostgreSQL, Redis, and MinIO
-- Shared packages, linting, tests, CI, and ADRs
-
-Business domains, auth, payments, and product UI are intentionally deferred.
+Business domains remain intentionally deferred.
 
 ## Stack
 

@@ -8,5 +8,223 @@ datasource db {
   provider = "postgresql"
 }
 
-// Phase 1: no business models.
-// Kernel tables (users, sessions, organizations, audit) begin in Phase 2.
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+  PENDING_VERIFICATION
+}
+
+enum OrganizationType {
+  DEVELOPER
+  AGENCY
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum OrganizationRole {
+  DEVELOPER
+  DEVELOPER_STAFF
+  AGENT
+  AGENT_STAFF
+}
+
+enum MembershipStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  ADMIN
+  PROPERTY_ADMIN
+  CONTENT_EDITOR
+  MODERATOR
+}
+
+enum Persona {
+  PROPERTY_SEEKER
+  INVESTOR
+  PROPERTY_OWNER
+  LAND_OWNER
+  BUILDER
+  LEGAL_VERIFIER
+  VALUATION_EXPERT
+}
+
+model User {
+  id              String        @id @db.Uuid
+  publicId        String        @unique @map("public_id") @db.VarChar(32)
+  email           String        @unique @db.Citext
+  emailVerifiedAt DateTime?     @map("email_verified_at") @db.Timestamptz(3)
+  status          AccountStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       String?       @map("created_by") @db.Uuid
+  updatedBy       String?       @map("updated_by") @db.Uuid
+
+  credential   UserCredential?
+  sessions     Session[]
+  refreshTokens RefreshToken[]
+  platformRoles UserPlatformRole[]
+  personas     UserPersona[]
+  memberships  OrganizationMembership[]
+
+  @@map("users")
+}
+
+model UserCredential {
+  id           String   @id @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_credentials")
+}
+
+model Session {
+  id                     String    @id @db.Uuid
+  userId                 String    @map("user_id") @db.Uuid
+  tokenHash              String    @unique @map("token_hash") @db.VarChar(64)
+  activeOrganizationId   String?   @map("active_organization_id") @db.Uuid
+  ipAddress              String?   @map("ip_address") @db.VarChar(64)
+  userAgent              String?   @map("user_agent") @db.VarChar(512)
+  expiresAt              DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt              DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganization Organization? @relation(fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([activeOrganizationId])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id                String    @id @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash") @db.VarChar(64)
+  familyId          String    @map("family_id") @db.Uuid
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(3)
+  replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+model Organization {
+  id        String             @id @db.Uuid
+  publicId  String             @unique @map("public_id") @db.VarChar(32)
+  type      OrganizationType
+  name      String             @db.VarChar(120)
+  status    OrganizationStatus @default(ACTIVE)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy String?            @map("created_by") @db.Uuid
+  updatedBy String?            @map("updated_by") @db.Uuid
+
+  memberships OrganizationMembership[]
+  sessions    Session[]
+
+  @@map("organizations")
+}
+
+model OrganizationMembership {
+  id             String           @id @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  role           OrganizationRole
+  status         MembershipStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?          @map("created_by") @db.Uuid
+  updatedBy      String?          @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("organization_memberships")
+}
+
+model UserPlatformRole {
+  id        String       @id @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  role      PlatformRole
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?      @map("created_by") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@map("user_platform_roles")
+}
+
+model UserPersona {
+  id        String   @id @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  persona   Persona
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?  @map("created_by") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, persona])
+  @@index([userId])
+  @@map("user_personas")
+}
+
+model AuditEvent {
+  id             String   @id @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  sessionId      String?  @map("session_id") @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  action         String   @db.VarChar(120)
+  resourceType   String?  @map("resource_type") @db.VarChar(80)
+  resourceId     String?  @map("resource_id") @db.VarChar(80)
+  requestId      String?  @map("request_id") @db.VarChar(80)
+  ipAddress      String?  @map("ip_address") @db.VarChar(64)
+  userAgent      String?  @map("user_agent") @db.VarChar(512)
+  before         Json?
+  after          Json?
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([actorUserId])
+  @@index([organizationId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_events")
+}
+
+model IdempotencyKey {
+  id             String   @id @db.Uuid
+  key            String   @db.VarChar(128)
+  scope          String   @db.VarChar(64)
+  userId         String?  @map("user_id") @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  requestHash    String?  @map("request_hash") @db.VarChar(64)
+  responseCode   Int?     @map("response_code")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@unique([key, scope, userId, organizationId])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}

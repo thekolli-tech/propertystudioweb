@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger as PinoLogger } from 'nestjs-pino';
 
@@ -10,7 +11,6 @@ import { validateEnv } from './common/config/env.schema';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap(): Promise<void> {
-  // Fail fast before Nest DI wiring if env is invalid.
   validateEnv(process.env);
 
   const app = await NestFactory.create(AppModule, {
@@ -20,6 +20,10 @@ async function bootstrap(): Promise<void> {
   const config = app.get(AppConfigService);
   app.useLogger(app.get(PinoLogger));
   app.use(helmet());
+  app.use(cookieParser());
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['health', 'ready'],
+  });
   app.enableCors({
     origin: config.values.WEB_ORIGIN,
     credentials: true,
