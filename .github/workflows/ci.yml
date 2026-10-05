@@ -16,6 +16,63 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: property_studio
+          POSTGRES_PASSWORD: property_studio
+          POSTGRES_DB: property_studio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U property_studio -d property_studio"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Deterministic NON-PRODUCTION values aligned with .env.example / Compose.
+    # S3 values satisfy validateEnv for ObjectStorageService config only;
+    # Phase 4 tests do not require a live object-storage service.
+    env:
+      NODE_ENV: test
+      APP_MARKET: IN
+      APP_CURRENCY: INR
+      APP_TIMEZONE: Asia/Kolkata
+      APP_LOCALE: en-IN
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      API_PUBLIC_URL: http://localhost:3001
+      WEB_ORIGIN: http://localhost:3000
+      LOG_LEVEL: silent
+      DATABASE_URL: postgresql://property_studio:property_studio@localhost:5432/property_studio?schema=public
+      REDIS_URL: redis://localhost:6379
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: ap-south-1
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_BUCKET: property-studio
+      S3_FORCE_PATH_STYLE: true
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 120
+      AUTH_RATE_LIMIT_WINDOW_MS: 60000
+      AUTH_RATE_LIMIT_MAX_REQUESTS: 20
+      SESSION_TTL_SECONDS: 1209600
+      ARGON2_MEMORY_COST: 65536
+      ARGON2_TIME_COST: 3
+      ARGON2_PARALLELISM: 1
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,8 +93,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm --filter @property-studio/api prisma:generate
-        env:
-          DATABASE_URL: postgresql://property_studio:property_studio@localhost:5432/property_studio
+
+      - name: Apply database migrations
+        run: pnpm --filter @property-studio/api prisma:migrate:deploy
 
       - name: Format check
         run: pnpm format:check
@@ -53,6 +111,3 @@ jobs:
 
       - name: Build
         run: pnpm build
-        env:
-          NEXT_PUBLIC_API_BASE_URL: http://localhost:3001
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
