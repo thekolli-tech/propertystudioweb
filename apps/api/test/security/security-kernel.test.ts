@@ -57,6 +57,8 @@ describe('Phase 2 security kernel', () => {
     await prisma.$executeRawUnsafe('DELETE FROM idempotency_keys');
     await prisma.$executeRawUnsafe('DELETE FROM refresh_tokens');
     await prisma.$executeRawUnsafe('DELETE FROM sessions');
+    await prisma.$executeRawUnsafe('DELETE FROM developer_profiles');
+    await prisma.$executeRawUnsafe('DELETE FROM agency_profiles');
     await prisma.$executeRawUnsafe('DELETE FROM organization_memberships');
     await prisma.$executeRawUnsafe('DELETE FROM organizations');
     await prisma.$executeRawUnsafe('DELETE FROM user_platform_roles');

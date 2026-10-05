@@ -15,7 +15,15 @@ export class PublicIdService {
     return this.next('ORG');
   }
 
-  private async next(kind: 'USER' | 'ORG'): Promise<string> {
+  async nextDeveloperPublicId(): Promise<string> {
+    return this.next('DEV');
+  }
+
+  async nextAgencyPublicId(): Promise<string> {
+    return this.next('AGT');
+  }
+
+  private async next(kind: 'USER' | 'ORG' | 'DEV' | 'AGT'): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(
       `SELECT nextval('${sequence}') AS n`,

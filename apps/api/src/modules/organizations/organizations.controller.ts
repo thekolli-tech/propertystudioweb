@@ -1,7 +1,23 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   addOrganizationMemberRequestSchema,
   createOrganizationRequestSchema,
+  onboardOrganizationRequestSchema,
+  updateAgencyProfileRequestSchema,
+  updateDeveloperProfileRequestSchema,
+  updateOrganizationMemberRequestSchema,
+  updateOrganizationRequestSchema,
 } from '@property-studio/contracts';
 
 import { AuthGuard, PermissionsGuard } from '../../common/auth/auth.guards';
@@ -14,6 +30,19 @@ import { OrganizationsService } from './organizations.service';
 @UseGuards(AuthGuard, PermissionsGuard)
 export class OrganizationsController {
   constructor(private readonly organizations: OrganizationsService) {}
+
+  @Post('onboard')
+  onboard(
+    @CurrentActor() actor: AuthActor,
+    @Body(new ZodValidationPipe(onboardOrganizationRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.onboard(
+      actor,
+      body as Parameters<OrganizationsService['onboard']>[1],
+      request,
+    );
+  }
 
   @Post()
   create(
@@ -38,6 +67,21 @@ export class OrganizationsController {
     return this.organizations.getOne(actor, publicId);
   }
 
+  @Patch(':publicId')
+  update(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(updateOrganizationRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.updateOrganization(
+      actor,
+      publicId,
+      body as Parameters<OrganizationsService['updateOrganization']>[2],
+      request,
+    );
+  }
+
   @Post(':publicId/switch')
   switchActive(
     @CurrentActor() actor: AuthActor,
@@ -45,6 +89,46 @@ export class OrganizationsController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.organizations.switchActive(actor, publicId, request);
+  }
+
+  @Get(':publicId/developer-profile')
+  getDeveloperProfile(@CurrentActor() actor: AuthActor, @Param('publicId') publicId: string) {
+    return this.organizations.getDeveloperProfile(actor, publicId);
+  }
+
+  @Put(':publicId/developer-profile')
+  updateDeveloperProfile(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(updateDeveloperProfileRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.updateDeveloperProfile(
+      actor,
+      publicId,
+      body as Parameters<OrganizationsService['updateDeveloperProfile']>[2],
+      request,
+    );
+  }
+
+  @Get(':publicId/agency-profile')
+  getAgencyProfile(@CurrentActor() actor: AuthActor, @Param('publicId') publicId: string) {
+    return this.organizations.getAgencyProfile(actor, publicId);
+  }
+
+  @Put(':publicId/agency-profile')
+  updateAgencyProfile(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(updateAgencyProfileRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.updateAgencyProfile(
+      actor,
+      publicId,
+      body as Parameters<OrganizationsService['updateAgencyProfile']>[2],
+      request,
+    );
   }
 
   @Get(':publicId/members')
@@ -65,5 +149,47 @@ export class OrganizationsController {
       body as Parameters<OrganizationsService['addMember']>[2],
       request,
     );
+  }
+
+  @Patch(':publicId/members/:userPublicId')
+  updateMember(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Param('userPublicId') userPublicId: string,
+    @Body(new ZodValidationPipe(updateOrganizationMemberRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.updateMember(
+      actor,
+      publicId,
+      userPublicId,
+      body as Parameters<OrganizationsService['updateMember']>[3],
+      request,
+    );
+  }
+
+  @Delete(':publicId/members/:userPublicId')
+  deactivateMember(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Param('userPublicId') userPublicId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.organizations.deactivateMember(actor, publicId, userPublicId, request);
+  }
+}
+
+@Controller()
+export class PublicProfilesController {
+  constructor(private readonly organizations: OrganizationsService) {}
+
+  @Get('developers/:publicId')
+  getDeveloper(@Param('publicId') publicId: string) {
+    return this.organizations.getPublicDeveloperProfile(publicId);
+  }
+
+  @Get('agents/:publicId')
+  getAgent(@Param('publicId') publicId: string) {
+    return this.organizations.getPublicAgencyProfile(publicId);
   }
 }

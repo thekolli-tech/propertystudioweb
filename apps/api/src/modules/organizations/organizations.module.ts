@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 
-import { OrganizationsController } from './organizations.controller';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
+import { OrganizationsController, PublicProfilesController } from './organizations.controller';
 import { OrganizationsService } from './organizations.service';
 
 @Module({
-  controllers: [OrganizationsController],
-  providers: [OrganizationsService],
+  controllers: [OrganizationsController, PublicProfilesController],
+  providers: [OrganizationsService, ObjectStorageService],
   exports: [OrganizationsService],
 })
 export class OrganizationsModule {}

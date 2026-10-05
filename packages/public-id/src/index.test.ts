@@ -6,6 +6,8 @@ describe('formatPublicId', () => {
   it('pads numbers to at least 6 digits', () => {
     expect(formatPublicId('USER', 1)).toBe('PS-USER-000001');
     expect(formatPublicId('ORG', 1)).toBe('PS-ORG-000001');
+    expect(formatPublicId('DEV', 1)).toBe('PS-DEV-000001');
+    expect(formatPublicId('AGT', 1)).toBe('PS-AGT-000001');
   });
 
   it('does not truncate numbers beyond 6 digits', () => {

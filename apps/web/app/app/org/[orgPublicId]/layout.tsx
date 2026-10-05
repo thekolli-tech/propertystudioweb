@@ -39,7 +39,6 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
       if (error.status === 403) {
         accessError = 'unauthorized';
       } else {
-        // Out-of-scope membership returns NOT_FOUND per Phase 2 security kernel.
         accessError = 'not_found';
       }
     } else {
@@ -70,7 +69,7 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
             {organization.name}
           </p>
           <div className="flex gap-1 overflow-x-auto lg:block lg:overflow-visible">
-            <OrganizationNav orgPublicId={orgPublicId} />
+            <OrganizationNav orgPublicId={orgPublicId} organizationType={organization.type} />
           </div>
         </div>
       </aside>

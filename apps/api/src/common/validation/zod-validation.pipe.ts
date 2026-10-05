@@ -1,11 +1,15 @@
-import { type ArgumentMetadata, Injectable, type PipeTransform } from '@nestjs/common';
+import { type ArgumentMetadata, type PipeTransform } from '@nestjs/common';
 import { type ZodType } from 'zod';
 
 import { AppError } from '../errors/app-error';
 
-@Injectable()
+/** Constructed per-route with `new ZodValidationPipe(schema)` — not DI-managed. */
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodType) {}
+  constructor(private readonly schema: ZodType) {
+    if (!schema || typeof schema.safeParse !== 'function') {
+      throw new Error('ZodValidationPipe requires a Zod schema with safeParse().');
+    }
+  }
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
     const result = this.schema.safeParse(value);

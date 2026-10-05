@@ -12,8 +12,11 @@ Community, CRM, Media and AI Platform.
 - **Phase 3:** public website routes, authentication UI, session-aware `/app`
   shell, organization and admin shells, typed API client auth/org methods,
   shared design system, Broadcast Mode foundation
+- **Phase 4:** developer/agency organization profiles, onboarding, team
+  membership foundation, public developer/agent profiles
 
-Business domains remain intentionally deferred.
+Business domains such as properties, projects, communities, and monetization
+remain intentionally deferred.
 
 ## Stack
 

@@ -1,29 +1,53 @@
 import {
+  addOrganizationMemberRequestSchema,
+  agencyProfileSchema,
   apiErrorBodySchema,
   authSuccessResponseSchema,
   changePasswordRequestSchema,
   createOrganizationRequestSchema,
+  developerProfileSchema,
   healthResponseSchema,
   loginRequestSchema,
   okResponseSchema,
+  onboardOrganizationRequestSchema,
+  onboardOrganizationResponseSchema,
+  organizationDetailSchema,
   organizationListResponseSchema,
   organizationMembersResponseSchema,
   organizationSummarySchema,
+  publicAgencyProfileSchema,
+  publicDeveloperProfileSchema,
   readyResponseSchema,
   registerRequestSchema,
   switchOrganizationResponseSchema,
+  updateAgencyProfileRequestSchema,
+  updateDeveloperProfileRequestSchema,
+  updateOrganizationMemberRequestSchema,
+  updateOrganizationRequestSchema,
+  type AddOrganizationMemberRequest,
+  type AgencyProfile,
   type AuthSuccessResponse,
   type ChangePasswordRequest,
   type CreateOrganizationRequest,
+  type DeveloperProfile,
   type HealthResponse,
   type LoginRequest,
   type OkResponse,
+  type OnboardOrganizationRequest,
+  type OnboardOrganizationResponse,
+  type OrganizationDetail,
   type OrganizationListResponse,
   type OrganizationMembersResponse,
   type OrganizationSummary,
+  type PublicAgencyProfile,
+  type PublicDeveloperProfile,
   type ReadyResponse,
   type RegisterRequest,
   type SwitchOrganizationResponse,
+  type UpdateAgencyProfileRequest,
+  type UpdateDeveloperProfileRequest,
+  type UpdateOrganizationMemberRequest,
+  type UpdateOrganizationRequest,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -44,7 +68,6 @@ export type ApiClientOptions = {
   baseUrl: string;
   fetch?: typeof fetch;
   credentials?: RequestCredentials;
-  /** Extra headers merged into every request (e.g. Cookie for SSR). */
   headers?: HeadersInit;
 };
 
@@ -108,10 +131,10 @@ export class ApiClient {
     return this.request('/api/v1/organizations', organizationListResponseSchema);
   }
 
-  async getOrganization(publicId: string): Promise<OrganizationSummary> {
+  async getOrganization(publicId: string): Promise<OrganizationDetail> {
     return this.request(
       `/api/v1/organizations/${encodeURIComponent(publicId)}`,
-      organizationSummarySchema,
+      organizationDetailSchema,
     );
   }
 
@@ -121,6 +144,31 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async onboardOrganization(
+    input: OnboardOrganizationRequest,
+  ): Promise<OnboardOrganizationResponse> {
+    const body = onboardOrganizationRequestSchema.parse(input);
+    return this.request('/api/v1/organizations/onboard', onboardOrganizationResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateOrganization(
+    publicId: string,
+    input: UpdateOrganizationRequest,
+  ): Promise<OrganizationDetail> {
+    const body = updateOrganizationRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(publicId)}`,
+      organizationDetailSchema,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      },
+    );
   }
 
   async switchOrganization(publicId: string): Promise<SwitchOrganizationResponse> {
@@ -134,10 +182,95 @@ export class ApiClient {
     );
   }
 
+  async getDeveloperProfile(organizationPublicId: string): Promise<DeveloperProfile> {
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(organizationPublicId)}/developer-profile`,
+      developerProfileSchema,
+    );
+  }
+
+  async updateDeveloperProfile(
+    organizationPublicId: string,
+    input: UpdateDeveloperProfileRequest,
+  ): Promise<DeveloperProfile> {
+    const body = updateDeveloperProfileRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(organizationPublicId)}/developer-profile`,
+      developerProfileSchema,
+      { method: 'PUT', body: JSON.stringify(body) },
+    );
+  }
+
+  async getAgencyProfile(organizationPublicId: string): Promise<AgencyProfile> {
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(organizationPublicId)}/agency-profile`,
+      agencyProfileSchema,
+    );
+  }
+
+  async updateAgencyProfile(
+    organizationPublicId: string,
+    input: UpdateAgencyProfileRequest,
+  ): Promise<AgencyProfile> {
+    const body = updateAgencyProfileRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(organizationPublicId)}/agency-profile`,
+      agencyProfileSchema,
+      { method: 'PUT', body: JSON.stringify(body) },
+    );
+  }
+
   async listOrganizationMembers(publicId: string): Promise<OrganizationMembersResponse> {
     return this.request(
       `/api/v1/organizations/${encodeURIComponent(publicId)}/members`,
       organizationMembersResponseSchema,
+    );
+  }
+
+  async inviteOrganizationMember(
+    publicId: string,
+    input: AddOrganizationMemberRequest,
+  ): Promise<OkResponse> {
+    const body = addOrganizationMemberRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(publicId)}/members`,
+      okResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async updateOrganizationMember(
+    publicId: string,
+    userPublicId: string,
+    input: UpdateOrganizationMemberRequest,
+  ): Promise<OkResponse> {
+    const body = updateOrganizationMemberRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(publicId)}/members/${encodeURIComponent(userPublicId)}`,
+      okResponseSchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async deactivateOrganizationMember(publicId: string, userPublicId: string): Promise<OkResponse> {
+    return this.request(
+      `/api/v1/organizations/${encodeURIComponent(publicId)}/members/${encodeURIComponent(userPublicId)}`,
+      okResponseSchema,
+      { method: 'DELETE' },
+    );
+  }
+
+  async getPublicDeveloper(publicId: string): Promise<PublicDeveloperProfile> {
+    return this.request(
+      `/api/v1/developers/${encodeURIComponent(publicId)}`,
+      publicDeveloperProfileSchema,
+    );
+  }
+
+  async getPublicAgent(publicId: string): Promise<PublicAgencyProfile> {
+    return this.request(
+      `/api/v1/agents/${encodeURIComponent(publicId)}`,
+      publicAgencyProfileSchema,
     );
   }
 

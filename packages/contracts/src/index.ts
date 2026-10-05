@@ -193,3 +193,141 @@ export const switchOrganizationResponseSchema = z.object({
 });
 
 export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;
+
+export const profileStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
+export const agencyVerificationStatusSchema = z.enum(['UNVERIFIED', 'PENDING', 'VERIFIED']);
+
+const operatingZonesSchema = z.array(z.string().trim().min(1).max(80)).max(20).default([]);
+
+const optionalUrlSchema = z
+  .union([z.literal(''), z.url().max(320)])
+  .optional()
+  .nullable();
+
+const optionalEmailSchema = z
+  .union([z.literal(''), z.email().max(320)])
+  .optional()
+  .nullable();
+
+export const developerProfileFieldsSchema = z.object({
+  legalName: z.string().trim().min(2).max(160),
+  displayName: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+  website: optionalUrlSchema,
+  contactEmail: optionalEmailSchema,
+  contactPhone: z.string().trim().max(32).optional().nullable(),
+  headquartersCity: z.string().trim().max(80).optional().nullable(),
+  headquartersState: z.string().trim().max(80).optional().nullable(),
+  operatingZones: operatingZonesSchema,
+});
+
+export const updateDeveloperProfileRequestSchema = developerProfileFieldsSchema.partial().extend({
+  logoObjectKey: z.string().trim().max(512).optional().nullable(),
+});
+
+export type UpdateDeveloperProfileRequest = z.infer<typeof updateDeveloperProfileRequestSchema>;
+
+export const agencyProfileFieldsSchema = developerProfileFieldsSchema.extend({
+  specialization: z.string().trim().max(160).optional().nullable(),
+});
+
+export const updateAgencyProfileRequestSchema = agencyProfileFieldsSchema.partial().extend({
+  logoObjectKey: z.string().trim().max(512).optional().nullable(),
+});
+
+export type UpdateAgencyProfileRequest = z.infer<typeof updateAgencyProfileRequestSchema>;
+
+export const onboardOrganizationRequestSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('DEVELOPER'),
+    name: z.string().trim().min(2).max(120),
+    profile: developerProfileFieldsSchema,
+  }),
+  z.object({
+    type: z.literal('AGENCY'),
+    name: z.string().trim().min(2).max(120),
+    profile: agencyProfileFieldsSchema,
+  }),
+]);
+
+export type OnboardOrganizationRequest = z.infer<typeof onboardOrganizationRequestSchema>;
+
+export const updateOrganizationRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+});
+
+export type UpdateOrganizationRequest = z.infer<typeof updateOrganizationRequestSchema>;
+
+export const updateOrganizationMemberRequestSchema = z
+  .object({
+    role: organizationRoleSchema.optional(),
+    status: z.enum(['ACTIVE', 'DISABLED']).optional(),
+  })
+  .refine((value) => value.role !== undefined || value.status !== undefined, {
+    message: 'At least one of role or status is required.',
+  });
+
+export type UpdateOrganizationMemberRequest = z.infer<typeof updateOrganizationMemberRequestSchema>;
+
+export const developerProfileSchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  legalName: z.string(),
+  displayName: z.string(),
+  description: z.string().nullable(),
+  logoObjectKey: z.string().nullable(),
+  website: z.string().nullable(),
+  contactEmail: z.string().nullable(),
+  contactPhone: z.string().nullable(),
+  headquartersCity: z.string().nullable(),
+  headquartersState: z.string().nullable(),
+  operatingZones: z.array(z.string()),
+  status: profileStatusSchema,
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type DeveloperProfile = z.infer<typeof developerProfileSchema>;
+
+export const agencyProfileSchema = developerProfileSchema.extend({
+  specialization: z.string().nullable(),
+  verificationStatus: agencyVerificationStatusSchema,
+});
+
+export type AgencyProfile = z.infer<typeof agencyProfileSchema>;
+
+export const publicDeveloperProfileSchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  displayName: z.string(),
+  description: z.string().nullable(),
+  website: z.string().nullable(),
+  headquartersCity: z.string().nullable(),
+  headquartersState: z.string().nullable(),
+  operatingZones: z.array(z.string()),
+});
+
+export type PublicDeveloperProfile = z.infer<typeof publicDeveloperProfileSchema>;
+
+export const publicAgencyProfileSchema = publicDeveloperProfileSchema.extend({
+  specialization: z.string().nullable(),
+  verificationStatus: agencyVerificationStatusSchema,
+});
+
+export type PublicAgencyProfile = z.infer<typeof publicAgencyProfileSchema>;
+
+export const organizationDetailSchema = organizationSummarySchema.extend({
+  profilePublicId: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type OrganizationDetail = z.infer<typeof organizationDetailSchema>;
+
+export const onboardOrganizationResponseSchema = z.object({
+  organization: organizationDetailSchema,
+  developerProfile: developerProfileSchema.optional(),
+  agencyProfile: agencyProfileSchema.optional(),
+});
+
+export type OnboardOrganizationResponse = z.infer<typeof onboardOrganizationResponseSchema>;

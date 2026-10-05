@@ -60,10 +60,14 @@ export default async function AppHomePage() {
           <CardHeader>
             <CardTitle>Organizations</CardTitle>
             <CardDescription>
-              Switch context via the organization switcher. Access is enforced by the API.
+              Create a Developer or Agency workspace, then switch context via the organization
+              switcher. Access is enforced by the API.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
+            <Button asChild size="sm">
+              <Link href="/app/onboarding">Create organization</Link>
+            </Button>
             {organizations.length === 0 ? (
               <p className="text-sm text-muted-foreground">No organization memberships yet.</p>
             ) : (

@@ -54,6 +54,17 @@ enum Persona {
   VALUATION_EXPERT
 }
 
+enum ProfileStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum AgencyVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -135,8 +146,10 @@ model Organization {
   createdBy String?            @map("created_by") @db.Uuid
   updatedBy String?            @map("updated_by") @db.Uuid
 
-  memberships OrganizationMembership[]
-  sessions    Session[]
+  memberships      OrganizationMembership[]
+  sessions         Session[]
+  developerProfile DeveloperProfile?
+  agencyProfile    AgencyProfile?
 
   @@map("organizations")
 }
@@ -159,6 +172,61 @@ model OrganizationMembership {
   @@index([userId])
   @@index([organizationId])
   @@map("organization_memberships")
+}
+
+model DeveloperProfile {
+  id                 String        @id @db.Uuid
+  organizationId     String        @unique @map("organization_id") @db.Uuid
+  publicId           String        @unique @map("public_id") @db.VarChar(32)
+  legalName          String        @map("legal_name") @db.VarChar(160)
+  displayName        String        @map("display_name") @db.VarChar(120)
+  description        String?       @db.VarChar(2000)
+  logoObjectKey      String?       @map("logo_object_key") @db.VarChar(512)
+  website            String?       @db.VarChar(320)
+  contactEmail       String?       @map("contact_email") @db.Citext
+  contactPhone       String?       @map("contact_phone") @db.VarChar(32)
+  headquartersCity   String?       @map("headquarters_city") @db.VarChar(80)
+  headquartersState  String?       @map("headquarters_state") @db.VarChar(80)
+  operatingZones     String[]      @default([]) @map("operating_zones")
+  status             ProfileStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy          String?       @map("created_by") @db.Uuid
+  updatedBy          String?       @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("developer_profiles")
+}
+
+model AgencyProfile {
+  id                   String                   @id @db.Uuid
+  organizationId       String                   @unique @map("organization_id") @db.Uuid
+  publicId             String                   @unique @map("public_id") @db.VarChar(32)
+  legalName            String                   @map("legal_name") @db.VarChar(160)
+  displayName          String                   @map("display_name") @db.VarChar(120)
+  description          String?                  @db.VarChar(2000)
+  logoObjectKey        String?                  @map("logo_object_key") @db.VarChar(512)
+  website              String?                  @db.VarChar(320)
+  contactEmail         String?                  @map("contact_email") @db.Citext
+  contactPhone         String?                  @map("contact_phone") @db.VarChar(32)
+  headquartersCity     String?                  @map("headquarters_city") @db.VarChar(80)
+  headquartersState    String?                  @map("headquarters_state") @db.VarChar(80)
+  operatingZones       String[]                 @default([]) @map("operating_zones")
+  specialization       String?                  @db.VarChar(160)
+  verificationStatus   AgencyVerificationStatus @default(UNVERIFIED) @map("verification_status")
+  status               ProfileStatus            @default(ACTIVE)
+  createdAt            DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy            String?                  @map("created_by") @db.Uuid
+  updatedBy            String?                  @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([verificationStatus])
+  @@map("agency_profiles")
 }
 
 model UserPlatformRole {
