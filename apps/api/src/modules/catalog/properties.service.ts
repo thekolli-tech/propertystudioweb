@@ -476,6 +476,8 @@ export class PropertiesService {
       facing: property.facing,
       state: property.state,
       countryCode: property.countryCode,
+      trustStatus: property.trustStatus,
+      verifiedBadge: property.trustStatus === 'VERIFIED',
       media,
       documents,
     };

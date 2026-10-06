@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from
 import {
   adminLeadListQuerySchema,
   createMarketplaceLeadRequestSchema,
+  leadAccessQuerySchema,
   leadListQuerySchema,
   updateLeadStatusRequestSchema,
 } from '@property-studio/contracts';
@@ -10,11 +11,15 @@ import { AuthGuard, PermissionsGuard, RequirePermissions } from '../../common/au
 import { CurrentActor, type AuthenticatedRequest } from '../../common/auth/current-actor.decorator';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
+import { LeadAccessService } from './lead-access.service';
 import { LeadsService } from './leads.service';
 
 @Controller()
 export class LeadsController {
-  constructor(private readonly leads: LeadsService) {}
+  constructor(
+    private readonly leads: LeadsService,
+    private readonly leadAccess: LeadAccessService,
+  ) {}
 
   @Post('leads/from-requirement')
   @UseGuards(AuthGuard, PermissionsGuard)
@@ -42,6 +47,30 @@ export class LeadsController {
       query as Parameters<LeadsService['listForOrganization']>[1],
       request,
     );
+  }
+
+  @Get('leads/:publicId/access')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  getAccess(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Query(new ZodValidationPipe(leadAccessQuerySchema)) query: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const parsed = query as { organizationPublicId: string };
+    return this.leadAccess.getAccess(actor, publicId, parsed.organizationPublicId, request);
+  }
+
+  @Post('leads/:publicId/contact')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  revealContact(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(leadAccessQuerySchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const parsed = body as { organizationPublicId: string };
+    return this.leadAccess.revealContact(actor, publicId, parsed.organizationPublicId, request);
   }
 
   @Get('leads/:publicId')

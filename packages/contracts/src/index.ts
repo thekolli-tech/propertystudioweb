@@ -305,13 +305,14 @@ export const publicDeveloperProfileSchema = z.object({
   headquartersCity: z.string().nullable(),
   headquartersState: z.string().nullable(),
   operatingZones: z.array(z.string()),
+  verificationStatus: agencyVerificationStatusSchema,
+  verifiedBadge: z.boolean(),
 });
 
 export type PublicDeveloperProfile = z.infer<typeof publicDeveloperProfileSchema>;
 
 export const publicAgencyProfileSchema = publicDeveloperProfileSchema.extend({
   specialization: z.string().nullable(),
-  verificationStatus: agencyVerificationStatusSchema,
 });
 
 export type PublicAgencyProfile = z.infer<typeof publicAgencyProfileSchema>;
@@ -377,7 +378,12 @@ export const propertyAvailabilityStatusSchema = z.enum([
 
 export const communityStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
 export const communityVisibilitySchema = z.enum(['PRIVATE', 'PUBLIC']);
-export const catalogEntityTypeSchema = z.enum(['PROJECT', 'PROPERTY', 'COMMUNITY']);
+export const catalogEntityTypeSchema = z.enum([
+  'PROJECT',
+  'PROPERTY',
+  'COMMUNITY',
+  'VERIFICATION_CASE',
+]);
 export const mediaTypeSchema = z.enum(['IMAGE', 'VIDEO', 'FLOOR_PLAN', 'OTHER']);
 export const assetVisibilitySchema = z.enum(['PRIVATE', 'PUBLIC']);
 
@@ -753,6 +759,14 @@ export const publicProjectSummarySchema = z.object({
 
 export type PublicProjectSummary = z.infer<typeof publicProjectSummarySchema>;
 
+export const trustSubjectStatusSchema = z.enum([
+  'UNVERIFIED',
+  'PENDING_VERIFICATION',
+  'VERIFIED',
+  'FLAGGED',
+  'REVOKED',
+]);
+
 export const publicProjectDetailSchema = publicProjectSummarySchema.extend({
   description: z.string().nullable(),
   state: z.string().nullable(),
@@ -761,6 +775,8 @@ export const publicProjectDetailSchema = publicProjectSummarySchema.extend({
   totalUnits: z.number().nullable(),
   possessionDate: z.string().nullable(),
   propertyCount: z.number().int().nonnegative(),
+  trustStatus: trustSubjectStatusSchema,
+  verifiedBadge: z.boolean(),
   media: z.array(mediaAssetSummarySchema).default([]),
   documents: z.array(documentAssetSummarySchema).default([]),
 });
@@ -815,6 +831,8 @@ export const publicPropertyDetailSchema = publicPropertySummarySchema.extend({
   facing: z.string().nullable(),
   state: z.string().nullable(),
   countryCode: z.string(),
+  trustStatus: trustSubjectStatusSchema,
+  verifiedBadge: z.boolean(),
   media: z.array(mediaAssetSummarySchema).default([]),
   documents: z.array(documentAssetSummarySchema).default([]),
 });
@@ -2078,3 +2096,499 @@ export const walletTopUpResponseSchema = z.object({
   wallet: walletSummarySchema,
 });
 export type WalletTopUpResponse = z.infer<typeof walletTopUpResponseSchema>;
+
+// --- Phase 10: trust, verification, reviews, notifications, communications ---
+
+export const verificationCaseStatusSchema = z.enum([
+  'DRAFT',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'APPROVED',
+  'REJECTED',
+  'CHANGES_REQUESTED',
+  'EXPIRED',
+  'REVOKED',
+]);
+export type VerificationCaseStatus = z.infer<typeof verificationCaseStatusSchema>;
+
+export const verificationSubjectTypeSchema = z.enum(['AGENT', 'DEVELOPER', 'PROJECT', 'PROPERTY']);
+export type VerificationSubjectType = z.infer<typeof verificationSubjectTypeSchema>;
+
+export const verificationDocumentTypeSchema = z.enum([
+  'RERA_CERTIFICATE',
+  'GOVERNMENT_ID',
+  'COMPANY_REGISTRATION',
+  'AUTHORIZATION_LETTER',
+  'PROJECT_APPROVAL',
+  'OWNERSHIP_DOCUMENT',
+  'PROPERTY_DOCUMENT',
+  'OTHER',
+]);
+export type VerificationDocumentType = z.infer<typeof verificationDocumentTypeSchema>;
+
+export const verificationDocumentStatusSchema = z.enum([
+  'SUBMITTED',
+  'ACCEPTED',
+  'REJECTED',
+  'REPLACEMENT_REQUIRED',
+]);
+export type VerificationDocumentStatus = z.infer<typeof verificationDocumentStatusSchema>;
+
+export const reviewSubjectTypeSchema = z.enum(['PROJECT', 'PROPERTY', 'DEVELOPER', 'AGENT']);
+export type ReviewSubjectType = z.infer<typeof reviewSubjectTypeSchema>;
+
+export const reviewStatusSchema = z.enum(['PENDING', 'PUBLISHED', 'HIDDEN', 'REJECTED', 'FLAGGED']);
+export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
+
+export const reviewDimensionSchema = z.enum([
+  'EXECUTION',
+  'CONSTRUCTION_QUALITY',
+  'DOCUMENTATION',
+  'TIMELINE',
+  'AMENITIES',
+  'LOCATION',
+  'OVERALL',
+]);
+export type ReviewDimension = z.infer<typeof reviewDimensionSchema>;
+
+export const reviewReportReasonSchema = z.enum([
+  'SPAM',
+  'ABUSE',
+  'FALSE_INFORMATION',
+  'PERSONAL_INFORMATION',
+  'DUPLICATE',
+  'HARASSMENT',
+  'OTHER',
+]);
+export type ReviewReportReason = z.infer<typeof reviewReportReasonSchema>;
+
+export const notificationTypeSchema = z.enum([
+  'VERIFICATION_SUBMITTED',
+  'VERIFICATION_APPROVED',
+  'VERIFICATION_REJECTED',
+  'VERIFICATION_CHANGES_REQUESTED',
+  'VERIFICATION_EXPIRING',
+  'NEW_LEAD',
+  'LEAD_ASSIGNED',
+  'LEAD_PURCHASED',
+  'SITE_VISIT_CREATED',
+  'SITE_VISIT_UPDATED',
+  'REVIEW_PUBLISHED',
+  'REVIEW_REPORTED',
+  'MESSAGE_RECEIVED',
+  'SYSTEM',
+]);
+export type NotificationType = z.infer<typeof notificationTypeSchema>;
+
+export const notificationSeveritySchema = z.enum(['INFO', 'SUCCESS', 'WARNING', 'CRITICAL']);
+export type NotificationSeverity = z.infer<typeof notificationSeveritySchema>;
+
+export const notificationChannelSchema = z.enum(['IN_APP', 'EMAIL', 'WHATSAPP', 'SMS']);
+export type NotificationChannel = z.infer<typeof notificationChannelSchema>;
+
+export const conversationTypeSchema = z.enum(['LEAD', 'PROPERTY', 'PROJECT', 'GENERAL']);
+export type ConversationType = z.infer<typeof conversationTypeSchema>;
+
+export const conversationStatusSchema = z.enum(['OPEN', 'RESTRICTED', 'CLOSED']);
+export type ConversationStatus = z.infer<typeof conversationStatusSchema>;
+
+export const leadAccessStateSchema = z.enum(['PURCHASED', 'ACTIVE', 'REVOKED', 'EXPIRED']);
+export type LeadAccessState = z.infer<typeof leadAccessStateSchema>;
+
+export const contentReportStatusSchema = z.enum(['OPEN', 'REVIEWING', 'RESOLVED', 'DISMISSED']);
+export type ContentReportStatus = z.infer<typeof contentReportStatusSchema>;
+
+export const reviewEligibilityBasisSchema = z.enum(['VERIFIED_CLIENT', 'AUTHENTICATED_USER']);
+export type ReviewEligibilityBasis = z.infer<typeof reviewEligibilityBasisSchema>;
+
+export const trustScoreStateSchema = z.enum(['INSUFFICIENT_DATA', 'READY']);
+export type TrustScoreState = z.infer<typeof trustScoreStateSchema>;
+
+export const createVerificationCaseRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  subjectType: verificationSubjectTypeSchema,
+  subjectPublicId: z.string().regex(/^PS-(DEV|AGT|PROJ|PROP)-\d+$/),
+  verificationType: verificationSubjectTypeSchema,
+  reraNumber: z.string().trim().max(64).optional().nullable(),
+  declarationAccepted: z.boolean().default(false),
+});
+export type CreateVerificationCaseRequest = z.infer<typeof createVerificationCaseRequestSchema>;
+
+export const updateVerificationCaseRequestSchema = z.object({
+  reraNumber: z.string().trim().max(64).optional().nullable(),
+  declarationAccepted: z.boolean().optional(),
+});
+export type UpdateVerificationCaseRequest = z.infer<typeof updateVerificationCaseRequestSchema>;
+
+export const submitVerificationCaseRequestSchema = z.object({
+  declarationAccepted: z.boolean(),
+});
+export type SubmitVerificationCaseRequest = z.infer<typeof submitVerificationCaseRequestSchema>;
+
+export const reviewVerificationCaseRequestSchema = z.object({
+  reviewerNotes: z.string().trim().max(2000).optional().nullable(),
+  rejectionReason: z.string().trim().max(1000).optional().nullable(),
+  expiresAt: z.string().datetime().optional().nullable(),
+});
+export type ReviewVerificationCaseRequest = z.infer<typeof reviewVerificationCaseRequestSchema>;
+
+export const attachVerificationDocumentRequestSchema = z.object({
+  documentType: verificationDocumentTypeSchema,
+  storageKey: z.string().trim().min(1).max(512),
+  mimeType: z.string().trim().min(3).max(120),
+  title: z.string().trim().min(2).max(200),
+  fileSizeBytes: moneyMinorSchema,
+  extractedReference: z.string().trim().max(160).optional().nullable(),
+});
+export type AttachVerificationDocumentRequest = z.infer<
+  typeof attachVerificationDocumentRequestSchema
+>;
+
+export const updateVerificationDocumentRequestSchema = z.object({
+  status: verificationDocumentStatusSchema,
+  reviewerNotes: z.string().trim().max(1000).optional().nullable(),
+  extractedReference: z.string().trim().max(160).optional().nullable(),
+});
+export type UpdateVerificationDocumentRequest = z.infer<
+  typeof updateVerificationDocumentRequestSchema
+>;
+
+export const verificationDocumentSummarySchema = z.object({
+  publicId: z.string(),
+  documentAssetPublicId: z.string(),
+  documentType: verificationDocumentTypeSchema,
+  status: verificationDocumentStatusSchema,
+  storageKey: z.string(),
+  extractedReference: z.string().nullable(),
+  reviewerNotes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type VerificationDocumentSummary = z.infer<typeof verificationDocumentSummarySchema>;
+
+export const verificationCaseSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  subjectType: verificationSubjectTypeSchema,
+  subjectPublicId: z.string(),
+  verificationType: verificationSubjectTypeSchema,
+  status: verificationCaseStatusSchema,
+  reraNumber: z.string().nullable(),
+  declarationAccepted: z.boolean(),
+  submittedAt: z.string().datetime().nullable(),
+  reviewedAt: z.string().datetime().nullable(),
+  expiresAt: z.string().datetime().nullable(),
+  rejectionReason: z.string().nullable(),
+  reviewerNotes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type VerificationCaseSummary = z.infer<typeof verificationCaseSummarySchema>;
+
+export const verificationCaseDetailSchema = verificationCaseSummarySchema.extend({
+  documents: z.array(verificationDocumentSummarySchema).default([]),
+});
+export type VerificationCaseDetail = z.infer<typeof verificationCaseDetailSchema>;
+
+export const verificationCaseListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  status: verificationCaseStatusSchema.optional(),
+  subjectType: verificationSubjectTypeSchema.optional(),
+});
+export type VerificationCaseListQuery = z.infer<typeof verificationCaseListQuerySchema>;
+
+export const verificationCaseListResponseSchema = z.object({
+  cases: z.array(verificationCaseSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type VerificationCaseListResponse = z.infer<typeof verificationCaseListResponseSchema>;
+
+export const adminVerificationCaseListQuerySchema = cursorPaginationQuerySchema.extend({
+  status: verificationCaseStatusSchema.optional(),
+  subjectType: verificationSubjectTypeSchema.optional(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+});
+export type AdminVerificationCaseListQuery = z.infer<typeof adminVerificationCaseListQuerySchema>;
+
+export const reviewRatingInputSchema = z.object({
+  dimension: reviewDimensionSchema,
+  rating: z.number().int().min(1).max(5),
+});
+export type ReviewRatingInput = z.infer<typeof reviewRatingInputSchema>;
+
+export const createReviewRequestSchema = z.object({
+  subjectType: reviewSubjectTypeSchema,
+  subjectPublicId: z.string().regex(/^PS-(DEV|AGT|PROJ|PROP)-\d+$/),
+  title: z.string().trim().max(200).optional().nullable(),
+  body: z.string().trim().min(10).max(4000),
+  overallRating: z.number().int().min(1).max(5),
+  ratings: z.array(reviewRatingInputSchema).max(7).default([]),
+});
+export type CreateReviewRequest = z.infer<typeof createReviewRequestSchema>;
+
+export const updateOwnReviewRequestSchema = z.object({
+  title: z.string().trim().max(200).optional().nullable(),
+  body: z.string().trim().min(10).max(4000).optional(),
+  overallRating: z.number().int().min(1).max(5).optional(),
+  ratings: z.array(reviewRatingInputSchema).max(7).optional(),
+});
+export type UpdateOwnReviewRequest = z.infer<typeof updateOwnReviewRequestSchema>;
+
+export const reportReviewRequestSchema = z.object({
+  reason: reviewReportReasonSchema,
+  details: z.string().trim().max(1000).optional().nullable(),
+});
+export type ReportReviewRequest = z.infer<typeof reportReviewRequestSchema>;
+
+export const moderateReviewRequestSchema = z.object({
+  action: z.enum(['HIDE', 'REJECT', 'RESTORE', 'FLAG']),
+  moderatorNotes: z.string().trim().max(1000).optional().nullable(),
+});
+export type ModerateReviewRequest = z.infer<typeof moderateReviewRequestSchema>;
+
+export const reviewRatingSummarySchema = z.object({
+  dimension: reviewDimensionSchema,
+  rating: z.number().int().min(1).max(5),
+});
+export type ReviewRatingSummary = z.infer<typeof reviewRatingSummarySchema>;
+
+export const reviewSummarySchema = z.object({
+  publicId: z.string(),
+  authorUserPublicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  subjectType: reviewSubjectTypeSchema,
+  subjectPublicId: z.string(),
+  title: z.string().nullable(),
+  body: z.string(),
+  status: reviewStatusSchema,
+  overallRating: z.number().int().min(1).max(5),
+  eligibilityBasis: reviewEligibilityBasisSchema,
+  ratings: z.array(reviewRatingSummarySchema).default([]),
+  publishedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ReviewSummary = z.infer<typeof reviewSummarySchema>;
+
+export const reviewListQuerySchema = cursorPaginationQuerySchema.extend({
+  subjectType: reviewSubjectTypeSchema.optional(),
+  subjectPublicId: z
+    .string()
+    .regex(/^PS-(DEV|AGT|PROJ|PROP)-\d+$/)
+    .optional(),
+  status: reviewStatusSchema.optional(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+});
+export type ReviewListQuery = z.infer<typeof reviewListQuerySchema>;
+
+export const reviewListResponseSchema = z.object({
+  reviews: z.array(reviewSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type ReviewListResponse = z.infer<typeof reviewListResponseSchema>;
+
+export const reviewReportSummarySchema = z.object({
+  publicId: z.string(),
+  reviewPublicId: z.string(),
+  reason: reviewReportReasonSchema,
+  details: z.string().nullable(),
+  status: contentReportStatusSchema,
+  createdAt: z.string().datetime(),
+});
+export type ReviewReportSummary = z.infer<typeof reviewReportSummarySchema>;
+
+export const trustScoreResponseSchema = z.object({
+  subjectType: reviewSubjectTypeSchema,
+  subjectPublicId: z.string(),
+  state: trustScoreStateSchema,
+  score: z.number().int().min(0).max(100).nullable(),
+  reviewCount: z.number().int().nonnegative(),
+  overallAverage: z.number().nullable(),
+  structuredAverage: z.number().nullable(),
+  verificationComponent: z.number().nullable(),
+  verified: z.boolean(),
+  formula:
+    z.string().default(
+      'score = round(((0.6 * overallAvg) + (0.25 * structuredAvg) + (0.15 * verificationComponent)) / 5 * 100); insufficient if reviewCount < 3',
+    ),
+});
+export type TrustScoreResponse = z.infer<typeof trustScoreResponseSchema>;
+
+export const notificationSummarySchema = z.object({
+  publicId: z.string(),
+  type: notificationTypeSchema,
+  title: z.string(),
+  body: z.string(),
+  severity: notificationSeveritySchema,
+  readAt: z.string().datetime().nullable(),
+  entityType: z.string().nullable(),
+  entityPublicId: z.string().nullable(),
+  organizationPublicId: z.string().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type NotificationSummary = z.infer<typeof notificationSummarySchema>;
+
+export const notificationListQuerySchema = cursorPaginationQuerySchema.extend({
+  unreadOnly: z.preprocess((value) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return value;
+  }, z.boolean().optional()),
+});
+export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;
+
+export const notificationListResponseSchema = z.object({
+  notifications: z.array(notificationSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type NotificationListResponse = z.infer<typeof notificationListResponseSchema>;
+
+export const notificationPreferenceSchema = z.object({
+  type: notificationTypeSchema,
+  channel: notificationChannelSchema,
+  enabled: z.boolean(),
+});
+export type NotificationPreference = z.infer<typeof notificationPreferenceSchema>;
+
+export const notificationPreferencesResponseSchema = z.object({
+  preferences: z.array(notificationPreferenceSchema),
+});
+export type NotificationPreferencesResponse = z.infer<
+  typeof notificationPreferencesResponseSchema
+>;
+
+export const updateNotificationPreferencesRequestSchema = z.object({
+  preferences: z
+    .array(notificationPreferenceSchema)
+    .min(1)
+    .max(64),
+});
+export type UpdateNotificationPreferencesRequest = z.infer<
+  typeof updateNotificationPreferencesRequestSchema
+>;
+
+export const createConversationRequestSchema = z.object({
+  type: z.literal('LEAD'),
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  leadPublicId: z.string().regex(/^PS-LEAD-\d+$/),
+  subjectLabel: z.string().trim().max(200).optional().nullable(),
+  initialMessage: z.string().trim().min(1).max(4000).optional(),
+});
+export type CreateConversationRequest = z.infer<typeof createConversationRequestSchema>;
+
+export const conversationParticipantSchema = z.object({
+  userPublicId: z.string(),
+  joinedAt: z.string().datetime(),
+  lastReadAt: z.string().datetime().nullable(),
+});
+export type ConversationParticipantSummary = z.infer<typeof conversationParticipantSchema>;
+
+export const messageSummarySchema = z.object({
+  publicId: z.string(),
+  conversationPublicId: z.string(),
+  senderUserPublicId: z.string(),
+  body: z.string(),
+  createdAt: z.string().datetime(),
+});
+export type MessageSummary = z.infer<typeof messageSummarySchema>;
+
+export const conversationSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  type: conversationTypeSchema,
+  leadPublicId: z.string().nullable(),
+  subjectLabel: z.string().nullable(),
+  status: conversationStatusSchema,
+  participants: z.array(conversationParticipantSchema).default([]),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
+
+export const conversationDetailSchema = conversationSummarySchema.extend({
+  messages: z.array(messageSummarySchema).default([]),
+});
+export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
+
+export const conversationListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  type: conversationTypeSchema.optional(),
+});
+export type ConversationListQuery = z.infer<typeof conversationListQuerySchema>;
+
+export const conversationListResponseSchema = z.object({
+  conversations: z.array(conversationSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type ConversationListResponse = z.infer<typeof conversationListResponseSchema>;
+
+export const sendMessageRequestSchema = z.object({
+  body: z.string().trim().min(1).max(4000),
+});
+export type SendMessageRequest = z.infer<typeof sendMessageRequestSchema>;
+
+export const reportMessageRequestSchema = z.object({
+  reason: reviewReportReasonSchema,
+  details: z.string().trim().max(1000).optional().nullable(),
+});
+export type ReportMessageRequest = z.infer<typeof reportMessageRequestSchema>;
+
+export const restrictConversationRequestSchema = z.object({
+  status: z.enum(['RESTRICTED', 'OPEN', 'CLOSED']),
+});
+export type RestrictConversationRequest = z.infer<typeof restrictConversationRequestSchema>;
+
+export const contentReportSummarySchema = z.object({
+  publicId: z.string(),
+  entityType: z.string(),
+  entityPublicId: z.string(),
+  reason: reviewReportReasonSchema,
+  details: z.string().nullable(),
+  status: contentReportStatusSchema,
+  createdAt: z.string().datetime(),
+});
+export type ContentReportSummary = z.infer<typeof contentReportSummarySchema>;
+
+export const leadAccessStatusSchema = z.object({
+  leadPublicId: z.string(),
+  organizationPublicId: z.string(),
+  accessState: leadAccessStateSchema.nullable(),
+  grantPublicId: z.string().nullable(),
+  grantedAt: z.string().datetime().nullable(),
+  expiresAt: z.string().datetime().nullable(),
+  lastRevealedAt: z.string().datetime().nullable(),
+  canReveal: z.boolean(),
+});
+export type LeadAccessStatus = z.infer<typeof leadAccessStatusSchema>;
+
+export const leadContactRevealResponseSchema = z.object({
+  leadPublicId: z.string(),
+  accessState: leadAccessStateSchema,
+  revealedAt: z.string().datetime(),
+  contact: z.object({
+    email: z.string().email(),
+    displayHint: z.string(),
+  }),
+});
+export type LeadContactRevealResponse = z.infer<typeof leadContactRevealResponseSchema>;
+
+export const leadAccessQuerySchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+});
+export type LeadAccessQuery = z.infer<typeof leadAccessQuerySchema>;
+
+export type TrustSubjectStatus = z.infer<typeof trustSubjectStatusSchema>;
+

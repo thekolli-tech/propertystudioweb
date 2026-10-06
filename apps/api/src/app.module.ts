@@ -10,12 +10,16 @@ import { RequestIdMiddleware } from './common/request-context/request-id.middlew
 import { OriginCheckMiddleware } from './common/security/origin-check.middleware';
 import { SecurityKernelModule } from './common/security/security-kernel.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { CommunicationsModule } from './modules/communications/communications.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
-import { BillingModule } from './modules/billing/billing.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { VerificationModule } from './modules/verification/verification.module';
 
 @Module({
   imports: [
@@ -63,6 +67,10 @@ import { BillingModule } from './modules/billing/billing.module';
     MarketplaceModule,
     CrmModule,
     BillingModule,
+    NotificationsModule,
+    VerificationModule,
+    ReviewsModule,
+    CommunicationsModule,
   ],
   providers: [OriginCheckMiddleware],
 })

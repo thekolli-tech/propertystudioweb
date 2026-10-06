@@ -130,6 +130,7 @@ enum CatalogEntityType {
   PROJECT
   PROPERTY
   COMMUNITY
+  VERIFICATION_CASE
 }
 
 enum MediaType {
@@ -366,6 +367,138 @@ enum LeadPurchaseStatus {
   FAILED
 }
 
+enum TrustSubjectStatus {
+  UNVERIFIED
+  PENDING_VERIFICATION
+  VERIFIED
+  FLAGGED
+  REVOKED
+}
+
+enum VerificationCaseStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+  EXPIRED
+  REVOKED
+}
+
+enum VerificationSubjectType {
+  AGENT
+  DEVELOPER
+  PROJECT
+  PROPERTY
+}
+
+enum VerificationDocumentType {
+  RERA_CERTIFICATE
+  GOVERNMENT_ID
+  COMPANY_REGISTRATION
+  AUTHORIZATION_LETTER
+  PROJECT_APPROVAL
+  OWNERSHIP_DOCUMENT
+  PROPERTY_DOCUMENT
+  OTHER
+}
+
+enum VerificationDocumentStatus {
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  REPLACEMENT_REQUIRED
+}
+
+enum ReviewSubjectType {
+  PROJECT
+  PROPERTY
+  DEVELOPER
+  AGENT
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+  REJECTED
+  FLAGGED
+}
+
+enum ReviewDimension {
+  EXECUTION
+  CONSTRUCTION_QUALITY
+  DOCUMENTATION
+  TIMELINE
+  AMENITIES
+  LOCATION
+  OVERALL
+}
+
+enum ReviewReportReason {
+  SPAM
+  ABUSE
+  FALSE_INFORMATION
+  PERSONAL_INFORMATION
+  DUPLICATE
+  HARASSMENT
+  OTHER
+}
+
+enum NotificationType {
+  VERIFICATION_SUBMITTED
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  VERIFICATION_CHANGES_REQUESTED
+  VERIFICATION_EXPIRING
+  NEW_LEAD
+  LEAD_ASSIGNED
+  LEAD_PURCHASED
+  SITE_VISIT_CREATED
+  SITE_VISIT_UPDATED
+  REVIEW_PUBLISHED
+  REVIEW_REPORTED
+  MESSAGE_RECEIVED
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  INFO
+  SUCCESS
+  WARNING
+  CRITICAL
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+enum ConversationType {
+  LEAD
+  PROPERTY
+  PROJECT
+  GENERAL
+}
+
+enum LeadAccessState {
+  PURCHASED
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum ContentReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -389,6 +522,17 @@ model User {
   crmActivities CrmActivity[] @relation("ActivityActor")
   assignedFollowUps CrmFollowUp[] @relation("FollowUpAssignee")
   assignedSiteVisits CrmSiteVisit[] @relation("SiteVisitAssignee")
+  submittedVerificationCases VerificationCase[] @relation("VerificationSubmitter")
+  reviewedVerificationCases VerificationCase[] @relation("VerificationReviewer")
+  authoredReviews Review[] @relation("ReviewAuthor")
+  moderatedReviews Review[] @relation("ReviewModerator")
+  notifications Notification[]
+  notificationPreferences NotificationPreference[]
+  conversationParticipants ConversationParticipant[]
+  messages Message[]
+  reviewReports ReviewReport[] @relation("ReviewReporter")
+  leadAccessGrants LeadAccessGrant[]
+  contentReports ContentReport[] @relation("ContentReporter")
 
   @@map("users")
 }
@@ -476,6 +620,10 @@ model Organization {
   invoices            Invoice[]
   refunds             Refund[]
   leadPurchases       LeadPurchase[]
+  verificationCases   VerificationCase[]
+  reviews             Review[]
+  conversations       Conversation[]
+  leadAccessGrants    LeadAccessGrant[]
 
   @@map("organizations")
 }
@@ -514,6 +662,7 @@ model DeveloperProfile {
   headquartersCity   String?       @map("headquarters_city") @db.VarChar(80)
   headquartersState  String?       @map("headquarters_state") @db.VarChar(80)
   operatingZones     String[]      @default([]) @map("operating_zones")
+  verificationStatus AgencyVerificationStatus @default(UNVERIFIED) @map("verification_status")
   status             ProfileStatus @default(ACTIVE)
   createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -523,6 +672,7 @@ model DeveloperProfile {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([status])
+  @@index([verificationStatus])
   @@map("developer_profiles")
 }
 
@@ -649,6 +799,7 @@ model Project {
   startingPriceMinor BigInt?             @map("starting_price_minor")
   currency         String                @default("INR") @db.VarChar(3)
   possessionDate   DateTime?             @map("possession_date") @db.Date
+  trustStatus      TrustSubjectStatus    @default(UNVERIFIED) @map("trust_status")
   publishedAt      DateTime?             @map("published_at") @db.Timestamptz(3)
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -671,6 +822,7 @@ model Project {
   @@index([projectType])
   @@index([publishedAt])
   @@index([deletedAt])
+  @@index([trustStatus])
   @@map("projects")
 }
 
@@ -707,6 +859,7 @@ model Property {
   countryCode        String                     @default("IN") @map("country_code") @db.VarChar(2)
   latitude           Decimal?                   @db.Decimal(10, 7)
   longitude          Decimal?                   @db.Decimal(10, 7)
+  trustStatus        TrustSubjectStatus         @default(UNVERIFIED) @map("trust_status")
   publishedAt        DateTime?                  @map("published_at") @db.Timestamptz(3)
   createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -731,6 +884,7 @@ model Property {
   @@index([priceMinor])
   @@index([publishedAt])
   @@index([deletedAt])
+  @@index([trustStatus])
   @@map("properties")
 }
 
@@ -806,6 +960,7 @@ model DocumentAsset {
   deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(3)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  verificationDocuments VerificationDocument[]
 
   @@index([organizationId])
   @@index([entityType, entityId])
@@ -915,6 +1070,8 @@ model Lead {
   crmSiteVisits         CrmSiteVisit[]
   crmDeals              CrmDeal[]
   leadPurchases         LeadPurchase[]
+  leadAccessGrants      LeadAccessGrant[]
+  conversations         Conversation[]
 
   @@unique([requirementId, recipientOrganizationId])
   @@index([recipientOrganizationId])
@@ -1378,3 +1535,270 @@ model LeadPurchase {
   @@index([financialTransactionId])
   @@map("lead_purchases")
 }
+
+model VerificationCase {
+  id                 String                   @id @db.Uuid
+  publicId           String                   @unique @map("public_id") @db.VarChar(32)
+  organizationId     String?                  @map("organization_id") @db.Uuid
+  subjectType        VerificationSubjectType  @map("subject_type")
+  subjectId          String                   @map("subject_id") @db.Uuid
+  verificationType   VerificationSubjectType  @map("verification_type")
+  status             VerificationCaseStatus   @default(DRAFT)
+  reraNumber         String?                  @map("rera_number") @db.VarChar(64)
+  declarationAccepted Boolean                 @default(false) @map("declaration_accepted")
+  submittedByUserId  String?                  @map("submitted_by_user_id") @db.Uuid
+  reviewedByUserId   String?                  @map("reviewed_by_user_id") @db.Uuid
+  submittedAt        DateTime?                @map("submitted_at") @db.Timestamptz(3)
+  reviewedAt         DateTime?                @map("reviewed_at") @db.Timestamptz(3)
+  expiresAt          DateTime?                @map("expires_at") @db.Timestamptz(3)
+  rejectionReason    String?                  @map("rejection_reason") @db.VarChar(1000)
+  reviewerNotes      String?                  @map("reviewer_notes") @db.VarChar(2000)
+  version            Int                      @default(1)
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy          String?                  @map("created_by") @db.Uuid
+  updatedBy          String?                  @map("updated_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  submittedBy  User?         @relation("VerificationSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewedBy   User?         @relation("VerificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  documents    VerificationDocument[]
+
+  @@index([subjectType, subjectId, verificationType])
+  @@index([organizationId])
+  @@index([subjectType, subjectId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([expiresAt])
+  @@map("verification_cases")
+}
+
+model VerificationDocument {
+  id                 String                      @id @db.Uuid
+  publicId           String                      @unique @map("public_id") @db.VarChar(32)
+  verificationCaseId String                      @map("verification_case_id") @db.Uuid
+  documentAssetId    String                      @map("document_asset_id") @db.Uuid
+  documentType       VerificationDocumentType    @map("document_type")
+  status             VerificationDocumentStatus  @default(SUBMITTED)
+  extractedReference String?                     @map("extracted_reference") @db.VarChar(160)
+  reviewerNotes      String?                     @map("reviewer_notes") @db.VarChar(1000)
+  uploadedByUserId   String                      @map("uploaded_by_user_id") @db.Uuid
+  reviewedAt         DateTime?                   @map("reviewed_at") @db.Timestamptz(3)
+  createdAt          DateTime                    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  verificationCase VerificationCase @relation(fields: [verificationCaseId], references: [id], onDelete: Cascade)
+  documentAsset    DocumentAsset    @relation(fields: [documentAssetId], references: [id], onDelete: Restrict)
+
+  @@index([verificationCaseId])
+  @@index([documentAssetId])
+  @@index([status])
+  @@map("verification_documents")
+}
+
+model Review {
+  id                 String            @id @db.Uuid
+  publicId           String            @unique @map("public_id") @db.VarChar(32)
+  authorUserId       String            @map("author_user_id") @db.Uuid
+  organizationId     String?           @map("organization_id") @db.Uuid
+  subjectType        ReviewSubjectType @map("subject_type")
+  subjectId          String            @map("subject_id") @db.Uuid
+  title              String?           @db.VarChar(200)
+  body               String            @db.VarChar(4000)
+  status             ReviewStatus      @default(PENDING)
+  overallRating      Int               @map("overall_rating")
+  eligibilityBasis   String            @map("eligibility_basis") @db.VarChar(64)
+  publishedAt        DateTime?         @map("published_at") @db.Timestamptz(3)
+  moderatedAt        DateTime?         @map("moderated_at") @db.Timestamptz(3)
+  moderatedByUserId  String?           @map("moderated_by_user_id") @db.Uuid
+  moderatorNotes     String?           @map("moderator_notes") @db.VarChar(1000)
+  version            Int               @default(1)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  author      User          @relation("ReviewAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  moderatedBy User?         @relation("ReviewModerator", fields: [moderatedByUserId], references: [id], onDelete: SetNull)
+  ratings     ReviewRating[]
+  reports     ReviewReport[]
+
+  @@unique([authorUserId, subjectType, subjectId])
+  @@index([organizationId])
+  @@index([subjectType, subjectId])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("reviews")
+}
+
+model ReviewRating {
+  id        String          @id @db.Uuid
+  reviewId  String          @map("review_id") @db.Uuid
+  dimension ReviewDimension
+  rating    Int
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, dimension])
+  @@index([dimension])
+  @@map("review_ratings")
+}
+
+model ReviewReport {
+  id             String             @id @db.Uuid
+  publicId       String             @unique @map("public_id") @db.VarChar(32)
+  reviewId       String             @map("review_id") @db.Uuid
+  reporterUserId String             @map("reporter_user_id") @db.Uuid
+  reason         ReviewReportReason
+  details        String?            @db.VarChar(1000)
+  status         ContentReportStatus @default(OPEN)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporter User   @relation("ReviewReporter", fields: [reporterUserId], references: [id], onDelete: Restrict)
+
+  @@unique([reviewId, reporterUserId])
+  @@index([status])
+  @@map("review_reports")
+}
+
+model Notification {
+  id             String               @id @db.Uuid
+  publicId       String               @unique @map("public_id") @db.VarChar(32)
+  userId         String               @map("user_id") @db.Uuid
+  organizationId String?              @map("organization_id") @db.Uuid
+  type           NotificationType
+  title          String               @db.VarChar(200)
+  body           String               @db.VarChar(1000)
+  severity       NotificationSeverity @default(INFO)
+  readAt         DateTime?            @map("read_at") @db.Timestamptz(3)
+  entityType     String?              @map("entity_type") @db.VarChar(64)
+  entityId       String?              @map("entity_id") @db.Uuid
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@index([organizationId])
+  @@index([type])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String              @id @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  type      NotificationType
+  channel   NotificationChannel
+  enabled   Boolean             @default(true)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, channel])
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+model Conversation {
+  id             String           @id @db.Uuid
+  publicId       String           @unique @map("public_id") @db.VarChar(32)
+  organizationId String?          @map("organization_id") @db.Uuid
+  type           ConversationType
+  leadId         String?          @map("lead_id") @db.Uuid
+  subjectLabel   String?          @map("subject_label") @db.VarChar(200)
+  status         String           @default("OPEN") @db.VarChar(32)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?          @map("created_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lead         Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([type])
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String    @id @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  joinedAt       DateTime  @default(now()) @map("joined_at") @db.Timestamptz(3)
+  lastReadAt     DateTime? @map("last_read_at") @db.Timestamptz(3)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @db.Uuid
+  publicId       String   @unique @map("public_id") @db.VarChar(32)
+  conversationId String   @map("conversation_id") @db.Uuid
+  senderUserId   String   @map("sender_user_id") @db.Uuid
+  body           String   @db.VarChar(4000)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderUserId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+  @@index([senderUserId])
+  @@map("messages")
+}
+
+model LeadAccessGrant {
+  id               String          @id @db.Uuid
+  publicId         String          @unique @map("public_id") @db.VarChar(32)
+  organizationId   String          @map("organization_id") @db.Uuid
+  leadId           String          @map("lead_id") @db.Uuid
+  leadPurchaseId   String?         @map("lead_purchase_id") @db.Uuid
+  requestingUserId String          @map("requesting_user_id") @db.Uuid
+  accessState      LeadAccessState @default(PURCHASED) @map("access_state")
+  grantedAt        DateTime        @default(now()) @map("granted_at") @db.Timestamptz(3)
+  expiresAt        DateTime?       @map("expires_at") @db.Timestamptz(3)
+  revokedAt        DateTime?       @map("revoked_at") @db.Timestamptz(3)
+  lastRevealedAt   DateTime?       @map("last_revealed_at") @db.Timestamptz(3)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  requestingUser User         @relation(fields: [requestingUserId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, leadId])
+  @@index([leadId])
+  @@index([accessState])
+  @@index([requestingUserId])
+  @@map("lead_access_grants")
+}
+
+model ContentReport {
+  id             String              @id @db.Uuid
+  publicId       String              @unique @map("public_id") @db.VarChar(32)
+  reporterUserId String              @map("reporter_user_id") @db.Uuid
+  entityType     String              @map("entity_type") @db.VarChar(64)
+  entityId       String              @map("entity_id") @db.Uuid
+  reason         ReviewReportReason
+  details        String?             @db.VarChar(1000)
+  status         ContentReportStatus @default(OPEN)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  reporter User @relation("ContentReporter", fields: [reporterUserId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([entityType, entityId])
+  @@map("content_reports")
+}
+
