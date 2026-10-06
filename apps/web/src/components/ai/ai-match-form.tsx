@@ -2,11 +2,20 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import type { AiPropertyMatchResponse, PropertyConfiguration } from '@property-studio/contracts';
+import type { AiPropertyMatchResponse } from '@property-studio/contracts';
 import { Button, EmptyState, Input, Label, PriceDisplay } from '@property-studio/ui';
 
 import { CoverageBadge } from '@/components/intelligence/coverage-badge';
 import { ApiClientError, createBrowserApiClient } from '@/lib/api';
+
+type PropertyConfiguration =
+  | 'STUDIO'
+  | 'ONE_BHK'
+  | 'TWO_BHK'
+  | 'THREE_BHK'
+  | 'FOUR_BHK'
+  | 'FIVE_BHK_PLUS'
+  | 'OTHER';
 
 const CONFIGURATIONS: Array<{ value: '' | PropertyConfiguration; label: string }> = [
   { value: '', label: 'Any' },

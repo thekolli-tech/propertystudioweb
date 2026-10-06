@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@property-studio/ui';
 
-const ITEMS = [
+const ITEMS: Array<{ href: string; label: string; exact?: boolean }> = [
   { href: '/app/ai', label: 'Overview', exact: true },
   { href: '/app/ai/assistant', label: 'Assistant' },
   { href: '/app/ai/search', label: 'Search' },
   { href: '/app/ai/match', label: 'Match' },
   { href: '/app/ai/valuation', label: 'Valuation' },
   { href: '/app/ai/compare', label: 'Compare' },
-] as const;
+];
 
 export function AiSubnav() {
   const pathname = usePathname();
