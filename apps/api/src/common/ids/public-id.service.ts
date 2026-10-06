@@ -105,6 +105,42 @@ export class PublicIdService {
     return this.next('LPUR');
   }
 
+  async nextVerificationCasePublicId(): Promise<string> {
+    return this.next('VCASE');
+  }
+
+  async nextVerificationDocumentPublicId(): Promise<string> {
+    return this.next('VDOC');
+  }
+
+  async nextReviewPublicId(): Promise<string> {
+    return this.next('REV');
+  }
+
+  async nextReviewReportPublicId(): Promise<string> {
+    return this.next('RRPT');
+  }
+
+  async nextNotificationPublicId(): Promise<string> {
+    return this.next('NTF');
+  }
+
+  async nextConversationPublicId(): Promise<string> {
+    return this.next('CONV');
+  }
+
+  async nextMessagePublicId(): Promise<string> {
+    return this.next('MSG');
+  }
+
+  async nextLeadAccessPublicId(): Promise<string> {
+    return this.next('LACC');
+  }
+
+  async nextContentReportPublicId(): Promise<string> {
+    return this.next('CRPT');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

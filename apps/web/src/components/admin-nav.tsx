@@ -7,11 +7,14 @@ import {
   ClipboardList,
   CreditCard,
   FileText,
+  Flag,
   Inbox,
   LayoutDashboard,
   ScrollText,
   Settings,
   Shield,
+  ShieldCheck,
+  Star,
   Users,
 } from 'lucide-react';
 import { SidebarNav } from '@property-studio/ui';
@@ -47,6 +50,18 @@ const SECTIONS = [
         icon: <ClipboardList className="h-4 w-4" />,
       },
       { href: '/admin/leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'Trust',
+    items: [
+      {
+        href: '/admin/verification',
+        label: 'Verification',
+        icon: <ShieldCheck className="h-4 w-4" />,
+      },
+      { href: '/admin/reviews', label: 'Reviews', icon: <Star className="h-4 w-4" /> },
+      { href: '/admin/reports', label: 'Reports', icon: <Flag className="h-4 w-4" /> },
     ],
   },
   {

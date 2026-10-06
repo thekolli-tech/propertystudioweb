@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { VerifiedBadge } from '@/components/verified-badge';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { isPublicIdForKind } from '@/lib/public-id';
 import {
@@ -94,6 +95,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             <StatusBadge tone={availabilityTone(property.availabilityStatus)}>
               {property.availabilityStatus.replaceAll('_', ' ')}
             </StatusBadge>
+            <VerifiedBadge verified={property.verifiedBadge} />
           </div>
 
           <Tabs defaultValue="overview">

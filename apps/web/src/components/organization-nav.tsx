@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import {
+  Bell,
   CreditCard,
   FileText,
   FolderKanban,
   Home,
   LayoutDashboard,
+  MessageSquare,
   Settings,
   ShieldCheck,
+  Star,
   Users,
   UsersRound,
   ClipboardList,
@@ -30,6 +33,13 @@ type NavItem = {
   comingSoon?: boolean;
 };
 
+const SHARED_TRUST_ITEMS: NavItem[] = [
+  { segment: 'verification', label: 'Verification', icon: <ShieldCheck className="h-4 w-4" /> },
+  { segment: 'reviews', label: 'Reviews', icon: <Star className="h-4 w-4" /> },
+  { segment: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
+  { segment: 'messages', label: 'Messages', icon: <MessageSquare className="h-4 w-4" /> },
+];
+
 const DEVELOPER_ITEMS: NavItem[] = [
   { segment: '', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
   { segment: 'projects', label: 'Projects', icon: <FolderKanban className="h-4 w-4" /> },
@@ -38,6 +48,7 @@ const DEVELOPER_ITEMS: NavItem[] = [
   { segment: 'leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
   { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
+  ...SHARED_TRUST_ITEMS,
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
@@ -50,7 +61,7 @@ const AGENCY_ITEMS: NavItem[] = [
   { segment: 'leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
   { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
-  { segment: 'verification', label: 'Verification', icon: <ShieldCheck className="h-4 w-4" /> },
+  ...SHARED_TRUST_ITEMS,
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },

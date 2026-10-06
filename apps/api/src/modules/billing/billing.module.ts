@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 
+import { MarketplaceModule } from '../marketplace/marketplace.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { AdminBillingController, BillingController, WebhookController } from './billing.controller';
 import { BillingAccessService } from './billing-access.service';
 import { EntitlementService } from './entitlement.service';
@@ -16,6 +18,7 @@ import { WalletService } from './wallet.service';
 import { WebhookService } from './webhook.service';
 
 @Module({
+  imports: [MarketplaceModule, NotificationsModule],
   controllers: [BillingController, AdminBillingController, WebhookController],
   providers: [
     BillingAccessService,

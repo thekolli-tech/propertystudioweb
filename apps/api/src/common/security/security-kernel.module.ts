@@ -6,6 +6,7 @@ import { SessionService } from '../auth/session.service';
 import { PasswordService } from '../crypto/password.service';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { PublicIdService } from '../ids/public-id.service';
+import { ObjectStorageService } from '../storage/object-storage.service';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { PublicIdService } from '../ids/public-id.service';
     PublicIdService,
     SessionService,
     IdempotencyService,
+    ObjectStorageService,
     AuthGuard,
     PermissionsGuard,
   ],
@@ -24,6 +26,7 @@ import { PublicIdService } from '../ids/public-id.service';
     PublicIdService,
     SessionService,
     IdempotencyService,
+    ObjectStorageService,
     AuthGuard,
     PermissionsGuard,
   ],

@@ -542,6 +542,8 @@ export class OrganizationsService {
       headquartersCity: profile.headquartersCity,
       headquartersState: profile.headquartersState,
       operatingZones: profile.operatingZones,
+      verificationStatus: profile.verificationStatus,
+      verifiedBadge: profile.verificationStatus === 'VERIFIED',
     };
   }
 
@@ -570,6 +572,7 @@ export class OrganizationsService {
       operatingZones: profile.operatingZones,
       specialization: profile.specialization,
       verificationStatus: profile.verificationStatus,
+      verifiedBadge: profile.verificationStatus === 'VERIFIED',
     };
   }
 

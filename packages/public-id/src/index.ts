@@ -24,6 +24,14 @@ export const PUBLIC_ID_PREFIXES = {
   INV: 'INV',
   REF: 'REF',
   LPUR: 'LPUR',
+  VCASE: 'VCASE',
+  VDOC: 'VDOC',
+  RRPT: 'RRPT',
+  NTF: 'NTF',
+  CONV: 'CONV',
+  MSG: 'MSG',
+  LACC: 'LACC',
+  CRPT: 'CRPT',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -108,7 +116,16 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'PAY'
   | 'INV'
   | 'REF'
-  | 'LPUR',
+  | 'LPUR'
+  | 'VCASE'
+  | 'VDOC'
+  | 'REV'
+  | 'RRPT'
+  | 'NTF'
+  | 'CONV'
+  | 'MSG'
+  | 'LACC'
+  | 'CRPT',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -135,4 +152,13 @@ export const PUBLIC_ID_SEQUENCES: Record<
   INV: 'public_id_inv_seq',
   REF: 'public_id_ref_seq',
   LPUR: 'public_id_lpur_seq',
+  VCASE: 'public_id_vcase_seq',
+  VDOC: 'public_id_vdoc_seq',
+  REV: 'public_id_rev_seq',
+  RRPT: 'public_id_rrpt_seq',
+  NTF: 'public_id_ntf_seq',
+  CONV: 'public_id_conv_seq',
+  MSG: 'public_id_msg_seq',
+  LACC: 'public_id_lacc_seq',
+  CRPT: 'public_id_crpt_seq',
 };

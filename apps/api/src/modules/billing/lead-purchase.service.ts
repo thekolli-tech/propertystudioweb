@@ -13,6 +13,8 @@ import { IdempotencyService } from '../../common/idempotency/idempotency.service
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { LeadAccessService } from '../marketplace/lead-access.service';
+import { NotificationService } from '../notifications/notification.service';
 import { BillingAccessService } from './billing-access.service';
 import { ACTIVE_SUBSCRIPTION_STATUSES, bigintToString, toIso } from './billing.util';
 import { EntitlementService } from './entitlement.service';
@@ -29,6 +31,8 @@ export class LeadPurchaseService {
     private readonly entitlements: EntitlementService,
     private readonly wallets: WalletService,
     private readonly config: AppConfigService,
+    private readonly leadAccess: LeadAccessService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async purchase(
@@ -154,6 +158,14 @@ export class LeadPurchaseService {
         },
       });
 
+      await this.leadAccess.grantFromPurchase({
+        organizationId: organization.id,
+        leadId: lead.id,
+        leadPurchaseId: created.id,
+        requestingUserId: actor.userId,
+        tx,
+      });
+
       return created;
     });
 
@@ -181,6 +193,23 @@ export class LeadPurchaseService {
       requestId: request?.requestId,
       after: { amountMinor: bigintToString(amountMinor) },
     });
+
+    const members = await this.prisma.organizationMembership.findMany({
+      where: { organizationId: organization.id, status: 'ACTIVE' },
+      select: { userId: true },
+    });
+    await this.notifications.createMany(
+      members.map((member) => ({
+        userId: member.userId,
+        orgId: organization.id,
+        type: 'LEAD_PURCHASED' as const,
+        title: 'Lead purchased',
+        body: 'A marketplace lead was purchased for your organization.',
+        severity: 'SUCCESS' as const,
+        entityType: 'LEAD',
+        entityId: lead.id,
+      })),
+    );
 
     await this.idempotency.complete(reserved.id, 201, {
       leadPurchasePublicId: purchase.publicId,

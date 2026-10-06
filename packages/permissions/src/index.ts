@@ -89,6 +89,35 @@ export const PERMISSIONS = [
   'lead:purchases:read',
   'admin:billing:read',
   'admin:billing:manage',
+  'verification:read',
+  'verification:create',
+  'verification:update',
+  'verification:submit',
+  'verification:documents:read',
+  'verification:documents:create',
+  'verification:documents:update',
+  'verification:review',
+  'verification:approve',
+  'verification:reject',
+  'verification:revoke',
+  'reviews:read',
+  'reviews:create',
+  'reviews:update:own',
+  'reviews:report',
+  'reviews:moderate',
+  'notifications:read',
+  'notifications:update',
+  'communications:read',
+  'communications:create',
+  'communications:message',
+  'communications:moderate',
+  'leads:access',
+  'leads:contact:reveal',
+  'admin:verification:read',
+  'admin:verification:manage',
+  'admin:reviews:read',
+  'admin:reviews:manage',
+  'admin:communications:moderate',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -141,6 +170,59 @@ const BILLING_MANAGE_PERMISSIONS = [
   'lead:purchases:create',
 ] as const satisfies readonly Permission[];
 
+const VERIFICATION_ORG_OWNER_PERMISSIONS = [
+  'verification:read',
+  'verification:create',
+  'verification:update',
+  'verification:submit',
+  'verification:documents:read',
+  'verification:documents:create',
+  'verification:documents:update',
+] as const satisfies readonly Permission[];
+
+const VERIFICATION_ORG_STAFF_PERMISSIONS = [
+  'verification:read',
+  'verification:documents:read',
+] as const satisfies readonly Permission[];
+
+const REVIEW_PARTICIPANT_PERMISSIONS = [
+  'reviews:read',
+  'reviews:create',
+  'reviews:report',
+] as const satisfies readonly Permission[];
+
+const NOTIFICATION_PERMISSIONS = [
+  'notifications:read',
+  'notifications:update',
+] as const satisfies readonly Permission[];
+
+const COMMUNICATIONS_ORG_OWNER_PERMISSIONS = [
+  'communications:read',
+  'communications:create',
+  'communications:message',
+] as const satisfies readonly Permission[];
+
+const COMMUNICATIONS_ORG_STAFF_PERMISSIONS = [
+  'communications:read',
+  'communications:message',
+] as const satisfies readonly Permission[];
+
+const LEAD_ACCESS_PERMISSIONS = [
+  'leads:access',
+  'leads:contact:reveal',
+] as const satisfies readonly Permission[];
+
+const PERSONA_PHASE10_PERMISSIONS = [
+  'reviews:create',
+  'reviews:read',
+  'reviews:update:own',
+  'reviews:report',
+  ...NOTIFICATION_PERMISSIONS,
+  'communications:read',
+  'communications:create',
+  'communications:message',
+] as const satisfies readonly Permission[];
+
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
   ADMIN: [
@@ -172,6 +254,20 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     ...BILLING_MANAGE_PERMISSIONS,
     'admin:billing:read',
     'admin:billing:manage',
+    'admin:verification:read',
+    'admin:verification:manage',
+    'admin:reviews:read',
+    'admin:reviews:manage',
+    'reviews:read',
+    'reviews:moderate',
+    'verification:review',
+    'verification:approve',
+    'verification:reject',
+    'verification:revoke',
+    ...NOTIFICATION_PERMISSIONS,
+    'communications:moderate',
+    'admin:communications:moderate',
+    ...LEAD_ACCESS_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -181,7 +277,17 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'property:publish',
   ],
   CONTENT_EDITOR: ['project:read', 'property:read', 'property:update', 'community:read'],
-  MODERATOR: ['project:read', 'property:read', 'community:read', 'audit:read'],
+  MODERATOR: [
+    'project:read',
+    'property:read',
+    'community:read',
+    'audit:read',
+    'reviews:read',
+    'reviews:report',
+    'reviews:moderate',
+    'admin:reviews:read',
+    'communications:moderate',
+  ],
 };
 
 export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Permission[]> = {
@@ -205,6 +311,11 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...CRM_PERMISSIONS,
     ...BILLING_READ_PERMISSIONS,
     ...BILLING_MANAGE_PERMISSIONS,
+    ...VERIFICATION_ORG_OWNER_PERMISSIONS,
+    ...REVIEW_PARTICIPANT_PERMISSIONS,
+    ...NOTIFICATION_PERMISSIONS,
+    ...COMMUNICATIONS_ORG_OWNER_PERMISSIONS,
+    ...LEAD_ACCESS_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -220,6 +331,11 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     ...CRM_PERMISSIONS,
     ...BILLING_READ_PERMISSIONS,
+    ...VERIFICATION_ORG_STAFF_PERMISSIONS,
+    ...REVIEW_PARTICIPANT_PERMISSIONS,
+    ...NOTIFICATION_PERMISSIONS,
+    ...COMMUNICATIONS_ORG_STAFF_PERMISSIONS,
+    ...LEAD_ACCESS_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -230,19 +346,29 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...CRM_PERMISSIONS,
     ...BILLING_READ_PERMISSIONS,
     ...BILLING_MANAGE_PERMISSIONS,
+    ...VERIFICATION_ORG_OWNER_PERMISSIONS,
+    ...REVIEW_PARTICIPANT_PERMISSIONS,
+    ...NOTIFICATION_PERMISSIONS,
+    ...COMMUNICATIONS_ORG_OWNER_PERMISSIONS,
+    ...LEAD_ACCESS_PERMISSIONS,
   ],
   AGENT_STAFF: [
     'organization:read',
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     ...CRM_PERMISSIONS,
     ...BILLING_READ_PERMISSIONS,
+    ...VERIFICATION_ORG_STAFF_PERMISSIONS,
+    ...REVIEW_PARTICIPANT_PERMISSIONS,
+    ...NOTIFICATION_PERMISSIONS,
+    ...COMMUNICATIONS_ORG_STAFF_PERMISSIONS,
+    ...LEAD_ACCESS_PERMISSIONS,
   ],
 };
 
-/** Persona grants for demand-side requirement ownership (Phase 7). */
+/** Persona grants for demand-side requirement ownership (Phase 7) and Phase 10 trust/comms. */
 export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>> = {
-  PROPERTY_SEEKER: REQUIREMENT_OWNER_PERMISSIONS,
-  INVESTOR: REQUIREMENT_OWNER_PERMISSIONS,
+  PROPERTY_SEEKER: [...REQUIREMENT_OWNER_PERMISSIONS, ...PERSONA_PHASE10_PERMISSIONS],
+  INVESTOR: [...REQUIREMENT_OWNER_PERMISSIONS, ...PERSONA_PHASE10_PERMISSIONS],
 };
 
 /** Organization roles allowed for each organization type. */

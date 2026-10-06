@@ -434,6 +434,8 @@ export class ProjectsService {
       totalUnits: project.totalUnits,
       possessionDate: toDateOnly(project.possessionDate),
       propertyCount: project._count.properties,
+      trustStatus: project.trustStatus,
+      verifiedBadge: project.trustStatus === 'VERIFIED',
       media,
       documents,
     };

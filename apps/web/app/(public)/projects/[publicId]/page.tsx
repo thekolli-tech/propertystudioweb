@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { VerifiedBadge } from '@/components/verified-badge';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { isPublicIdForKind } from '@/lib/public-id';
 import {
@@ -80,6 +81,7 @@ export default async function PublicProjectPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{project.publicId}</Badge>
             <Badge variant="outline">{project.projectType.replaceAll('_', ' ')}</Badge>
+            <VerifiedBadge verified={project.verifiedBadge} />
           </div>
 
           <Tabs defaultValue="overview">
