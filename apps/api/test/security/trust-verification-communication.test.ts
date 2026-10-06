@@ -99,6 +99,90 @@ async function grantAdmin(app: INestApplication, prisma: PrismaService, email: s
   return { ...user, cookie };
 }
 
+/** Seeds a buyer→org CRM relationship so review eligibility can be established. */
+async function seedReviewEligibility(
+  prisma: PrismaService,
+  input: {
+    buyerUserPublicId: string;
+    organizationPublicId: string;
+    mode: 'SITE_VISITOR' | 'VERIFIED_CLIENT';
+    propertyId?: string;
+    projectId?: string;
+  },
+) {
+  const buyer = await prisma.user.findFirstOrThrow({
+    where: { publicId: input.buyerUserPublicId },
+  });
+  const organization = await prisma.organization.findFirstOrThrow({
+    where: { publicId: input.organizationPublicId },
+  });
+
+  const requirement = await prisma.requirement.create({
+    data: {
+      id: newUuid(),
+      publicId: `PS-REQ-${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      ownerUserId: buyer.id,
+      propertyType: 'APARTMENT',
+      transactionType: 'BUY',
+      configuration: 'THREE_BHK',
+      bedrooms: 3,
+      budgetMinMinor: 10000000n,
+      budgetMaxMinor: 20000000n,
+      currency: 'INR',
+      city: 'Hyderabad',
+      locality: 'Tellapur',
+      status: 'ACTIVE',
+      visibility: 'MARKETPLACE',
+    },
+  });
+
+  const lead = await prisma.lead.create({
+    data: {
+      id: newUuid(),
+      publicId: `PS-LEAD-${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      requirementId: requirement.id,
+      recipientOrganizationId: organization.id,
+      matchedPropertyId: input.propertyId ?? null,
+      matchedProjectId: input.projectId ?? null,
+      matchScore: 80,
+      matchedCriteria: {},
+      unmatchedCriteria: {},
+      matchExplanation: 'Test eligibility lead',
+      status: 'QUALIFIED',
+    },
+  });
+
+  if (input.mode === 'SITE_VISITOR') {
+    await prisma.crmSiteVisit.create({
+      data: {
+        id: newUuid(),
+        publicId: `PS-VISIT-${Date.now()}${Math.floor(Math.random() * 1000)}`,
+        organizationId: organization.id,
+        leadId: lead.id,
+        propertyId: input.propertyId ?? null,
+        projectId: input.projectId ?? null,
+        scheduledAt: new Date(),
+        status: 'COMPLETED',
+      },
+    });
+  } else {
+    await prisma.crmDeal.create({
+      data: {
+        id: newUuid(),
+        publicId: `PS-DEAL-${Date.now()}${Math.floor(Math.random() * 1000)}`,
+        organizationId: organization.id,
+        leadId: lead.id,
+        propertyId: input.propertyId ?? null,
+        projectId: input.projectId ?? null,
+        status: 'CLOSED',
+        closedAt: new Date(),
+      },
+    });
+  }
+
+  return { requirementId: requirement.id, leadId: lead.id };
+}
+
 const PHASE10_DELETE_ORDER = [
   'messages',
   'conversation_participants',
@@ -408,12 +492,37 @@ describe('Phase 10 trust verification communication security', () => {
         })
         .expect(201);
       expect(doc.body.documentType).toBe('RERA_CERTIFICATE');
+      expect(doc.body.storageKey).toBeUndefined();
 
       const detail = await request(app.getHttpServer())
         .get(`/api/v1/verification/cases/${created.body.publicId}`)
         .set('Cookie', agent.cookie)
         .expect(200);
       expect(detail.body.documents).toHaveLength(1);
+      expect(detail.body.documents[0].storageKey).toBeUndefined();
+
+      const access = await request(app.getHttpServer())
+        .get(
+          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}/access`,
+        )
+        .set('Cookie', agent.cookie)
+        .expect(200);
+      expect(access.body.url).toMatch(/^https?:\/\//);
+      expect(access.body.expiresInSeconds).toBeGreaterThan(0);
+      expect(access.body.expiresAt).toBeTruthy();
+      expect(access.body).not.toHaveProperty('storageKey');
+      expect(JSON.stringify(access.body)).not.toMatch(/S3_SECRET_ACCESS_KEY/);
+      // SigV4 includes access-key ID in X-Amz-Credential; the secret must never appear as a raw field.
+      expect(access.body.url).toContain('X-Amz-Signature=');
+      expect(access.body.url).toContain('X-Amz-Expires=');
+
+      const adminAccess = await request(app.getHttpServer())
+        .get(
+          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}/access`,
+        )
+        .set('Cookie', admin.cookie)
+        .expect(200);
+      expect(adminAccess.body.url).toMatch(/^https?:\/\//);
 
       await request(app.getHttpServer())
         .patch(`/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}`)
@@ -428,6 +537,32 @@ describe('Phase 10 trust verification communication security', () => {
       await request(app.getHttpServer())
         .get(`/api/v1/verification/cases/${created.body.publicId}`)
         .set('Cookie', outsider.cookie)
+        .expect(404);
+
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}/access`,
+        )
+        .set('Cookie', outsider.cookie)
+        .expect(404);
+
+      const stranger = await register(app, `stranger-doc-${Date.now()}@example.com`);
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}/access`,
+        )
+        .set('Cookie', stranger.cookie)
+        .expect(404);
+
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}/access`,
+        )
+        .expect(401);
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/verification/cases/${created.body.publicId}/documents/PS-VDOC-999999/access`)
+        .set('Cookie', agent.cookie)
         .expect(404);
 
       await request(app.getHttpServer())
@@ -455,6 +590,11 @@ describe('Phase 10 trust verification communication security', () => {
       });
 
       const reviewer = await register(app, `reviewer-${Date.now()}@example.com`);
+      await seedReviewEligibility(prisma, {
+        buyerUserPublicId: reviewer.publicId,
+        organizationPublicId: agency.orgPublicId,
+        mode: 'VERIFIED_CLIENT',
+      });
       const created = await request(app.getHttpServer())
         .post('/api/v1/reviews')
         .set('Cookie', reviewer.cookie)
@@ -471,9 +611,22 @@ describe('Phase 10 trust verification communication security', () => {
         })
         .expect(201);
       expect(created.body.status).toBe('PUBLISHED');
-      expect(created.body.eligibilityBasis).toBe('AUTHENTICATED_USER');
+      expect(created.body.eligibilityBasis).toBe('VERIFIED_CLIENT');
       expect(created.body.moderatorNotes).toBeUndefined();
       expect(created.body.authorEmail).toBeUndefined();
+
+      const genericUser = await register(app, `generic-rev-${Date.now()}@example.com`);
+      await request(app.getHttpServer())
+        .post('/api/v1/reviews')
+        .set('Cookie', genericUser.cookie)
+        .send({
+          subjectType: 'AGENT',
+          subjectPublicId: agency.profilePublicId,
+          body: 'I have an account but no relationship to this agency.',
+          overallRating: 1,
+          ratings: [],
+        })
+        .expect(403);
 
       const noPerms = await register(app, `noperm-${Date.now()}@example.com`, []);
       await request(app.getHttpServer())
@@ -514,6 +667,56 @@ describe('Phase 10 trust verification communication security', () => {
       expect(JSON.stringify(list.body)).not.toMatch(/hidden for spam review|@example\.com/);
     });
 
+    it('enforces relationship eligibility and rejects cross-tenant / subject spoofing', async () => {
+      const agentA = await register(app, `agent-elig-a-${Date.now()}@example.com`, []);
+      const agencyA = await onboardAgency(app, agentA.cookie, `Agency Elig A ${Date.now()}`);
+      const agentB = await register(app, `agent-elig-b-${Date.now()}@example.com`, []);
+      const agencyB = await onboardAgency(app, agentB.cookie, `Agency Elig B ${Date.now()}`);
+
+      const buyer = await register(app, `buyer-elig-${Date.now()}@example.com`);
+      await seedReviewEligibility(prisma, {
+        buyerUserPublicId: buyer.publicId,
+        organizationPublicId: agencyA.orgPublicId,
+        mode: 'SITE_VISITOR',
+      });
+
+      await request(app.getHttpServer())
+        .post('/api/v1/reviews')
+        .set('Cookie', buyer.cookie)
+        .send({
+          subjectType: 'AGENT',
+          subjectPublicId: agencyA.profilePublicId,
+          body: 'Site visit went well with agency A and staff were helpful.',
+          overallRating: 4,
+          ratings: [{ dimension: 'EXECUTION', rating: 4 }],
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/reviews')
+        .set('Cookie', buyer.cookie)
+        .send({
+          subjectType: 'AGENT',
+          subjectPublicId: agencyB.profilePublicId,
+          body: 'Trying to review an unrelated agency using another relationship.',
+          overallRating: 2,
+          ratings: [],
+        })
+        .expect(403);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/reviews')
+        .set('Cookie', buyer.cookie)
+        .send({
+          subjectType: 'AGENT',
+          subjectPublicId: 'PS-AGT-999999',
+          body: 'Unknown subject should not be reviewable.',
+          overallRating: 1,
+          ratings: [],
+        })
+        .expect(404);
+    });
+
     it('computes INSUFFICIENT_DATA below 3 reviews and READY formula after 3+', async () => {
       const agent = await register(app, `agent-ts-${Date.now()}@example.com`, []);
       const agency = await onboardAgency(app, agent.cookie, `Agency TS ${Date.now()}`);
@@ -539,6 +742,11 @@ describe('Phase 10 trust verification communication security', () => {
 
       for (let i = 0; i < ratings.length; i += 1) {
         const user = await register(app, `ts-user-${i}-${Date.now()}@example.com`);
+        await seedReviewEligibility(prisma, {
+          buyerUserPublicId: user.publicId,
+          organizationPublicId: agency.orgPublicId,
+          mode: i === 0 ? 'VERIFIED_CLIENT' : 'SITE_VISITOR',
+        });
         await request(app.getHttpServer())
           .post('/api/v1/reviews')
           .set('Cookie', user.cookie)

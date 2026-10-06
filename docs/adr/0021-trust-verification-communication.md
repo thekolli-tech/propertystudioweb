@@ -23,8 +23,14 @@ Phases 7–9 delivered marketplace leads, CRM operations, and monetized lead pur
 
 - Documents reuse existing `DocumentAsset` storage (`entityType = VERIFICATION_CASE`); there is no second object-storage subsystem.
 - `VerificationDocument` links case ↔ asset with review status and optional extracted references / reviewer notes.
-- Only the case organization (with document permissions) or platform verification admins may attach or inspect documents.
-- Signed URL delivery for private assets remains a future enhancement; Phase 10 persists `storageKey` and visibility only.
+- Document summaries **never** return raw `storageKey` values or permanent URLs.
+- Secure retrieval is completed via `GET /api/v1/verification/cases/:casePublicId/documents/:documentPublicId/access`:
+  1. Authenticate the actor
+  2. Authorize with `verification:documents:read` plus case org membership **or** verification admin/review permissions
+  3. Issue a short-lived S3-compatible signed GET URL through `ObjectStorageService.createSignedDownloadUrl` (default TTL 120s, capped at 900s)
+  4. Audit `verification.document.accessed` without storage secrets or long-lived credentials
+- Cross-tenant / unauthorized / unknown document access returns `NOT_FOUND` (with `authorization.denied` audit where applicable).
+- Storage credentials remain in validated environment variables and are never included in API responses or logs.
 
 ### Badge semantics
 
@@ -34,11 +40,19 @@ Phases 7–9 delivered marketplace leads, CRM operations, and monetized lead pur
 
 ### Review eligibility
 
-- Authenticated users with `reviews:create` (persona or org role) may create one review per subject.
-- Eligibility basis is recorded as `AUTHENTICATED_USER`, or `VERIFIED_CLIENT` when a closed/booked CRM deal links the author to the subject organization.
+- Backend is authoritative (`ReviewsAccessService.requireEligibility`). Frontend cannot grant eligibility.
+- `reviews:create` permission is necessary but **not sufficient**.
+- A meaningful CRM relationship to the subject is required:
+  - `VERIFIED_CLIENT`: `CrmDeal` in `BOOKED`/`CLOSED` for the subject organization, owned via `lead.requirement.ownerUserId`, and scoped to the property/project when reviewing those subject types.
+  - `SITE_VISITOR`: non-cancelled `CrmSiteVisit` (`SCHEDULED`/`CONFIRMED`/`COMPLETED`) with the same buyer→org (and property/project) linkage.
+- Generic authenticated accounts without such a relationship are denied (`FORBIDDEN`).
+- Relationships cannot be invented; if domain data cannot prove eligibility, the review is denied.
+- Historical `AUTHENTICATED_USER` remains in the contract enum for legacy rows only and is never assigned to new reviews.
 - Moderation (`HIDE` / `REJECT` / `RESTORE` / `FLAG`) is admin/moderator-only; public/participant list DTOs expose only published reviews and never moderator notes or author email/PII.
 
 ### Trust score formula
+
+This is a **preliminary Property Studio Trust Score** — deterministic and explainable, not AI-derived and not legal/financial advice.
 
 Matches `TrustScoreService` exactly:
 

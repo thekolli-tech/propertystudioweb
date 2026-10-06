@@ -43,9 +43,18 @@ export class ReviewsService {
     }
 
     const subject = await this.resolveReviewableSubject(body.subjectType, body.subjectPublicId);
-    const eligibilityBasis = await this.resolveEligibilityBasis(
-      actor.userId,
-      subject.organizationId,
+    if (!subject.organizationId) {
+      throw new AppError('NOT_FOUND', 'Resource not found.');
+    }
+    const eligibilityBasis = await this.access.requireEligibility(
+      actor,
+      {
+        id: subject.id,
+        organizationId: subject.organizationId,
+        subjectType: body.subjectType,
+        projectId: subject.projectId,
+      },
+      request,
     );
 
     try {
@@ -487,28 +496,10 @@ export class ReviewsService {
     return this.trustScores.compute(subjectType, subjectPublicId);
   }
 
-  private async resolveEligibilityBasis(
-    userId: string,
-    organizationId: string | null,
-  ): Promise<ReviewEligibilityBasis> {
-    if (!organizationId) return 'AUTHENTICATED_USER';
-    const deal = await this.prisma.crmDeal.findFirst({
-      where: {
-        organizationId,
-        status: { in: ['BOOKED', 'CLOSED'] },
-        OR: [
-          { contact: { ownerUserId: userId } },
-          { lead: { requirement: { ownerUserId: userId } } },
-        ],
-      },
-    });
-    return deal ? 'VERIFIED_CLIENT' : 'AUTHENTICATED_USER';
-  }
-
   private async resolveReviewableSubject(
     subjectType: ReviewSubjectType,
     subjectPublicId: string,
-  ): Promise<{ id: string; organizationId: string | null }> {
+  ): Promise<{ id: string; organizationId: string | null; projectId?: string | null }> {
     if (subjectType === 'DEVELOPER') {
       const row = await this.prisma.developerProfile.findFirst({
         where: { publicId: subjectPublicId, status: 'ACTIVE' },
@@ -528,13 +519,13 @@ export class ReviewsService {
         where: { publicId: subjectPublicId, deletedAt: null, lifecycleStatus: 'PUBLISHED' },
       });
       if (!row) throw new AppError('NOT_FOUND', 'Resource not found.');
-      return { id: row.id, organizationId: row.organizationId };
+      return { id: row.id, organizationId: row.organizationId, projectId: row.id };
     }
     const row = await this.prisma.property.findFirst({
       where: { publicId: subjectPublicId, deletedAt: null, publicationStatus: 'PUBLISHED' },
     });
     if (!row) throw new AppError('NOT_FOUND', 'Resource not found.');
-    return { id: row.id, organizationId: row.organizationId };
+    return { id: row.id, organizationId: row.organizationId, projectId: row.projectId };
   }
 
   private async resolveSubjectPublicId(
