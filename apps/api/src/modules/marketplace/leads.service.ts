@@ -16,11 +16,7 @@ import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
 import { LeadAccessService } from './lead-access.service';
 import { LeadEligibilityService } from './lead-eligibility.service';
-import {
-  decodeCursor,
-  encodeCursor,
-  toPublicRequirementSummary,
-} from './marketplace.util';
+import { decodeCursor, encodeCursor, toPublicRequirementSummary } from './marketplace.util';
 import { RequirementMatchingService } from './requirement-matching.service';
 
 const TERMINAL_LEAD_STATUSES = new Set(['CLOSED', 'LOST', 'BOOKED']);
@@ -63,10 +59,7 @@ export class LeadsService {
       throw new AppError('NOT_FOUND', 'Resource not found.');
     }
     if (requirement.status !== 'ACTIVE' || requirement.visibility !== 'MARKETPLACE') {
-      throw new AppError(
-        'CONFLICT',
-        'Only active marketplace requirements can generate leads.',
-      );
+      throw new AppError('CONFLICT', 'Only active marketplace requirements can generate leads.');
     }
 
     let matchedProperty: {
@@ -193,10 +186,7 @@ export class LeadsService {
 
       return this.toLeadSummary(lead);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const duplicate = await this.prisma.lead.findUnique({
           where: {
             requirementId_recipientOrganizationId: {
@@ -261,7 +251,7 @@ export class LeadsService {
     };
   }
 
-  async listAdmin(actor: AuthActor, query: LeadListQuery, request?: AuthenticatedRequest) {
+  async listAdmin(actor: AuthActor, query: LeadListQuery, _request?: AuthenticatedRequest) {
     if (
       !actorHasPermission(actor, 'admin:leads:read') &&
       !actorHasPermission(actor, 'platform:admin')
@@ -317,8 +307,7 @@ export class LeadsService {
     }
 
     const isAdmin =
-      actorHasPermission(actor, 'platform:admin') ||
-      actorHasPermission(actor, 'admin:leads:read');
+      actorHasPermission(actor, 'platform:admin') || actorHasPermission(actor, 'admin:leads:read');
 
     if (!isAdmin) {
       const membership = await this.prisma.organizationMembership.findFirst({
@@ -397,8 +386,7 @@ export class LeadsService {
       where: { id: lead.id },
       data: {
         status: body.status,
-        contactedAt:
-          body.status === 'CONTACTED' && !lead.contactedAt ? new Date() : undefined,
+        contactedAt: body.status === 'CONTACTED' && !lead.contactedAt ? new Date() : undefined,
         version: { increment: 1 },
         updatedBy: actor.userId,
       },
@@ -465,8 +453,7 @@ export class LeadsService {
     const candidateLocality = property?.locality ?? null;
     const zoneMatch =
       zones.some((zone) => zone.toLowerCase() === requirement.city.toLowerCase()) ||
-      (candidateCity !== null &&
-        candidateCity.toLowerCase() === requirement.city.toLowerCase());
+      (candidateCity !== null && candidateCity.toLowerCase() === requirement.city.toLowerCase());
 
     return this.matching.score(
       {
@@ -486,16 +473,15 @@ export class LeadsService {
       },
       {
         propertyType: property?.propertyType ?? null,
-        listingType: property?.listingType ?? (requirement.transactionType === 'BUY' ? 'SALE' : 'RENT'),
+        listingType:
+          property?.listingType ?? (requirement.transactionType === 'BUY' ? 'SALE' : 'RENT'),
         configuration: property?.configuration ?? requirement.configuration,
         bedrooms: property?.bedrooms ?? requirement.bedrooms,
         priceMinor: property?.priceMinor ?? requirement.budgetMaxMinor,
         city: zoneMatch ? requirement.city : candidateCity,
         locality: candidateLocality ?? requirement.locality,
         microMarket: requirement.microMarket,
-        amenities: property?.amenities?.length
-          ? property.amenities
-          : requirement.amenities,
+        amenities: property?.amenities?.length ? property.amenities : requirement.amenities,
         vaastuCompliant: requirement.vaastuRequired ? true : null,
         purposeFit: requirement.purpose,
         timelineFit: requirement.timeline,
@@ -513,29 +499,27 @@ export class LeadsService {
     } as const;
   }
 
-  private toLeadSummary(
-    lead: {
-      publicId: string;
-      matchScore: number;
-      matchedCriteria: unknown;
-      unmatchedCriteria: unknown;
-      matchExplanation: string;
-      source: string;
-      status: string;
-      priority: string;
-      assignedAt: Date | null;
-      firstViewedAt: Date | null;
-      contactedAt: Date | null;
-      version: number;
-      createdAt: Date;
-      updatedAt: Date;
-      requirement: Parameters<typeof toPublicRequirementSummary>[0];
-      recipientOrganization: { publicId: string };
-      recipientUser: { publicId: string } | null;
-      matchedProperty: { publicId: string } | null;
-      matchedProject: { publicId: string } | null;
-    },
-  ) {
+  private toLeadSummary(lead: {
+    publicId: string;
+    matchScore: number;
+    matchedCriteria: unknown;
+    unmatchedCriteria: unknown;
+    matchExplanation: string;
+    source: string;
+    status: string;
+    priority: string;
+    assignedAt: Date | null;
+    firstViewedAt: Date | null;
+    contactedAt: Date | null;
+    version: number;
+    createdAt: Date;
+    updatedAt: Date;
+    requirement: Parameters<typeof toPublicRequirementSummary>[0];
+    recipientOrganization: { publicId: string };
+    recipientUser: { publicId: string } | null;
+    matchedProperty: { publicId: string } | null;
+    matchedProject: { publicId: string } | null;
+  }) {
     return {
       publicId: lead.publicId,
       requirementPublicId: lead.requirement.publicId,

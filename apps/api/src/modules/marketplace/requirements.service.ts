@@ -85,7 +85,7 @@ export class RequirementsService {
     return toRequirementDetail(row, actor.userPublicId);
   }
 
-  async listMine(actor: AuthActor, query: RequirementListQuery, request?: AuthenticatedRequest) {
+  async listMine(actor: AuthActor, query: RequirementListQuery, _request?: AuthenticatedRequest) {
     this.requireOwnerPermission(actor, 'requirement:read:own');
 
     const where: Record<string, unknown> = { ownerUserId: actor.userId };
@@ -112,7 +112,12 @@ export class RequirementsService {
   }
 
   async getMine(actor: AuthActor, publicId: string, request?: AuthenticatedRequest) {
-    const row = await this.requireOwnedRequirement(actor, publicId, 'requirement:read:own', request);
+    const row = await this.requireOwnedRequirement(
+      actor,
+      publicId,
+      'requirement:read:own',
+      request,
+    );
     return toRequirementDetail(row, actor.userPublicId);
   }
 
@@ -142,8 +147,7 @@ export class RequirementsService {
       data: {
         propertyType: body.propertyType ?? undefined,
         transactionType: body.transactionType ?? undefined,
-        configuration:
-          body.configuration === undefined ? undefined : body.configuration,
+        configuration: body.configuration === undefined ? undefined : body.configuration,
         bedrooms: body.bedrooms === undefined ? undefined : body.bedrooms,
         budgetMinMinor: body.budgetMinMinor === undefined ? undefined : body.budgetMinMinor,
         budgetMaxMinor: body.budgetMaxMinor === undefined ? undefined : body.budgetMaxMinor,
@@ -151,8 +155,7 @@ export class RequirementsService {
         city: body.city ?? undefined,
         locality: body.locality === undefined ? undefined : body.locality,
         microMarket: body.microMarket === undefined ? undefined : body.microMarket,
-        preferredProject:
-          body.preferredProject === undefined ? undefined : body.preferredProject,
+        preferredProject: body.preferredProject === undefined ? undefined : body.preferredProject,
         purpose: body.purpose ?? undefined,
         timeline: body.timeline ?? undefined,
         vaastuRequired: body.vaastuRequired ?? undefined,
@@ -209,7 +212,12 @@ export class RequirementsService {
   }
 
   async pause(actor: AuthActor, publicId: string, request?: AuthenticatedRequest) {
-    const row = await this.requireOwnedRequirement(actor, publicId, 'requirement:update:own', request);
+    const row = await this.requireOwnedRequirement(
+      actor,
+      publicId,
+      'requirement:update:own',
+      request,
+    );
     if (row.status !== 'ACTIVE') {
       throw new AppError('CONFLICT', 'Only active requirements can be paused.');
     }
@@ -238,7 +246,12 @@ export class RequirementsService {
   }
 
   async close(actor: AuthActor, publicId: string, request?: AuthenticatedRequest) {
-    const row = await this.requireOwnedRequirement(actor, publicId, 'requirement:update:own', request);
+    const row = await this.requireOwnedRequirement(
+      actor,
+      publicId,
+      'requirement:update:own',
+      request,
+    );
     if (row.status === 'CLOSED' || row.status === 'CANCELLED') {
       throw new AppError('CONFLICT', 'Requirement is already closed.');
     }
@@ -322,7 +335,11 @@ export class RequirementsService {
     return toPublicRequirementDetail(row);
   }
 
-  async listAdmin(actor: AuthActor, query: AdminRequirementListQuery, request?: AuthenticatedRequest) {
+  async listAdmin(
+    actor: AuthActor,
+    query: AdminRequirementListQuery,
+    _request?: AuthenticatedRequest,
+  ) {
     if (
       !actorHasPermission(actor, 'admin:requirements:read') &&
       !actorHasPermission(actor, 'platform:admin')
@@ -368,7 +385,11 @@ export class RequirementsService {
 
   private requireOwnerPermission(
     actor: AuthActor,
-    permission: 'requirement:create' | 'requirement:read:own' | 'requirement:update:own' | 'requirement:publish',
+    permission:
+      | 'requirement:create'
+      | 'requirement:read:own'
+      | 'requirement:update:own'
+      | 'requirement:publish',
   ) {
     if (this.isPlatformAdmin(actor)) return;
     if (!actorHasPermission(actor, permission)) {

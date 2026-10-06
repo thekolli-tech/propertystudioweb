@@ -98,6 +98,7 @@ export function RequirementWizardForm() {
         bedrooms: bedrooms ? Number(bedrooms) : null,
         budgetMinMinor: croreToMinor(budgetMinCr) as unknown as bigint | null,
         budgetMaxMinor: croreToMinor(budgetMaxCr) as unknown as bigint | null,
+        currency: 'INR',
         city: city.trim(),
         locality: locality.trim() || null,
         microMarket: microMarket.trim() || null,
@@ -142,7 +143,7 @@ export function RequirementWizardForm() {
         ))}
       </ol>
 
-      {error ? <ErrorState title="Could not continue" description={error} /> : null}
+      {error ? <ErrorState title="Could not continue" message={error} /> : null}
 
       {step === 1 ? (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -301,8 +302,7 @@ export function RequirementWizardForm() {
       {step === 5 ? (
         <div className="space-y-4 rounded-lg border border-border bg-card p-5">
           <p className="text-sm text-muted-foreground">
-            {transactionType} · {configuration.replace(/_/g, ' ')} · {propertyType} in{' '}
-            {city || '—'}
+            {transactionType} · {configuration.replace(/_/g, ' ')} · {propertyType} in {city || '—'}
           </p>
           <p className="text-sm">
             Budget: {budgetMinCr || '—'} – {budgetMaxCr || '—'} Cr · Timeline: {timeline}

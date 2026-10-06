@@ -41,7 +41,11 @@ const SECTIONS = [
   {
     title: 'Marketplace',
     items: [
-      { href: '/admin/requirements', label: 'Requirements', icon: <ClipboardList className="h-4 w-4" /> },
+      {
+        href: '/admin/requirements',
+        label: 'Requirements',
+        icon: <ClipboardList className="h-4 w-4" />,
+      },
       { href: '/admin/leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
     ],
   },

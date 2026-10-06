@@ -8,11 +8,10 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class LeadAccessService {
-  canRevealBuyerContact(_input: {
-    leadId: string;
-    organizationId: string;
-    actorUserId: string;
-  }): { allowed: boolean; reason: string } {
+  canRevealBuyerContact(_input: { leadId: string; organizationId: string; actorUserId: string }): {
+    allowed: boolean;
+    reason: string;
+  } {
     return {
       allowed: false,
       reason: 'Buyer contact reveal is not enabled in Phase 7.',

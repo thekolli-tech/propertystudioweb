@@ -120,10 +120,7 @@ export class RequirementMatchingService {
       unmatched.push({ key: 'budget', label: 'Budget not aligned', weight: WEIGHTS.budget });
     }
 
-    if (
-      candidate.propertyType &&
-      candidate.propertyType === requirement.propertyType
-    ) {
+    if (candidate.propertyType && candidate.propertyType === requirement.propertyType) {
       score += WEIGHTS.propertyType;
       matched.push({
         key: 'propertyType',
@@ -240,10 +237,7 @@ export class RequirementMatchingService {
     };
   }
 
-  private budgetMatches(
-    requirement: MatchingRequirementInput,
-    priceMinor: bigint | null,
-  ): boolean {
+  private budgetMatches(requirement: MatchingRequirementInput, priceMinor: bigint | null): boolean {
     if (priceMinor === null) {
       return requirement.budgetMinMinor === null && requirement.budgetMaxMinor === null;
     }

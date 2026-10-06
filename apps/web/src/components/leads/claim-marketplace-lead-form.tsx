@@ -56,7 +56,7 @@ export function ClaimMarketplaceLeadForm({
       <Button type="submit" disabled={pending}>
         {pending ? 'Creating…' : 'Create lead'}
       </Button>
-      {error ? <ErrorState title="Lead creation failed" description={error} /> : null}
+      {error ? <ErrorState title="Lead creation failed" message={error} /> : null}
       {message ? <p className="text-sm text-muted-foreground sm:basis-full">{message}</p> : null}
     </form>
   );

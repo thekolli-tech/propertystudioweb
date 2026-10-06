@@ -78,10 +78,6 @@ export class LeadsController {
     @Query(new ZodValidationPipe(adminLeadListQuerySchema)) query: unknown,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.leads.listAdmin(
-      actor,
-      query as Parameters<LeadsService['listAdmin']>[1],
-      request,
-    );
+    return this.leads.listAdmin(actor, query as Parameters<LeadsService['listAdmin']>[1], request);
   }
 }

@@ -76,7 +76,7 @@ async function switchOrg(app: INestApplication, cookie: string, orgPublicId: str
   await request(app.getHttpServer())
     .post(`/api/v1/organizations/${orgPublicId}/switch`)
     .set('Cookie', cookie)
-    .expect(200);
+    .expect(201);
 }
 
 describe('Phase 7 demand marketplace security', () => {
@@ -325,7 +325,7 @@ describe('Phase 7 demand marketplace security', () => {
     const login = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ email: 'prop-admin-mkt@example.com', password: 'CorrectHorseBattery!' })
-      .expect(200);
+      .expect(201);
     const cookie = extractSessionCookie(login.headers['set-cookie'])!;
 
     await request(app.getHttpServer())
@@ -344,27 +344,25 @@ describe('Phase 7 demand marketplace security', () => {
     await prisma.userPlatformRole.create({
       data: {
         id: newUuid(),
-        userId: (
-          await prisma.user.findFirstOrThrow({ where: { publicId: superAdmin.publicId } })
-        ).id,
+        userId: (await prisma.user.findFirstOrThrow({ where: { publicId: superAdmin.publicId } }))
+          .id,
         role: 'SUPER_ADMIN',
       },
     });
-    await request(app.getHttpServer())
-      .post('/api/v1/auth/logout')
-      .set('Cookie', superAdmin.cookie);
+    await request(app.getHttpServer()).post('/api/v1/auth/logout').set('Cookie', superAdmin.cookie);
     const login = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ email: 'super-admin-mkt@example.com', password: 'CorrectHorseBattery!' })
-      .expect(200);
+      .expect(201);
     const cookie = extractSessionCookie(login.headers['set-cookie'])!;
 
     const requirements = await request(app.getHttpServer())
       .get('/api/v1/admin/requirements')
       .set('Cookie', cookie)
       .expect(200);
-    expect(requirements.body.requirements.some((row: { publicId: string }) => row.publicId === reqId))
-      .toBe(true);
+    expect(
+      requirements.body.requirements.some((row: { publicId: string }) => row.publicId === reqId),
+    ).toBe(true);
     expect(requirements.body.requirements[0].ownerUserPublicId).toMatch(/^PS-USER-\d+$/);
 
     const leads = await request(app.getHttpServer())
@@ -467,7 +465,10 @@ describe('Phase 7 demand marketplace security', () => {
     const agent = await register(app, 'agent-verified@example.com', []);
     const orgId = await onboardAgency(app, agent.cookie, 'Verified Agency');
     await prisma.agencyProfile.update({
-      where: { organizationId: (await prisma.organization.findFirstOrThrow({ where: { publicId: orgId } })).id },
+      where: {
+        organizationId: (await prisma.organization.findFirstOrThrow({ where: { publicId: orgId } }))
+          .id,
+      },
       data: { verificationStatus: 'VERIFIED' },
     });
     await switchOrg(app, agent.cookie, orgId);

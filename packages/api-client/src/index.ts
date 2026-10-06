@@ -491,7 +491,9 @@ export class ApiClient {
     });
   }
 
-  async listRequirements(query: Partial<RequirementListQuery> = {}): Promise<RequirementListResponse> {
+  async listRequirements(
+    query: Partial<RequirementListQuery> = {},
+  ): Promise<RequirementListResponse> {
     const parsed = requirementListQuerySchema.parse(query);
     const params = new URLSearchParams();
     Object.entries(parsed).forEach(([key, value]) => {
@@ -591,14 +593,10 @@ export class ApiClient {
 
   async updateLeadStatus(publicId: string, input: UpdateLeadStatusRequest): Promise<LeadSummary> {
     const body = updateLeadStatusRequestSchema.parse(input);
-    return this.request(
-      `/api/v1/leads/${encodeURIComponent(publicId)}/status`,
-      leadSummarySchema,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-      },
-    );
+    return this.request(`/api/v1/leads/${encodeURIComponent(publicId)}/status`, leadSummarySchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
   }
 
   async listAdminRequirements(

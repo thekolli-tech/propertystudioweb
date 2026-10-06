@@ -85,7 +85,10 @@ export default async function RequirementDetailPage({
           />
         </div>
 
-        <Link href="/app/requirements" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          href="/app/requirements"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
           ← Back to requirements
         </Link>
       </div>

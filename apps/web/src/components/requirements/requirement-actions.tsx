@@ -36,7 +36,7 @@ export function RequirementActions({
 
   return (
     <div className="space-y-3">
-      {error ? <ErrorState title="Action failed" description={error} /> : null}
+      {error ? <ErrorState title="Action failed" message={error} /> : null}
       <div className="flex flex-wrap gap-2">
         {(status === 'DRAFT' || status === 'PAUSED') && (
           <Button type="button" disabled={pending} onClick={() => run('publish')}>

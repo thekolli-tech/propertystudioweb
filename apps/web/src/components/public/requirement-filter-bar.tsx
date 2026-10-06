@@ -2,15 +2,24 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { Button, FilterBar, FilterField, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@property-studio/ui';
+import {
+  Button,
+  FilterBar,
+  FilterField,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@property-studio/ui';
 
 export function PublicRequirementFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [propertyType, setPropertyType] = useState(searchParams.get('propertyType') ?? '');
-  const [transactionType, setTransactionType] = useState(
-    searchParams.get('transactionType') ?? '',
-  );
+  const [transactionType, setTransactionType] = useState(searchParams.get('transactionType') ?? '');
   const [city, setCity] = useState(searchParams.get('city') ?? '');
   const [configuration, setConfiguration] = useState(searchParams.get('configuration') ?? '');
   const [bedrooms, setBedrooms] = useState(searchParams.get('bedrooms') ?? '');
@@ -63,7 +72,11 @@ export function PublicRequirementFilters() {
           </Select>
         </FilterField>
         <FilterField label="City">
-          <Input value={city} onChange={(event) => setCity(event.target.value)} placeholder="City" />
+          <Input
+            value={city}
+            onChange={(event) => setCity(event.target.value)}
+            placeholder="City"
+          />
         </FilterField>
         <FilterField label="Configuration">
           <Select value={configuration || undefined} onValueChange={setConfiguration}>

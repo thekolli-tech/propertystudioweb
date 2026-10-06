@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  MATCHING_WEIGHTS,
-  RequirementMatchingService,
-} from '../requirement-matching.service';
+import { MATCHING_WEIGHTS, RequirementMatchingService } from '../requirement-matching.service';
 
 describe('RequirementMatchingService', () => {
   const matching = new RequirementMatchingService();

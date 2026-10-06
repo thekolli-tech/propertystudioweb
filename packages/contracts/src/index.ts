@@ -890,33 +890,38 @@ export const leadStatusSchema = z.enum([
 export const leadSourceSchema = z.enum(['REQUIREMENT_MARKETPLACE']);
 export const leadPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH']);
 
-export const createRequirementRequestSchema = z
-  .object({
-    propertyType: propertyTypeSchema,
-    transactionType: requirementTransactionTypeSchema,
-    configuration: propertyConfigurationSchema.optional().nullable(),
-    bedrooms: z.number().int().min(0).max(50).optional().nullable(),
-    budgetMinMinor: optionalMoneyMinorSchema,
-    budgetMaxMinor: optionalMoneyMinorSchema,
-    currency: z.string().trim().length(3).default('INR'),
-    city: z.string().trim().min(2).max(80),
-    locality: z.string().trim().max(120).optional().nullable(),
-    microMarket: z.string().trim().max(120).optional().nullable(),
-    preferredProject: z.string().trim().max(160).optional().nullable(),
-    purpose: requirementPurposeSchema.default('END_USE'),
-    timeline: requirementTimelineSchema.default('FLEXIBLE'),
-    vaastuRequired: z.boolean().default(false),
-    amenities: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
-    notes: z.string().trim().max(2000).optional().nullable(),
-    visibility: requirementVisibilitySchema.default('PRIVATE'),
-  })
-  .superRefine((value, ctx) => {
+const requirementRequestFieldsSchema = z.object({
+  propertyType: propertyTypeSchema,
+  transactionType: requirementTransactionTypeSchema,
+  configuration: propertyConfigurationSchema.optional().nullable(),
+  bedrooms: z.number().int().min(0).max(50).optional().nullable(),
+  budgetMinMinor: optionalMoneyMinorSchema,
+  budgetMaxMinor: optionalMoneyMinorSchema,
+  currency: z.string().trim().length(3).default('INR'),
+  city: z.string().trim().min(2).max(80),
+  locality: z.string().trim().max(120).optional().nullable(),
+  microMarket: z.string().trim().max(120).optional().nullable(),
+  preferredProject: z.string().trim().max(160).optional().nullable(),
+  purpose: requirementPurposeSchema.default('END_USE'),
+  timeline: requirementTimelineSchema.default('FLEXIBLE'),
+  vaastuRequired: z.boolean().default(false),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  visibility: requirementVisibilitySchema.default('PRIVATE'),
+});
+
+function refineRequirementBudget<T extends z.ZodTypeAny>(schema: T) {
+  return schema.superRefine((value, ctx) => {
+    const record = value as {
+      budgetMinMinor?: bigint | null;
+      budgetMaxMinor?: bigint | null;
+    };
     if (
-      value.budgetMinMinor !== undefined &&
-      value.budgetMinMinor !== null &&
-      value.budgetMaxMinor !== undefined &&
-      value.budgetMaxMinor !== null &&
-      value.budgetMinMinor > value.budgetMaxMinor
+      record.budgetMinMinor !== undefined &&
+      record.budgetMinMinor !== null &&
+      record.budgetMaxMinor !== undefined &&
+      record.budgetMaxMinor !== null &&
+      record.budgetMinMinor > record.budgetMaxMinor
     ) {
       ctx.addIssue({
         code: 'custom',
@@ -925,14 +930,19 @@ export const createRequirementRequestSchema = z
       });
     }
   });
+}
+
+export const createRequirementRequestSchema = refineRequirementBudget(
+  requirementRequestFieldsSchema,
+);
 
 export type CreateRequirementRequest = z.infer<typeof createRequirementRequestSchema>;
 
-export const updateRequirementRequestSchema = createRequirementRequestSchema
-  .partial()
-  .extend({
+export const updateRequirementRequestSchema = refineRequirementBudget(
+  requirementRequestFieldsSchema.partial().extend({
     expectedVersion: z.number().int().positive().optional(),
-  });
+  }),
+);
 
 export type UpdateRequirementRequest = z.infer<typeof updateRequirementRequestSchema>;
 

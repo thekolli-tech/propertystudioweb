@@ -76,7 +76,10 @@ export class LeadEligibilityService {
       return await this.deny(actor, organizationPublicId, request);
     }
 
-    if (actorHasPermission(actor, 'platform:admin') || actorHasPermission(actor, 'admin:leads:read')) {
+    if (
+      actorHasPermission(actor, 'platform:admin') ||
+      actorHasPermission(actor, 'admin:leads:read')
+    ) {
       const eligibility = await this.canReceiveMarketplaceLeads(organization.id);
       return { organization, eligibility };
     }

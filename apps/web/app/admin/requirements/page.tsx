@@ -12,8 +12,7 @@ export default async function AdminRequirementsPage() {
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);
 
-  let requirements: Awaited<ReturnType<typeof client.listAdminRequirements>>['requirements'] =
-    [];
+  let requirements: Awaited<ReturnType<typeof client.listAdminRequirements>>['requirements'] = [];
   let unavailable = false;
 
   try {

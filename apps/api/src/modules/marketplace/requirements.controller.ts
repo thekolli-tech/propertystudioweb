@@ -19,9 +19,7 @@ export class RequirementsController {
 
   @Get('public/requirements')
   listPublic(@Query(new ZodValidationPipe(publicRequirementListQuerySchema)) query: unknown) {
-    return this.requirements.listPublic(
-      query as Parameters<RequirementsService['listPublic']>[0],
-    );
+    return this.requirements.listPublic(query as Parameters<RequirementsService['listPublic']>[0]);
   }
 
   @Get('public/requirements/:publicId')

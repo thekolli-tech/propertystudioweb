@@ -2,13 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import {
-  EmptyState,
-  PageHeader,
-  Pagination,
-  PriceDisplay,
-  StatusBadge,
-} from '@property-studio/ui';
+import { EmptyState, PageHeader, Pagination, PriceDisplay, StatusBadge } from '@property-studio/ui';
 
 import { createServerApiClient } from '@/lib/api';
 import { getRequestCookieHeader } from '@/lib/auth';
@@ -33,14 +27,7 @@ export default async function PublicRequirementsPage({
 
   const query = {
     propertyType: first(params.propertyType) as
-      | 'APARTMENT'
-      | 'VILLA'
-      | 'PLOT'
-      | 'OFFICE'
-      | 'SHOP'
-      | 'WAREHOUSE'
-      | 'OTHER'
-      | undefined,
+      'APARTMENT' | 'VILLA' | 'PLOT' | 'OFFICE' | 'SHOP' | 'WAREHOUSE' | 'OTHER' | undefined,
     transactionType: first(params.transactionType) as 'BUY' | 'RENT' | undefined,
     configuration: first(params.configuration) as
       | 'STUDIO'
@@ -65,8 +52,7 @@ export default async function PublicRequirementsPage({
     limit: 12,
   };
 
-  let requirements: Awaited<ReturnType<typeof client.listPublicRequirements>>['requirements'] =
-    [];
+  let requirements: Awaited<ReturnType<typeof client.listPublicRequirements>>['requirements'] = [];
   let nextCursor: string | null = null;
   let unavailable = false;
 
@@ -129,7 +115,11 @@ export default async function PublicRequirementsPage({
                 {[item.locality, item.city].filter(Boolean).join(', ')}
               </p>
               <p className="text-base font-semibold text-foreground">
-                <PriceDisplay amountMinor={item.budgetMinMinor} currency={item.currency} size="sm" />
+                <PriceDisplay
+                  amountMinor={item.budgetMinMinor}
+                  currency={item.currency}
+                  size="sm"
+                />
                 {item.budgetMinMinor || item.budgetMaxMinor ? (
                   <span className="mx-1 text-muted-foreground">–</span>
                 ) : null}

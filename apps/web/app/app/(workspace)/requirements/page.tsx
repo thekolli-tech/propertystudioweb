@@ -29,13 +29,7 @@ export default async function AppRequirementsPage({
 }) {
   const params = await searchParams;
   const status = first(params.status) as
-    | 'DRAFT'
-    | 'ACTIVE'
-    | 'PAUSED'
-    | 'FULFILLED'
-    | 'CLOSED'
-    | 'CANCELLED'
-    | undefined;
+    'DRAFT' | 'ACTIVE' | 'PAUSED' | 'FULFILLED' | 'CLOSED' | 'CANCELLED' | undefined;
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);
 
@@ -124,7 +118,11 @@ export default async function AppRequirementsPage({
                 </StatusBadge>
               </div>
               <p className="mt-3 text-sm font-semibold">
-                <PriceDisplay amountMinor={item.budgetMinMinor} currency={item.currency} size="sm" />
+                <PriceDisplay
+                  amountMinor={item.budgetMinMinor}
+                  currency={item.currency}
+                  size="sm"
+                />
                 {(item.budgetMinMinor || item.budgetMaxMinor) && (
                   <span className="mx-1 text-muted-foreground">–</span>
                 )}
