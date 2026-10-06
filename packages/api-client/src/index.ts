@@ -157,6 +157,7 @@ import {
   verificationCaseDetailSchema,
   verificationCaseListQuerySchema,
   verificationCaseListResponseSchema,
+  verificationDocumentAccessSchema,
   verificationDocumentSummarySchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
@@ -315,6 +316,7 @@ import {
   type VerificationCaseDetail,
   type VerificationCaseListQuery,
   type VerificationCaseListResponse,
+  type VerificationDocumentAccess,
   type VerificationDocumentSummary,
   type ReviewSubjectType,
 } from '@property-studio/contracts';
@@ -1307,6 +1309,16 @@ export class ApiClient {
       `/api/v1/verification/cases/${encodeURIComponent(casePublicId)}/documents/${encodeURIComponent(documentPublicId)}`,
       verificationDocumentSummarySchema,
       { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async getVerificationDocumentAccess(
+    casePublicId: string,
+    documentPublicId: string,
+  ): Promise<VerificationDocumentAccess> {
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(casePublicId)}/documents/${encodeURIComponent(documentPublicId)}/access`,
+      verificationDocumentAccessSchema,
     );
   }
 

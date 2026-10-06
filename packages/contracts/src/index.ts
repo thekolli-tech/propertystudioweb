@@ -2198,7 +2198,11 @@ export type LeadAccessState = z.infer<typeof leadAccessStateSchema>;
 export const contentReportStatusSchema = z.enum(['OPEN', 'REVIEWING', 'RESOLVED', 'DISMISSED']);
 export type ContentReportStatus = z.infer<typeof contentReportStatusSchema>;
 
-export const reviewEligibilityBasisSchema = z.enum(['VERIFIED_CLIENT', 'AUTHENTICATED_USER']);
+export const reviewEligibilityBasisSchema = z.enum([
+  'VERIFIED_CLIENT',
+  'SITE_VISITOR',
+  'AUTHENTICATED_USER',
+]);
 export type ReviewEligibilityBasis = z.infer<typeof reviewEligibilityBasisSchema>;
 
 export const trustScoreStateSchema = z.enum(['INSUFFICIENT_DATA', 'READY']);
@@ -2258,13 +2262,21 @@ export const verificationDocumentSummarySchema = z.object({
   documentAssetPublicId: z.string(),
   documentType: verificationDocumentTypeSchema,
   status: verificationDocumentStatusSchema,
-  storageKey: z.string(),
   extractedReference: z.string().nullable(),
   reviewerNotes: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 export type VerificationDocumentSummary = z.infer<typeof verificationDocumentSummarySchema>;
+
+export const verificationDocumentAccessSchema = z.object({
+  documentPublicId: z.string(),
+  casePublicId: z.string(),
+  url: z.string().url(),
+  expiresAt: z.string().datetime(),
+  expiresInSeconds: z.number().int().positive().max(900),
+});
+export type VerificationDocumentAccess = z.infer<typeof verificationDocumentAccessSchema>;
 
 export const verificationCaseSummarySchema = z.object({
   publicId: z.string(),

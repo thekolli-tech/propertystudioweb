@@ -11,6 +11,7 @@ import {
   type VerificationCaseListQuery,
   type VerificationCaseListResponse,
   type VerificationCaseSummary,
+  type VerificationDocumentAccess,
   type VerificationDocumentSummary,
   type VerificationSubjectType,
 } from '@property-studio/contracts';
@@ -22,6 +23,7 @@ import { newUuid } from '../../common/crypto/ids';
 import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { NotificationService } from '../notifications/notification.service';
 import { VerificationAccessService } from './verification-access.service';
@@ -47,6 +49,7 @@ export class VerificationService {
     private readonly audit: AuditService,
     private readonly access: VerificationAccessService,
     private readonly notifications: NotificationService,
+    private readonly storage: ObjectStorageService,
   ) {}
 
   async create(
@@ -612,6 +615,55 @@ export class VerificationService {
     return this.toDocumentSummary(updated);
   }
 
+  async getDocumentAccess(
+    actor: AuthActor,
+    casePublicId: string,
+    documentPublicId: string,
+    request?: AuthenticatedRequest,
+  ): Promise<VerificationDocumentAccess> {
+    const verificationCase = await this.access.requireCaseAccess(
+      actor,
+      casePublicId,
+      'verification:documents:read',
+      request,
+    );
+
+    const document = await this.prisma.verificationDocument.findFirst({
+      where: { publicId: documentPublicId, verificationCaseId: verificationCase.id },
+      include: { documentAsset: true },
+    });
+    if (!document?.documentAsset.storageKey) {
+      return await this.access.deny(actor, documentPublicId, request);
+    }
+
+    const signed = await this.storage.createSignedDownloadUrl(
+      document.documentAsset.storageKey,
+      120,
+    );
+
+    await this.audit.write({
+      actorUserId: actor.userId,
+      sessionId: actor.sessionId,
+      organizationId: verificationCase.organizationId,
+      action: 'verification.document.accessed',
+      resourceType: 'verification_document',
+      resourceId: document.publicId,
+      requestId: request?.requestId,
+      metadata: {
+        casePublicId: verificationCase.publicId,
+        expiresInSeconds: signed.expiresInSeconds,
+      },
+    });
+
+    return {
+      documentPublicId: document.publicId,
+      casePublicId: verificationCase.publicId,
+      url: signed.url,
+      expiresAt: toIso(signed.expiresAt)!,
+      expiresInSeconds: signed.expiresInSeconds,
+    };
+  }
+
   private async adminDecision(
     actor: AuthActor,
     publicId: string,
@@ -1013,7 +1065,6 @@ export class VerificationService {
       documentAssetPublicId: doc.documentAsset.publicId,
       documentType: doc.documentType,
       status: doc.status,
-      storageKey: doc.documentAsset.storageKey,
       extractedReference: doc.extractedReference,
       reviewerNotes: doc.reviewerNotes,
       createdAt: toIso(doc.createdAt)!,

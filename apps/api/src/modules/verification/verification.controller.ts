@@ -118,6 +118,16 @@ export class VerificationController {
     );
   }
 
+  @Get('verification/cases/:casePublicId/documents/:documentPublicId/access')
+  getDocumentAccess(
+    @CurrentActor() actor: AuthActor,
+    @Param('casePublicId') casePublicId: string,
+    @Param('documentPublicId') documentPublicId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.verification.getDocumentAccess(actor, casePublicId, documentPublicId, request);
+  }
+
   @Get('admin/verification')
   @RequirePermissions('admin:verification:read')
   listAdmin(
