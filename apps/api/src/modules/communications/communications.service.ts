@@ -127,12 +127,7 @@ export class CommunicationsService {
     });
 
     if (body.initialMessage) {
-      await this.sendMessage(
-        actor,
-        conversation.publicId,
-        { body: body.initialMessage },
-        request,
-      );
+      await this.sendMessage(actor, conversation.publicId, { body: body.initialMessage }, request);
       return this.getConversation(actor, conversation.publicId, request);
     }
 
@@ -220,11 +215,7 @@ export class CommunicationsService {
     if (!actorHasPermission(actor, 'communications:message')) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions.');
     }
-    const conversation = await this.access.requireParticipant(
-      actor,
-      conversationPublicId,
-      request,
-    );
+    const conversation = await this.access.requireParticipant(actor, conversationPublicId, request);
     if (conversation.status === 'RESTRICTED') {
       throw new AppError('FORBIDDEN', 'Conversation is restricted.');
     }
@@ -292,11 +283,7 @@ export class CommunicationsService {
     if (!actorHasPermission(actor, 'communications:read')) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions.');
     }
-    const conversation = await this.access.requireParticipant(
-      actor,
-      conversationPublicId,
-      request,
-    );
+    const conversation = await this.access.requireParticipant(actor, conversationPublicId, request);
     const participant = conversation.participants.find((row) => row.userId === actor.userId);
     if (!participant) {
       return await this.access.deny(actor, conversationPublicId, request);

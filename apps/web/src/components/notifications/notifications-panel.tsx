@@ -1,9 +1,4 @@
-import {
-  DashboardSection,
-  EmptyState,
-  PageHeader,
-  StatusBadge,
-} from '@property-studio/ui';
+import { DashboardSection, EmptyState, PageHeader, StatusBadge } from '@property-studio/ui';
 
 import {
   MarkAllNotificationsReadButton,

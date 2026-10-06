@@ -63,12 +63,7 @@ export function AdminVerificationActions({ casePublicId }: { casePublicId: strin
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          disabled={pending !== null}
-          onClick={() => run('approve')}
-        >
+        <Button type="button" size="sm" disabled={pending !== null} onClick={() => run('approve')}>
           {pending === 'approve' ? '…' : 'Approve'}
         </Button>
         <Button

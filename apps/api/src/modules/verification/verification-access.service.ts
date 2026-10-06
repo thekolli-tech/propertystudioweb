@@ -113,11 +113,7 @@ export class VerificationAccessService {
     return verificationCase;
   }
 
-  async deny(
-    actor: AuthActor,
-    resourceId: string,
-    request?: AuthenticatedRequest,
-  ): Promise<never> {
+  async deny(actor: AuthActor, resourceId: string, request?: AuthenticatedRequest): Promise<never> {
     await this.audit.write({
       actorUserId: actor.userId,
       sessionId: actor.sessionId,

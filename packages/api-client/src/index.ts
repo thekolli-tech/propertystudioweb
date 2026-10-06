@@ -122,6 +122,8 @@ import {
   walletTopUpRequestSchema,
   walletTopUpResponseSchema,
   adminVerificationCaseListQuerySchema,
+  adminReportListQuerySchema,
+  adminReportListResponseSchema,
   attachVerificationDocumentRequestSchema,
   conversationDetailSchema,
   conversationListQuerySchema,
@@ -278,6 +280,8 @@ import {
   type WalletTopUpRequest,
   type WalletTopUpResponse,
   type AdminVerificationCaseListQuery,
+  type AdminReportListQuery,
+  type AdminReportListResponse,
   type AttachVerificationDocumentRequest,
   type ConversationDetail,
   type ConversationListQuery,
@@ -311,7 +315,6 @@ import {
   type VerificationCaseDetail,
   type VerificationCaseListQuery,
   type VerificationCaseListResponse,
-  type VerificationCaseSummary,
   type VerificationDocumentSummary,
   type ReviewSubjectType,
 } from '@property-studio/contracts';
@@ -1433,7 +1436,10 @@ export class ApiClient {
     subjectPublicId: string,
   ): Promise<TrustScoreResponse> {
     const params = new URLSearchParams({ subjectType, subjectPublicId });
-    return this.request(`/api/v1/reviews/trust-score?${params.toString()}`, trustScoreResponseSchema);
+    return this.request(
+      `/api/v1/reviews/trust-score?${params.toString()}`,
+      trustScoreResponseSchema,
+    );
   }
 
   async adminListReviews(query: ReviewListQuery = { limit: 20 }): Promise<ReviewListResponse> {
@@ -1446,6 +1452,20 @@ export class ApiClient {
     return this.listReviews({ ...query, status: 'FLAGGED' });
   }
 
+  async adminListReports(
+    query: AdminReportListQuery = { limit: 20 },
+  ): Promise<AdminReportListResponse> {
+    const parsed = adminReportListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.entityType) params.set('entityType', parsed.entityType);
+    return this.request(
+      `/api/v1/admin/reports?${params.toString()}`,
+      adminReportListResponseSchema,
+    );
+  }
+
   async listNotifications(
     query: NotificationListQuery = { limit: 20 },
   ): Promise<NotificationListResponse> {
@@ -1453,7 +1473,10 @@ export class ApiClient {
     const params = new URLSearchParams({ limit: String(parsed.limit) });
     if (parsed.cursor) params.set('cursor', parsed.cursor);
     if (parsed.unreadOnly !== undefined) params.set('unreadOnly', String(parsed.unreadOnly));
-    return this.request(`/api/v1/notifications?${params.toString()}`, notificationListResponseSchema);
+    return this.request(
+      `/api/v1/notifications?${params.toString()}`,
+      notificationListResponseSchema,
+    );
   }
 
   async markNotificationRead(publicId: string): Promise<NotificationSummary> {
@@ -1541,10 +1564,7 @@ export class ApiClient {
     );
   }
 
-  async getLeadAccess(
-    leadPublicId: string,
-    query: LeadAccessQuery,
-  ): Promise<LeadAccessStatus> {
+  async getLeadAccess(leadPublicId: string, query: LeadAccessQuery): Promise<LeadAccessStatus> {
     const parsed = leadAccessQuerySchema.parse(query);
     const params = new URLSearchParams({
       organizationPublicId: parsed.organizationPublicId,

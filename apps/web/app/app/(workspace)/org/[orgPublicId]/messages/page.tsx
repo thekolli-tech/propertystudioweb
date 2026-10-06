@@ -76,9 +76,7 @@ export default async function OrganizationMessagesPage({
                   <td className="px-4 py-3">
                     <StatusBadge tone="info">{item.status}</StatusBadge>
                   </td>
-                  <td className="px-4 py-3">
-                    {new Date(item.updatedAt).toLocaleString('en-IN')}
-                  </td>
+                  <td className="px-4 py-3">{new Date(item.updatedAt).toLocaleString('en-IN')}</td>
                 </tr>
               ))}
             </tbody>

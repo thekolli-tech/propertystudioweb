@@ -7,11 +7,7 @@ export type VerifiedBadgeProps = {
   className?: string;
 };
 
-export function VerifiedBadge({
-  verified,
-  label = 'Verified',
-  className,
-}: VerifiedBadgeProps) {
+export function VerifiedBadge({ verified, label = 'Verified', className }: VerifiedBadgeProps) {
   if (!verified) return null;
   return (
     <Badge variant="success" className={className}>

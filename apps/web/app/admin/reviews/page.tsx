@@ -21,12 +21,7 @@ export default async function AdminReviewsPage({
 }) {
   const query = await searchParams;
   const status = first(query.status) as
-    | 'PENDING'
-    | 'PUBLISHED'
-    | 'HIDDEN'
-    | 'REJECTED'
-    | 'FLAGGED'
-    | undefined;
+    'PENDING' | 'PUBLISHED' | 'HIDDEN' | 'REJECTED' | 'FLAGGED' | undefined;
 
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);

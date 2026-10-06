@@ -90,11 +90,7 @@ export class CommunicationsAccessService {
     return conversation;
   }
 
-  async deny(
-    actor: AuthActor,
-    resourceId: string,
-    request?: AuthenticatedRequest,
-  ): Promise<never> {
+  async deny(actor: AuthActor, resourceId: string, request?: AuthenticatedRequest): Promise<never> {
     await this.audit.write({
       actorUserId: actor.userId,
       sessionId: actor.sessionId,

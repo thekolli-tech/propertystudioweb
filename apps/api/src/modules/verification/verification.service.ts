@@ -64,7 +64,11 @@ export class VerificationService {
       throw new AppError('VALIDATION_ERROR', 'subjectType and verificationType must match.');
     }
 
-    const subject = await this.resolveSubject(body.subjectType, body.subjectPublicId, organization.id);
+    const subject = await this.resolveSubject(
+      body.subjectType,
+      body.subjectPublicId,
+      organization.id,
+    );
 
     try {
       const created = await this.prisma.verificationCase.create({
@@ -105,7 +109,10 @@ export class VerificationService {
       return this.toDetail(created, subject.subjectPublicId);
     } catch (error) {
       if (isPrismaUniqueViolation(error)) {
-        throw new AppError('CONFLICT', 'An open verification case already exists for this subject.');
+        throw new AppError(
+          'CONFLICT',
+          'An open verification case already exists for this subject.',
+        );
       }
       throw error;
     }
@@ -249,7 +256,10 @@ export class VerificationService {
       requestId: request?.requestId,
     });
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toDetail(updated, subjectPublicId);
   }
 
@@ -316,7 +326,10 @@ export class VerificationService {
       });
     }
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toDetail(updated, subjectPublicId);
   }
 
@@ -388,7 +401,10 @@ export class VerificationService {
       });
     }
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toDetail(updated, subjectPublicId);
   }
 
@@ -476,7 +492,10 @@ export class VerificationService {
       });
     }
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toDetail(updated, subjectPublicId);
   }
 
@@ -643,7 +662,9 @@ export class VerificationService {
       sessionId: actor.sessionId,
       organizationId: updated.organizationId,
       action:
-        status === 'REJECTED' ? 'verification.case.rejected' : 'verification.case.changes_requested',
+        status === 'REJECTED'
+          ? 'verification.case.rejected'
+          : 'verification.case.changes_requested',
       resourceType: 'verification_case',
       resourceId: updated.publicId,
       requestId: request?.requestId,
@@ -654,8 +675,7 @@ export class VerificationService {
       await this.notifications.create({
         userId: updated.submittedByUserId,
         orgId: updated.organizationId,
-        type:
-          status === 'REJECTED' ? 'VERIFICATION_REJECTED' : 'VERIFICATION_CHANGES_REQUESTED',
+        type: status === 'REJECTED' ? 'VERIFICATION_REJECTED' : 'VERIFICATION_CHANGES_REQUESTED',
         title: status === 'REJECTED' ? 'Verification rejected' : 'Verification changes requested',
         body:
           status === 'REJECTED'
@@ -667,7 +687,10 @@ export class VerificationService {
       });
     }
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toDetail(updated, subjectPublicId);
   }
 

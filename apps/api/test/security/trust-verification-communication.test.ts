@@ -233,7 +233,11 @@ describe('Phase 10 trust verification communication security', () => {
     return created.body.publicId as string;
   }
 
-  async function submitAgencyVerification(agentCookie: string, orgPublicId: string, profilePublicId: string) {
+  async function submitAgencyVerification(
+    agentCookie: string,
+    orgPublicId: string,
+    profilePublicId: string,
+  ) {
     const created = await request(app.getHttpServer())
       .post('/api/v1/verification/cases')
       .set('Cookie', agentCookie)
@@ -412,9 +416,7 @@ describe('Phase 10 trust verification communication security', () => {
       expect(detail.body.documents).toHaveLength(1);
 
       await request(app.getHttpServer())
-        .patch(
-          `/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}`,
-        )
+        .patch(`/api/v1/verification/cases/${created.body.publicId}/documents/${doc.body.publicId}`)
         .set('Cookie', admin.cookie)
         .send({ status: 'ACCEPTED', reviewerNotes: 'clear scan' })
         .expect(200);
@@ -501,13 +503,13 @@ describe('Phase 10 trust verification communication security', () => {
       expect(moderated.body.status).toBe('HIDDEN');
 
       const list = await request(app.getHttpServer())
-        .get(
-          `/api/v1/reviews?subjectType=AGENT&subjectPublicId=${agency.profilePublicId}`,
-        )
+        .get(`/api/v1/reviews?subjectType=AGENT&subjectPublicId=${agency.profilePublicId}`)
         .set('Cookie', reviewer.cookie)
         .expect(200);
       expect(
-        list.body.reviews.find((row: { publicId: string }) => row.publicId === created.body.publicId),
+        list.body.reviews.find(
+          (row: { publicId: string }) => row.publicId === created.body.publicId,
+        ),
       ).toBeUndefined();
       expect(JSON.stringify(list.body)).not.toMatch(/hidden for spam review|@example\.com/);
     });
@@ -640,7 +642,9 @@ describe('Phase 10 trust verification communication security', () => {
       expect(
         patched.body.preferences.some(
           (row: { type: string; channel: string; enabled: boolean }) =>
-            row.type === 'VERIFICATION_APPROVED' && row.channel === 'EMAIL' && row.enabled === false,
+            row.type === 'VERIFICATION_APPROVED' &&
+            row.channel === 'EMAIL' &&
+            row.enabled === false,
         ),
       ).toBe(true);
     });

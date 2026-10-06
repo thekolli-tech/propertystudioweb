@@ -11,9 +11,7 @@ import { getRequestCookieHeader } from '@/lib/auth';
 
 export const metadata = { title: 'Verification' };
 
-function statusTone(
-  status: string,
-): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
+function statusTone(status: string): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
   switch (status) {
     case 'APPROVED':
       return 'success';

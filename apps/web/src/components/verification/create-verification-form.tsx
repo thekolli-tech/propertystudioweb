@@ -71,7 +71,9 @@ export function CreateVerificationForm({
       </label>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={pending || !subjectPublicId}>
-        {pending ? 'Creating…' : `Start ${subjectType === 'AGENT' ? 'agency' : 'developer'} verification`}
+        {pending
+          ? 'Creating…'
+          : `Start ${subjectType === 'AGENT' ? 'agency' : 'developer'} verification`}
       </Button>
     </form>
   );

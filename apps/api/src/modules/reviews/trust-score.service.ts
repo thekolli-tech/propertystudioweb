@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  type ReviewSubjectType,
-  type TrustScoreResponse,
-} from '@property-studio/contracts';
+import { type ReviewSubjectType, type TrustScoreResponse } from '@property-studio/contracts';
 
 import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
@@ -20,7 +17,10 @@ import { PrismaService } from '../../common/prisma/prisma.module';
 export class TrustScoreService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async compute(subjectType: ReviewSubjectType, subjectPublicId: string): Promise<TrustScoreResponse> {
+  async compute(
+    subjectType: ReviewSubjectType,
+    subjectPublicId: string,
+  ): Promise<TrustScoreResponse> {
     const subject = await this.resolveSubject(subjectType, subjectPublicId);
     const reviews = await this.prisma.review.findMany({
       where: {
@@ -63,8 +63,8 @@ export class TrustScoreService {
     }
 
     const raw =
-      ((0.6 * (overallAverage ?? 0)) +
-        (0.25 * (structuredAverage ?? 0)) +
+      (0.6 * (overallAverage ?? 0) +
+        0.25 * (structuredAverage ?? 0) +
         0.15 * verificationComponent) /
       5;
     const score = Math.round(Math.min(5, Math.max(0, raw)) * 100);

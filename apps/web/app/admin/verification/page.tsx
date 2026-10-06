@@ -29,16 +29,17 @@ export default async function AdminVerificationPage({
   searchParams: Promise<SearchParams>;
 }) {
   const query = await searchParams;
-  const status = (first(query.status) as
-    | 'DRAFT'
-    | 'SUBMITTED'
-    | 'UNDER_REVIEW'
-    | 'APPROVED'
-    | 'REJECTED'
-    | 'CHANGES_REQUESTED'
-    | 'EXPIRED'
-    | 'REVOKED'
-    | undefined) ?? 'SUBMITTED';
+  const status =
+    (first(query.status) as
+      | 'DRAFT'
+      | 'SUBMITTED'
+      | 'UNDER_REVIEW'
+      | 'APPROVED'
+      | 'REJECTED'
+      | 'CHANGES_REQUESTED'
+      | 'EXPIRED'
+      | 'REVOKED'
+      | undefined) ?? 'SUBMITTED';
 
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);
@@ -131,9 +132,7 @@ export default async function AdminVerificationPage({
                     <StatusBadge tone="info">{item.status}</StatusBadge>
                   </td>
                   <td className="px-4 py-3">
-                    {item.submittedAt
-                      ? new Date(item.submittedAt).toLocaleString('en-IN')
-                      : '—'}
+                    {item.submittedAt ? new Date(item.submittedAt).toLocaleString('en-IN') : '—'}
                   </td>
                 </tr>
               ))}

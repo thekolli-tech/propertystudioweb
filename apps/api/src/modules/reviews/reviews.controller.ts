@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
+  adminReportListQuerySchema,
   createReviewRequestSchema,
   moderateReviewRequestSchema,
   reportReviewRequestSchema,
@@ -23,6 +24,30 @@ const trustScoreQuerySchema = z.object({
 @Controller()
 export class ReviewsController {
   constructor(private readonly reviews: ReviewsService) {}
+
+  @Get('admin/reviews')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('admin:reviews:read')
+  listAdmin(
+    @CurrentActor() actor: AuthActor,
+    @Query(new ZodValidationPipe(reviewListQuerySchema)) query: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.reviews.list(actor, query as Parameters<ReviewsService['list']>[1], request);
+  }
+
+  @Get('admin/reports')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('admin:reviews:read')
+  listAdminReports(
+    @CurrentActor() actor: AuthActor,
+    @Query(new ZodValidationPipe(adminReportListQuerySchema)) query: unknown,
+  ) {
+    return this.reviews.listAdminReports(
+      actor,
+      query as Parameters<ReviewsService['listAdminReports']>[1],
+    );
+  }
 
   @Post('reviews')
   @UseGuards(AuthGuard, PermissionsGuard)

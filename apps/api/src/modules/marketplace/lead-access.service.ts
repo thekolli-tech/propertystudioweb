@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  type LeadAccessStatus,
-  type LeadContactRevealResponse,
-} from '@property-studio/contracts';
+import { type LeadAccessStatus, type LeadContactRevealResponse } from '@property-studio/contracts';
 import { type Prisma } from '../../generated/prisma/client';
 
 import { AuditService } from '../../common/audit/audit.service';
@@ -37,7 +34,10 @@ export class LeadAccessService {
     organizationPublicId: string,
     request?: AuthenticatedRequest,
   ): Promise<LeadAccessStatus> {
-    if (!actorHasPermission(actor, 'leads:access') && !actorHasPermission(actor, 'platform:admin')) {
+    if (
+      !actorHasPermission(actor, 'leads:access') &&
+      !actorHasPermission(actor, 'platform:admin')
+    ) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions.');
     }
 

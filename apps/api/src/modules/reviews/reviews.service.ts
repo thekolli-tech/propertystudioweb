@@ -20,12 +20,7 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
 import { ReviewsAccessService } from './reviews-access.service';
-import {
-  applyCreatedCursor,
-  encodeCursor,
-  isPrismaUniqueViolation,
-  toIso,
-} from './reviews.util';
+import { applyCreatedCursor, encodeCursor, isPrismaUniqueViolation, toIso } from './reviews.util';
 import { TrustScoreService } from './trust-score.service';
 
 @Injectable()
@@ -184,7 +179,11 @@ export class ReviewsService {
     if (!row) {
       return await this.access.deny(actor, publicId, request);
     }
-    if (row.status !== 'PUBLISHED' && row.authorUserId !== actor.userId && !this.access.canReadAdmin(actor)) {
+    if (
+      row.status !== 'PUBLISHED' &&
+      row.authorUserId !== actor.userId &&
+      !this.access.canReadAdmin(actor)
+    ) {
       return await this.access.deny(actor, publicId, request);
     }
     const subjectPublicId = await this.resolveSubjectPublicId(row.subjectType, row.subjectId);
@@ -245,7 +244,10 @@ export class ReviewsService {
       requestId: request?.requestId,
     });
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toSummary(updated, subjectPublicId);
   }
 
@@ -264,16 +266,25 @@ export class ReviewsService {
     }
 
     try {
-      const report = await this.prisma.reviewReport.create({
-        data: {
-          id: newUuid(),
-          publicId: await this.publicIds.nextReviewReportPublicId(),
-          reviewId: review.id,
-          reporterUserId: actor.userId,
-          reason: body.reason,
-          details: body.details ?? null,
-          status: 'OPEN',
-        },
+      const report = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.reviewReport.create({
+          data: {
+            id: newUuid(),
+            publicId: await this.publicIds.nextReviewReportPublicId(),
+            reviewId: review.id,
+            reporterUserId: actor.userId,
+            reason: body.reason,
+            details: body.details ?? null,
+            status: 'OPEN',
+          },
+        });
+        if (review.status === 'PUBLISHED' || review.status === 'PENDING') {
+          await tx.review.update({
+            where: { id: review.id },
+            data: { status: 'FLAGGED' },
+          });
+        }
+        return created;
       });
 
       await this.audit.write({
@@ -300,6 +311,113 @@ export class ReviewsService {
       }
       throw error;
     }
+  }
+
+  async listAdminReports(
+    actor: AuthActor,
+    query: {
+      limit: number;
+      cursor?: string;
+      status?: 'OPEN' | 'REVIEWING' | 'RESOLVED' | 'DISMISSED';
+      entityType?: string;
+    },
+  ): Promise<{
+    reports: Array<{
+      publicId: string;
+      kind: 'REVIEW_REPORT' | 'CONTENT_REPORT';
+      entityType: string;
+      entityPublicId: string;
+      reason: ReviewReportSummary['reason'];
+      details: string | null;
+      status: ReviewReportSummary['status'];
+      createdAt: string;
+    }>;
+    nextCursor: string | null;
+  }> {
+    if (!this.access.canReadAdmin(actor)) {
+      throw new AppError('FORBIDDEN', 'Insufficient permissions.');
+    }
+
+    const reviewWhere: Record<string, unknown> = {};
+    if (query.status) reviewWhere.status = query.status;
+    applyCreatedCursor(reviewWhere, query.cursor);
+
+    const contentWhere: Record<string, unknown> = {};
+    if (query.status) contentWhere.status = query.status;
+    if (query.entityType) contentWhere.entityType = query.entityType;
+    applyCreatedCursor(contentWhere, query.cursor);
+
+    const [reviewReports, contentReports] = await Promise.all([
+      !query.entityType || query.entityType === 'REVIEW'
+        ? this.prisma.reviewReport.findMany({
+            where: reviewWhere,
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+            take: query.limit + 1,
+            include: { review: { select: { publicId: true } } },
+          })
+        : Promise.resolve([]),
+      query.entityType === 'REVIEW'
+        ? Promise.resolve([])
+        : this.prisma.contentReport.findMany({
+            where: contentWhere,
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+            take: query.limit + 1,
+          }),
+    ]);
+
+    const reviewItems = await Promise.all(
+      reviewReports.map(async (row) => ({
+        publicId: row.publicId,
+        kind: 'REVIEW_REPORT' as const,
+        entityType: 'REVIEW',
+        entityPublicId: row.review.publicId,
+        reason: row.reason,
+        details: row.details,
+        status: row.status,
+        createdAt: toIso(row.createdAt)!,
+        sortAt: row.createdAt,
+        sortId: row.id,
+      })),
+    );
+
+    const contentItems = await Promise.all(
+      contentReports.map(async (row) => {
+        let entityPublicId = row.entityId;
+        if (row.entityType === 'MESSAGE') {
+          const message = await this.prisma.message.findFirst({
+            where: { id: row.entityId },
+            select: { publicId: true },
+          });
+          entityPublicId = message?.publicId ?? row.entityId;
+        }
+        return {
+          publicId: row.publicId,
+          kind: 'CONTENT_REPORT' as const,
+          entityType: row.entityType,
+          entityPublicId,
+          reason: row.reason,
+          details: row.details,
+          status: row.status,
+          createdAt: toIso(row.createdAt)!,
+          sortAt: row.createdAt,
+          sortId: row.id,
+        };
+      }),
+    );
+
+    const merged = [...reviewItems, ...contentItems].sort((a, b) => {
+      const byTime = b.sortAt.getTime() - a.sortAt.getTime();
+      if (byTime !== 0) return byTime;
+      return b.sortId.localeCompare(a.sortId);
+    });
+    const page = merged.slice(0, query.limit);
+    const last = page[page.length - 1];
+
+    return {
+      reports: page.map(({ sortAt: _s, sortId: _i, ...item }) => item),
+      nextCursor:
+        merged.length > query.limit && last ? encodeCursor(last.sortAt, last.sortId) : null,
+    };
   }
 
   async moderate(
@@ -337,7 +455,8 @@ export class ReviewsService {
         moderatedAt: new Date(),
         moderatedByUserId: actor.userId,
         moderatorNotes: body.moderatorNotes ?? null,
-        publishedAt: body.action === 'RESTORE' ? (review.publishedAt ?? new Date()) : review.publishedAt,
+        publishedAt:
+          body.action === 'RESTORE' ? (review.publishedAt ?? new Date()) : review.publishedAt,
         version: { increment: 1 },
       },
       include: {
@@ -357,7 +476,10 @@ export class ReviewsService {
       after: { action: body.action, status: updated.status },
     });
 
-    const subjectPublicId = await this.resolveSubjectPublicId(updated.subjectType, updated.subjectId);
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
     return this.toSummary(updated, subjectPublicId);
   }
 

@@ -155,7 +155,10 @@ export class NotificationService {
     return this.toSummary(finalRow, org?.publicId ?? null, entityMap);
   }
 
-  async markAllRead(actor: AuthActor, _request?: AuthenticatedRequest): Promise<{ updated: number }> {
+  async markAllRead(
+    actor: AuthActor,
+    _request?: AuthenticatedRequest,
+  ): Promise<{ updated: number }> {
     this.requirePermission(actor, 'notifications:update');
     const result = await this.prisma.notification.updateMany({
       where: { userId: actor.userId, readAt: null },
@@ -210,7 +213,10 @@ export class NotificationService {
     return this.getPreferences(actor);
   }
 
-  private requirePermission(actor: AuthActor, permission: 'notifications:read' | 'notifications:update') {
+  private requirePermission(
+    actor: AuthActor,
+    permission: 'notifications:read' | 'notifications:update',
+  ) {
     if (!actorHasPermission(actor, permission)) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions.');
     }

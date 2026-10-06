@@ -2416,8 +2416,9 @@ export const trustScoreResponseSchema = z.object({
   structuredAverage: z.number().nullable(),
   verificationComponent: z.number().nullable(),
   verified: z.boolean(),
-  formula:
-    z.string().default(
+  formula: z
+    .string()
+    .default(
       'score = round(((0.6 * overallAvg) + (0.25 * structuredAvg) + (0.15 * verificationComponent)) / 5 * 100); insufficient if reviewCount < 3',
     ),
 });
@@ -2463,15 +2464,10 @@ export type NotificationPreference = z.infer<typeof notificationPreferenceSchema
 export const notificationPreferencesResponseSchema = z.object({
   preferences: z.array(notificationPreferenceSchema),
 });
-export type NotificationPreferencesResponse = z.infer<
-  typeof notificationPreferencesResponseSchema
->;
+export type NotificationPreferencesResponse = z.infer<typeof notificationPreferencesResponseSchema>;
 
 export const updateNotificationPreferencesRequestSchema = z.object({
-  preferences: z
-    .array(notificationPreferenceSchema)
-    .min(1)
-    .max(64),
+  preferences: z.array(notificationPreferenceSchema).min(1).max(64),
 });
 export type UpdateNotificationPreferencesRequest = z.infer<
   typeof updateNotificationPreferencesRequestSchema
@@ -2562,6 +2558,30 @@ export const contentReportSummarySchema = z.object({
 });
 export type ContentReportSummary = z.infer<typeof contentReportSummarySchema>;
 
+export const adminReportListQuerySchema = cursorPaginationQuerySchema.extend({
+  status: contentReportStatusSchema.optional(),
+  entityType: z.string().trim().max(64).optional(),
+});
+export type AdminReportListQuery = z.infer<typeof adminReportListQuerySchema>;
+
+export const adminReportItemSchema = z.object({
+  publicId: z.string(),
+  kind: z.enum(['REVIEW_REPORT', 'CONTENT_REPORT']),
+  entityType: z.string(),
+  entityPublicId: z.string(),
+  reason: reviewReportReasonSchema,
+  details: z.string().nullable(),
+  status: contentReportStatusSchema,
+  createdAt: z.string().datetime(),
+});
+export type AdminReportItem = z.infer<typeof adminReportItemSchema>;
+
+export const adminReportListResponseSchema = z.object({
+  reports: z.array(adminReportItemSchema),
+  nextCursor: z.string().nullable(),
+});
+export type AdminReportListResponse = z.infer<typeof adminReportListResponseSchema>;
+
 export const leadAccessStatusSchema = z.object({
   leadPublicId: z.string(),
   organizationPublicId: z.string(),
@@ -2591,4 +2611,3 @@ export const leadAccessQuerySchema = z.object({
 export type LeadAccessQuery = z.infer<typeof leadAccessQuerySchema>;
 
 export type TrustSubjectStatus = z.infer<typeof trustSubjectStatusSchema>;
-
