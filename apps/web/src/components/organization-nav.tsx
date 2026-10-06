@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Home,
   LayoutDashboard,
+  LineChart,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -40,6 +41,12 @@ const SHARED_TRUST_ITEMS: NavItem[] = [
   { segment: 'messages', label: 'Messages', icon: <MessageSquare className="h-4 w-4" /> },
 ];
 
+const SHARED_INTELLIGENCE_ITEM: NavItem = {
+  segment: 'intelligence',
+  label: 'Intelligence',
+  icon: <LineChart className="h-4 w-4" />,
+};
+
 const DEVELOPER_ITEMS: NavItem[] = [
   { segment: '', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
   { segment: 'projects', label: 'Projects', icon: <FolderKanban className="h-4 w-4" /> },
@@ -49,6 +56,7 @@ const DEVELOPER_ITEMS: NavItem[] = [
   { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
   ...SHARED_TRUST_ITEMS,
+  SHARED_INTELLIGENCE_ITEM,
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
@@ -62,6 +70,7 @@ const AGENCY_ITEMS: NavItem[] = [
   { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
   ...SHARED_TRUST_ITEMS,
+  SHARED_INTELLIGENCE_ITEM,
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },

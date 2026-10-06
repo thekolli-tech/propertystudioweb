@@ -10,10 +10,12 @@ import {
   Flag,
   Inbox,
   LayoutDashboard,
+  LineChart,
   ScrollText,
   Settings,
   Shield,
   ShieldCheck,
+  Sparkles,
   Star,
   Users,
 } from 'lucide-react';
@@ -62,6 +64,17 @@ const SECTIONS = [
       },
       { href: '/admin/reviews', label: 'Reviews', icon: <Star className="h-4 w-4" /> },
       { href: '/admin/reports', label: 'Reports', icon: <Flag className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'Intelligence',
+    items: [
+      {
+        href: '/admin/intelligence',
+        label: 'Intelligence',
+        icon: <LineChart className="h-4 w-4" />,
+      },
+      { href: '/admin/ai', label: 'AI', icon: <Sparkles className="h-4 w-4" /> },
     ],
   },
   {

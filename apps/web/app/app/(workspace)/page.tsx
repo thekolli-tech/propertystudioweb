@@ -52,6 +52,9 @@ export default async function AppHomePage() {
               <Link href="/app/inbox">Inbox</Link>
             </Button>
             <Button asChild variant="outline" size="sm">
+              <Link href="/app/ai">AI tools</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/app/me">Profile</Link>
             </Button>
           </CardContent>
