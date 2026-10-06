@@ -31,7 +31,6 @@ export function NotificationBell() {
   return (
     <Button
       asChild
-      type="button"
       variant="ghost"
       size="icon"
       aria-label={showBadge ? `Notifications (${unreadCount} unread)` : 'Notifications'}
