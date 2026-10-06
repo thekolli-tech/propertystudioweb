@@ -9,7 +9,8 @@ import { getRequestCookieHeader } from '@/lib/auth';
 
 export const metadata: Metadata = {
   title: 'Media',
-  description: 'Public media from Property Studio — photos, videos, and assets from published records.',
+  description:
+    'Public media from Property Studio — photos, videos, and assets from published records.',
 };
 
 export default async function MediaPage() {

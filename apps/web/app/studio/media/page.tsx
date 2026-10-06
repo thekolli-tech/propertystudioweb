@@ -16,7 +16,9 @@ export default async function StudioMediaPage() {
   const [mediaResult, editorialResult, collectionsResult] = await Promise.all([
     client.listPublicMedia({ limit: 24 }).catch(() => ({ media: [], nextCursor: null })),
     client.listPublicEditorial({ limit: 12 }).catch(() => ({ contents: [], nextCursor: null })),
-    client.listPublicCollections({ limit: 12 }).catch(() => ({ collections: [], nextCursor: null })),
+    client
+      .listPublicCollections({ limit: 12 })
+      .catch(() => ({ collections: [], nextCursor: null })),
   ]);
 
   return (

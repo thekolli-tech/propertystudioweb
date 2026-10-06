@@ -169,10 +169,7 @@ export class MediaAnalyticsService {
         where: { publicId: query.organizationPublicId },
       });
       if (!org) return { events: [], nextCursor: null };
-      if (
-        !this.access.isPlatformAdmin(actor) &&
-        !(await this.access.isOrgMember(actor, org.id))
-      ) {
+      if (!this.access.isPlatformAdmin(actor) && !(await this.access.isOrgMember(actor, org.id))) {
         return await this.access.deny(actor, query.organizationPublicId, request, 'organization');
       }
       where.organizationId = org.id;

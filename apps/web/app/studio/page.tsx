@@ -14,7 +14,11 @@ const DESTINATIONS = [
   { href: '/studio/media', label: 'Media', description: 'Public media from the CMS.' },
   { href: '/studio/communities', label: 'Communities', description: 'Published communities.' },
   { href: '/studio/compare', label: 'Compare', description: 'Side-by-side intelligence compare.' },
-  { href: '/studio/ai', label: 'AI Assistant', description: 'Phase 11 assistant — verified data only.' },
+  {
+    href: '/studio/ai',
+    label: 'AI Assistant',
+    description: 'Phase 11 assistant — verified data only.',
+  },
 ] as const;
 
 export default function StudioHomePage() {

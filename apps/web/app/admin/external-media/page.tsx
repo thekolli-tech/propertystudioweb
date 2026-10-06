@@ -39,10 +39,7 @@ export default async function AdminExternalMediaPage() {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {list.providers.map((provider) => (
-            <li
-              key={provider.provider}
-              className="rounded-lg border border-border bg-card p-4"
-            >
+            <li key={provider.provider} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{provider.provider}</Badge>
                 <StatusBadge

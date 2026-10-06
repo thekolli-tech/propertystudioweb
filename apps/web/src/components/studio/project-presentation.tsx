@@ -17,7 +17,10 @@ export function ProjectPresentation({
   if (unavailable || !presentation) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Project presentation" description="Broadcast view for a development project." />
+        <PageHeader
+          title="Project presentation"
+          description="Broadcast view for a development project."
+        />
         <EmptyState title="Presentation unavailable" description={unavailableMessage} />
       </div>
     );

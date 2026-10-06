@@ -21,8 +21,7 @@ export type SeoInput = {
  */
 export function buildSeoMetadata(input: SeoInput): SeoMetadata {
   // Private content is never indexable; callers pass the effective indexable flag.
-  const indexable =
-    input.visibility === 'PRIVATE' ? false : input.indexable === true;
+  const indexable = input.visibility === 'PRIVATE' ? false : input.indexable === true;
 
   if (!indexable) {
     return {

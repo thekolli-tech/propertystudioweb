@@ -223,7 +223,10 @@ export class CollectionsService {
       });
     } else {
       if (!body.editorialPublicId) {
-        throw new AppError('VALIDATION_ERROR', 'editorialPublicId is required for EDITORIAL items.');
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'editorialPublicId is required for EDITORIAL items.',
+        );
       }
       const editorial = await this.prisma.editorialContent.findFirst({
         where: { publicId: body.editorialPublicId, deletedAt: null },

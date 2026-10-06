@@ -20,6 +20,7 @@ import { z } from 'zod';
 
 import { AuthGuard, PermissionsGuard, RequirePermissions } from '../../common/auth/auth.guards';
 import { CurrentActor, type AuthenticatedRequest } from '../../common/auth/current-actor.decorator';
+import { SessionService } from '../../common/auth/session.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
 import { BroadcastService } from './broadcast.service';
@@ -51,6 +52,7 @@ export class MediaController {
     private readonly external: ExternalMediaService,
     private readonly broadcast: BroadcastService,
     private readonly creators: CreatorsService,
+    private readonly sessions: SessionService,
   ) {}
 
   @Get('public/media')
@@ -79,12 +81,8 @@ export class MediaController {
   }
 
   @Get('public/collections')
-  listPublicCollections(
-    @Query(new ZodValidationPipe(collectionListQuerySchema)) query: unknown,
-  ) {
-    return this.collections.listPublic(
-      query as Parameters<CollectionsService['listPublic']>[0],
-    );
+  listPublicCollections(@Query(new ZodValidationPipe(collectionListQuerySchema)) query: unknown) {
+    return this.collections.listPublic(query as Parameters<CollectionsService['listPublic']>[0]);
   }
 
   @Get('public/collections/:slug')
@@ -92,7 +90,7 @@ export class MediaController {
     return this.collections.getPublic(slug);
   }
 
-  @Post('media/cms')
+  @Post('media')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('media:create')
   createMedia(
@@ -103,7 +101,7 @@ export class MediaController {
     return this.media.create(actor, body as Parameters<MediaCmsService['create']>[1], request);
   }
 
-  @Patch('media/cms/:publicId')
+  @Patch('media/:publicId')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('media:update')
   updateMedia(
@@ -120,7 +118,7 @@ export class MediaController {
     );
   }
 
-  @Post('media/cms/:publicId/publish')
+  @Post('media/:publicId/publish')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('media:publish')
   publishMedia(
@@ -131,7 +129,7 @@ export class MediaController {
     return this.media.publish(actor, publicId, request);
   }
 
-  @Post('media/cms/:publicId/archive')
+  @Post('media/:publicId/archive')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('media:archive')
   archiveMedia(
@@ -142,7 +140,7 @@ export class MediaController {
     return this.media.archive(actor, publicId, request);
   }
 
-  @Post('media/cms/:publicId/moderate')
+  @Post('media/:publicId/moderate')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('media:moderate')
   moderateMedia(
@@ -159,19 +157,10 @@ export class MediaController {
     );
   }
 
-  @Get('media/cms/:publicId/access-url')
-  @UseGuards(AuthGuard, PermissionsGuard)
-  mediaAccessUrl(
-    @CurrentActor() actor: AuthActor,
-    @Param('publicId') publicId: string,
-    @Req() request: AuthenticatedRequest,
-  ) {
+  @Get('media/:publicId/access-url')
+  async mediaAccessUrl(@Param('publicId') publicId: string, @Req() request: AuthenticatedRequest) {
+    const actor = await this.sessions.resolveActorFromRequest(request);
     return this.media.getAccessUrl(actor, publicId, request);
-  }
-
-  @Get('public/media/:publicId/access-url')
-  publicMediaAccessUrl(@Param('publicId') publicId: string) {
-    return this.media.getAccessUrl(null, publicId);
   }
 
   @Post('editorial')
@@ -182,11 +171,7 @@ export class MediaController {
     @Body(new ZodValidationPipe(createEditorialContentRequestSchema)) body: unknown,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.editorial.create(
-      actor,
-      body as Parameters<EditorialService['create']>[1],
-      request,
-    );
+    return this.editorial.create(actor, body as Parameters<EditorialService['create']>[1], request);
   }
 
   @Patch('editorial/:publicId')
@@ -311,27 +296,13 @@ export class MediaController {
   }
 
   @Post('media/analytics/events')
-  @UseGuards(AuthGuard, PermissionsGuard)
-  @RequirePermissions('media:analytics:write')
-  trackAnalytics(
-    @CurrentActor() actor: AuthActor,
+  async writeAnalyticsEvent(
     @Body(new ZodValidationPipe(createMediaAnalyticsEventRequestSchema)) body: unknown,
     @Req() request: AuthenticatedRequest,
   ) {
+    const actor = await this.sessions.resolveActorFromRequest(request);
     return this.analytics.writeEvent(
       actor,
-      body as Parameters<MediaAnalyticsService['writeEvent']>[1],
-      request,
-    );
-  }
-
-  @Post('public/media/analytics/events')
-  trackPublicAnalytics(
-    @Body(new ZodValidationPipe(createMediaAnalyticsEventRequestSchema)) body: unknown,
-    @Req() request: AuthenticatedRequest,
-  ) {
-    return this.analytics.writeEvent(
-      null,
       body as Parameters<MediaAnalyticsService['writeEvent']>[1],
       request,
     );

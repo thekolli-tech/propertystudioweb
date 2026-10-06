@@ -1990,7 +1990,10 @@ export class ApiClient {
     if (parsed.status) params.set('status', parsed.status);
     if (parsed.category) params.set('category', parsed.category);
     if (parsed.featured !== undefined) params.set('featured', String(parsed.featured));
-    return this.request(`/api/v1/public/editorial?${params.toString()}`, editorialListResponseSchema);
+    return this.request(
+      `/api/v1/public/editorial?${params.toString()}`,
+      editorialListResponseSchema,
+    );
   }
 
   async getPublicEditorial(slug: string): Promise<EditorialContentDetail> {
@@ -2072,9 +2075,7 @@ export class ApiClient {
     );
   }
 
-  async createMediaCollection(
-    input: CreateMediaCollectionRequest,
-  ): Promise<MediaCollectionDetail> {
+  async createMediaCollection(input: CreateMediaCollectionRequest): Promise<MediaCollectionDetail> {
     const body = createMediaCollectionRequestSchema.parse(input);
     return this.request('/api/v1/collections', mediaCollectionDetailSchema, {
       method: 'POST',
@@ -2170,7 +2171,10 @@ export class ApiClient {
     if (parsed.status) params.set('status', parsed.status);
     if (parsed.category) params.set('category', parsed.category);
     if (parsed.featured !== undefined) params.set('featured', String(parsed.featured));
-    return this.request(`/api/v1/admin/editorial?${params.toString()}`, editorialListResponseSchema);
+    return this.request(
+      `/api/v1/admin/editorial?${params.toString()}`,
+      editorialListResponseSchema,
+    );
   }
 
   async listAdminCollections(
@@ -2189,7 +2193,12 @@ export class ApiClient {
   }
 
   async listAdminMediaAnalytics(
-    query: { cursor?: string; limit?: number; organizationPublicId?: string; eventType?: string } = {},
+    query: {
+      cursor?: string;
+      limit?: number;
+      organizationPublicId?: string;
+      eventType?: string;
+    } = {},
   ): Promise<MediaAnalyticsListResponse> {
     const params = new URLSearchParams();
     if (query.cursor) params.set('cursor', query.cursor);
@@ -2215,10 +2224,14 @@ export class ApiClient {
     input: CreateExternalMediaMappingRequest,
   ): Promise<ExternalMediaMappingSummary> {
     const body = createExternalMediaMappingRequestSchema.parse(input);
-    return this.request('/api/v1/admin/external-media/mappings', externalMediaMappingSummarySchema, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    return this.request(
+      '/api/v1/admin/external-media/mappings',
+      externalMediaMappingSummarySchema,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
   }
 
   async getExternalMediaMetrics(publicId: string): Promise<ExternalMediaMetricsResponse> {

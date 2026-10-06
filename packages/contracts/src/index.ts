@@ -448,11 +448,7 @@ export const externalMediaProviderKindSchema = z.enum([
   'OTHER',
 ]);
 export type ExternalMediaProviderKind = z.infer<typeof externalMediaProviderKindSchema>;
-export const externalMediaProviderStatusSchema = z.enum([
-  'UNAVAILABLE',
-  'CONFIGURED',
-  'DISABLED',
-]);
+export const externalMediaProviderStatusSchema = z.enum(['UNAVAILABLE', 'CONFIGURED', 'DISABLED']);
 export type ExternalMediaProviderStatus = z.infer<typeof externalMediaProviderStatusSchema>;
 
 export type MediaLifecycleStatus = z.infer<typeof mediaLifecycleStatusSchema>;
@@ -3430,8 +3426,14 @@ export const createEditorialContentRequestSchema = z.object({
   category: z.string().trim().max(80).optional().nullable(),
   tags: z.array(z.string().trim().max(80)).max(40).default([]),
   featured: z.boolean().default(false),
-  relatedPropertyPublicIds: z.array(z.string().regex(/^PS-PROP-\d+$/)).max(20).default([]),
-  relatedProjectPublicIds: z.array(z.string().regex(/^PS-PROJ-\d+$/)).max(20).default([]),
+  relatedPropertyPublicIds: z
+    .array(z.string().regex(/^PS-PROP-\d+$/))
+    .max(20)
+    .default([]),
+  relatedProjectPublicIds: z
+    .array(z.string().regex(/^PS-PROJ-\d+$/))
+    .max(20)
+    .default([]),
   relatedLocalities: z.array(z.string().trim().max(120)).max(20).default([]),
   scheduledAt: z.string().datetime().optional().nullable(),
   seoTitle: z.string().trim().max(200).optional().nullable(),
@@ -3560,7 +3562,9 @@ export const createMediaAnalyticsEventRequestSchema = z.object({
   sessionKey: z.string().trim().max(64).optional().nullable(),
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
-export type CreateMediaAnalyticsEventRequest = z.infer<typeof createMediaAnalyticsEventRequestSchema>;
+export type CreateMediaAnalyticsEventRequest = z.infer<
+  typeof createMediaAnalyticsEventRequestSchema
+>;
 
 export const mediaAnalyticsEventSummarySchema = z.object({
   publicId: z.string(),

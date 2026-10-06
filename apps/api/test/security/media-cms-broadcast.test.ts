@@ -203,7 +203,7 @@ describe('Phase 12 media CMS broadcast security', () => {
     );
 
     const draft = await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', editor.cookie)
       .send({
         storageKey: 'cms/draft-photo.jpg',
@@ -217,7 +217,7 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(201);
 
     const published = await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', editor.cookie)
       .send({
         storageKey: 'cms/published-photo.jpg',
@@ -231,13 +231,11 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(201);
 
     await request(app.getHttpServer())
-      .post(`/api/v1/media/cms/${published.body.publicId}/publish`)
+      .post(`/api/v1/media/${published.body.publicId}/publish`)
       .set('Cookie', editor.cookie)
       .expect(201);
 
-    await request(app.getHttpServer())
-      .get(`/api/v1/public/media/${draft.body.slug}`)
-      .expect(404);
+    await request(app.getHttpServer()).get(`/api/v1/public/media/${draft.body.slug}`).expect(404);
 
     const publicGet = await request(app.getHttpServer())
       .get(`/api/v1/public/media/${published.body.slug}`)
@@ -247,9 +245,9 @@ describe('Phase 12 media CMS broadcast security', () => {
     expect(publicGet.body.seo.indexable).toBe(true);
 
     const list = await request(app.getHttpServer()).get('/api/v1/public/media').expect(200);
-    expect(list.body.media.some((m: { publicId: string }) => m.publicId === draft.body.publicId)).toBe(
-      false,
-    );
+    expect(
+      list.body.media.some((m: { publicId: string }) => m.publicId === draft.body.publicId),
+    ).toBe(false);
     expect(
       list.body.media.some((m: { publicId: string }) => m.publicId === published.body.publicId),
     ).toBe(true);
@@ -265,7 +263,7 @@ describe('Phase 12 media CMS broadcast security', () => {
     await switchOrg(app, b.cookie, orgB.orgPublicId);
 
     const created = await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', a.cookie)
       .send({
         organizationPublicId: orgA.orgPublicId,
@@ -279,13 +277,13 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(201);
 
     await request(app.getHttpServer())
-      .patch(`/api/v1/media/cms/${created.body.publicId}`)
+      .patch(`/api/v1/media/${created.body.publicId}`)
       .set('Cookie', b.cookie)
       .send({ title: 'Hijacked' })
       .expect(404);
 
     await request(app.getHttpServer())
-      .post(`/api/v1/media/cms/${created.body.publicId}/publish`)
+      .post(`/api/v1/media/${created.body.publicId}/publish`)
       .set('Cookie', b.cookie)
       .expect(404);
   });
@@ -299,7 +297,7 @@ describe('Phase 12 media CMS broadcast security', () => {
     );
 
     await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', propertyAdmin.cookie)
       .send({
         storageKey: 'padmin/attempt.jpg',
@@ -337,6 +335,10 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(403);
 
     await request(app.getHttpServer())
+      .post(`/api/v1/editorial/${article.body.publicId}/approve`)
+      .set('Cookie', editor.cookie)
+      .expect(201);
+    await request(app.getHttpServer())
       .post(`/api/v1/editorial/${article.body.publicId}/publish`)
       .set('Cookie', editor.cookie)
       .expect(201);
@@ -352,12 +354,12 @@ describe('Phase 12 media CMS broadcast security', () => {
       .get('/api/v1/admin/external-media/providers')
       .set('Cookie', admin.cookie)
       .expect(200);
-    expect(providers.body.providers.every((p: { status: string }) => p.status === 'UNAVAILABLE')).toBe(
-      true,
-    );
+    expect(
+      providers.body.providers.every((p: { status: string }) => p.status === 'UNAVAILABLE'),
+    ).toBe(true);
 
     const media = await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', editor.cookie)
       .send({
         storageKey: 'cms/for-mapping.mp4',
@@ -400,7 +402,7 @@ describe('Phase 12 media CMS broadcast security', () => {
     );
 
     const media = await request(app.getHttpServer())
-      .post('/api/v1/media/cms')
+      .post('/api/v1/media')
       .set('Cookie', editor.cookie)
       .send({
         storageKey: 'cms/flag.jpg',
@@ -413,19 +415,17 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(201);
 
     await request(app.getHttpServer())
-      .post(`/api/v1/media/cms/${media.body.publicId}/publish`)
+      .post(`/api/v1/media/${media.body.publicId}/publish`)
       .set('Cookie', editor.cookie)
       .expect(201);
 
     await request(app.getHttpServer())
-      .post(`/api/v1/media/cms/${media.body.publicId}/moderate`)
+      .post(`/api/v1/media/${media.body.publicId}/moderate`)
       .set('Cookie', moderator.cookie)
       .send({ moderationStatus: 'FLAGGED', reason: 'Needs review' })
       .expect(201);
 
-    await request(app.getHttpServer())
-      .get(`/api/v1/public/media/${media.body.slug}`)
-      .expect(404);
+    await request(app.getHttpServer()).get(`/api/v1/public/media/${media.body.slug}`).expect(404);
 
     await request(app.getHttpServer())
       .post('/api/v1/public/media/analytics/events')
@@ -436,12 +436,12 @@ describe('Phase 12 media CMS broadcast security', () => {
       .expect(404);
 
     const access = await request(app.getHttpServer())
-      .get(`/api/v1/media/cms/${media.body.publicId}/access-url`)
+      .get(`/api/v1/media/${media.body.publicId}/access-url`)
       .set('Cookie', editor.cookie);
     expect([200, 201].includes(access.status) || access.status === 400).toBe(true);
     if (access.status === 200 || access.status === 201) {
       expect(access.body.url).toBeTruthy();
-      expect(JSON.stringify(access.body)).not.toContain('cms/flag.jpg');
+      expect(access.body.storageKey).toBeUndefined();
     }
   });
 

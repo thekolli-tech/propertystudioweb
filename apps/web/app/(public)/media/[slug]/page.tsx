@@ -30,8 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       },
       twitter: {
         title: seo.twitterTitle ?? seo.seoTitle ?? media.title ?? undefined,
-        description:
-          seo.twitterDescription ?? seo.seoDescription ?? media.description ?? undefined,
+        description: seo.twitterDescription ?? seo.seoDescription ?? media.description ?? undefined,
       },
     };
   } catch {

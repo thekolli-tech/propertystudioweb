@@ -11,8 +11,9 @@ export const metadata = { title: 'Studio · Market Intelligence' };
 export default async function StudioMarketPage() {
   const cookie = await getRequestCookieHeader();
   let unavailable = false;
-  let market: Awaited<ReturnType<ReturnType<typeof createServerApiClient>['listMarketSnapshots']>> | null =
-    null;
+  let market: Awaited<
+    ReturnType<ReturnType<typeof createServerApiClient>['listMarketSnapshots']>
+  > | null = null;
 
   try {
     market = await createServerApiClient(cookie).listMarketSnapshots({ limit: 24 });

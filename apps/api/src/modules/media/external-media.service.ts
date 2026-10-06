@@ -175,7 +175,9 @@ export class ExternalMediaService {
     await this.prisma.externalMediaMapping.update({
       where: { id: mapping.id },
       data: {
-        lastMetricsJson: result.metrics ? (JSON.parse(JSON.stringify(result.metrics)) as never) : undefined,
+        lastMetricsJson: result.metrics
+          ? (JSON.parse(JSON.stringify(result.metrics)) as never)
+          : undefined,
         lastSyncedAt: new Date(),
         providerStatus: result.status,
       },

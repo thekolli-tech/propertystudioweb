@@ -17,7 +17,10 @@ export function PropertyPresentation({
   if (unavailable || !presentation) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Property presentation" description="Broadcast view for a single listing." />
+        <PageHeader
+          title="Property presentation"
+          description="Broadcast view for a single listing."
+        />
         <EmptyState title="Presentation unavailable" description={unavailableMessage} />
       </div>
     );
@@ -26,10 +29,7 @@ export function PropertyPresentation({
   if (presentation.sections.length === 0) {
     return (
       <div className="space-y-6">
-        <PageHeader
-          title={presentation.title}
-          description={presentation.propertyPublicId}
-        />
+        <PageHeader title={presentation.title} description={presentation.propertyPublicId} />
         <EmptyState
           title="Insufficient presentation data"
           description="No broadcast sections are available for this property yet. Charts and metrics appear only from live APIs."
@@ -47,8 +47,13 @@ export function PropertyPresentation({
             {section.available && section.data ? (
               <dl className="space-y-2 text-[calc(0.9rem*var(--broadcast-scale))]">
                 {Object.entries(section.data).map(([key, value]) => (
-                  <div key={key} className="flex flex-wrap justify-between gap-2 border-b border-border/60 py-2 last:border-0">
-                    <dt className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</dt>
+                  <div
+                    key={key}
+                    className="flex flex-wrap justify-between gap-2 border-b border-border/60 py-2 last:border-0"
+                  >
+                    <dt className="text-muted-foreground capitalize">
+                      {key.replace(/([A-Z])/g, ' $1')}
+                    </dt>
                     <dd className="font-medium text-foreground">
                       {value == null
                         ? '—'

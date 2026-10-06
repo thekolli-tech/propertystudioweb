@@ -279,7 +279,7 @@ export class MediaAccessService {
   async requireAdminRead(
     actor: AuthActor,
     permission: Permission,
-    request?: AuthenticatedRequest,
+    _request?: AuthenticatedRequest,
   ): Promise<void> {
     if (
       this.isPlatformAdmin(actor) ||

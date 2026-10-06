@@ -86,11 +86,7 @@ export class MediaCmsService {
       if (!org) {
         return await this.access.deny(actor, body.organizationPublicId, request);
       }
-      const allowed = await this.access.canManageOrganizationMedia(
-        actor,
-        org.id,
-        'media:create',
-      );
+      const allowed = await this.access.canManageOrganizationMedia(actor, org.id, 'media:create');
       if (!allowed) {
         return await this.access.deny(actor, body.organizationPublicId, request);
       }
@@ -375,7 +371,10 @@ export class MediaCmsService {
     await this.access.requireMediaRead(actor, asset, request);
 
     if (asset.mediaType === 'EMBED' || asset.storageKey.startsWith('embed://')) {
-      throw new AppError('VALIDATION_ERROR', 'Embed media does not use object storage access URLs.');
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'Embed media does not use object storage access URLs.',
+      );
     }
 
     const signed = await this.storage.createSignedDownloadUrl(asset.storageKey, 120);

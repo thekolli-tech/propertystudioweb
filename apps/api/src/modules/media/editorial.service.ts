@@ -255,7 +255,7 @@ export class EditorialService {
     request?: AuthenticatedRequest,
   ): Promise<EditorialContentDetail> {
     const editorial = await this.findOrDeny(actor, publicId, request);
-    await this.access.requireEditorialManage(actor, editorial, 'content:moderate', request);
+    await this.access.requireEditorialManage(actor, editorial, 'content:update', request);
     if (editorial.status !== 'IN_REVIEW' && editorial.status !== 'DRAFT') {
       throw new AppError('VALIDATION_ERROR', 'Editorial must be in review (or draft) to approve.');
     }
