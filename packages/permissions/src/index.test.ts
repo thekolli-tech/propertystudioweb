@@ -62,5 +62,23 @@ describe('permissions catalog', () => {
     expect(permissions.has('requirement:read:marketplace')).toBe(false);
     expect(permissions.has('lead:read')).toBe(false);
     expect(permissions.has('admin:requirements:read')).toBe(false);
+    expect(permissions.has('crm:read')).toBe(false);
+  });
+
+  it('grants CRM permissions to developer and agent org roles', () => {
+    const developer = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER',
+    });
+    expect(developer.has('crm:read')).toBe(true);
+    expect(developer.has('crm:leads:assign')).toBe(true);
+    expect(developer.has('crm:deals:create')).toBe(true);
+
+    const staff = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'AGENT_STAFF',
+    });
+    expect(staff.has('crm:contacts:create')).toBe(true);
+    expect(staff.has('crm:followups:update')).toBe(true);
   });
 });

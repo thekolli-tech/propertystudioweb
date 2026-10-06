@@ -61,6 +61,20 @@ export const PERMISSIONS = [
   'lead:assign',
   'admin:requirements:read',
   'admin:leads:read',
+  'crm:read',
+  'crm:contacts:read',
+  'crm:contacts:create',
+  'crm:contacts:update',
+  'crm:leads:assign',
+  'crm:leads:update',
+  'crm:activities:create',
+  'crm:activities:read',
+  'crm:followups:create',
+  'crm:followups:update',
+  'crm:sitevisits:create',
+  'crm:sitevisits:update',
+  'crm:deals:create',
+  'crm:deals:update',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -76,6 +90,23 @@ const MARKETPLACE_PARTICIPANT_PERMISSIONS = [
   'requirement:read:marketplace',
   'lead:read',
   'lead:update',
+] as const satisfies readonly Permission[];
+
+const CRM_PERMISSIONS = [
+  'crm:read',
+  'crm:contacts:read',
+  'crm:contacts:create',
+  'crm:contacts:update',
+  'crm:leads:assign',
+  'crm:leads:update',
+  'crm:activities:create',
+  'crm:activities:read',
+  'crm:followups:create',
+  'crm:followups:update',
+  'crm:sitevisits:create',
+  'crm:sitevisits:update',
+  'crm:deals:create',
+  'crm:deals:update',
 ] as const satisfies readonly Permission[];
 
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
@@ -104,6 +135,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'lead:assign',
     'admin:requirements:read',
     'admin:leads:read',
+    ...CRM_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -134,6 +166,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'community:update',
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     'lead:assign',
+    ...CRM_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -147,16 +180,17 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'community:create',
     'community:update',
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
+    ...CRM_PERMISSIONS,
   ],
-  // Agency roles: org management + marketplace lead participation (verification enforced in services).
   AGENT: [
     'organization:read',
     'organization:manage',
     'organization:members:manage',
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     'lead:assign',
+    ...CRM_PERMISSIONS,
   ],
-  AGENT_STAFF: ['organization:read', ...MARKETPLACE_PARTICIPANT_PERMISSIONS],
+  AGENT_STAFF: ['organization:read', ...MARKETPLACE_PARTICIPANT_PERMISSIONS, ...CRM_PERMISSIONS],
 };
 
 /** Persona grants for demand-side requirement ownership (Phase 7). */

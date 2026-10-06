@@ -1455,7 +1455,7 @@ export class CrmService {
       matchExplanation: lead.matchExplanation,
       source: lead.source as 'REQUIREMENT_MARKETPLACE',
       status: lead.status as LeadStatus,
-      priority: lead.priority as 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT',
+      priority: lead.priority as 'LOW' | 'NORMAL' | 'HIGH',
       requirement: toPublicRequirementSummary(lead.requirement),
       assignedAt: toIso(lead.assignedAt),
       firstViewedAt: toIso(lead.firstViewedAt),

@@ -10,6 +10,8 @@ describe('formatPublicId', () => {
     expect(formatPublicId('AGT', 1)).toBe('PS-AGT-000001');
     expect(formatPublicId('REQ', 1)).toBe('PS-REQ-000001');
     expect(formatPublicId('LEAD', 1)).toBe('PS-LEAD-000001');
+    expect(formatPublicId('CONTACT', 1)).toBe('PS-CONTACT-000001');
+    expect(formatPublicId('DEAL', 1)).toBe('PS-DEAL-000001');
   });
 
   it('does not truncate numbers beyond 6 digits', () => {

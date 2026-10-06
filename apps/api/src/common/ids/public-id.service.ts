@@ -53,6 +53,26 @@ export class PublicIdService {
     return this.next('LEAD');
   }
 
+  async nextContactPublicId(): Promise<string> {
+    return this.next('CONTACT');
+  }
+
+  async nextActivityPublicId(): Promise<string> {
+    return this.next('ACT');
+  }
+
+  async nextTaskPublicId(): Promise<string> {
+    return this.next('TASK');
+  }
+
+  async nextVisitPublicId(): Promise<string> {
+    return this.next('VISIT');
+  }
+
+  async nextDealPublicId(): Promise<string> {
+    return this.next('DEAL');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(
