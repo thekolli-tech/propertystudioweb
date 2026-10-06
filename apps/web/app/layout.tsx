@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Fraunces } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { BroadcastModeProvider } from '@property-studio/ui';
 
 import './globals.css';
 
-const display = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-display',
-});
-
-const body = DM_Sans({
+/**
+ * Mockup uses a professional sans-serif system.
+ * Single family avoids Turbopack multi-font google loader issues while preserving
+ * clear display vs body hierarchy via weight.
+ */
+const sans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-body',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +28,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-IN">
-      <body className={`${display.variable} ${body.variable} antialiased`}>
+      <body
+        className={`${sans.variable} antialiased`}
+        style={{ ['--font-display' as string]: 'var(--font-body)' }}
+      >
         <BroadcastModeProvider>{children}</BroadcastModeProvider>
       </body>
     </html>

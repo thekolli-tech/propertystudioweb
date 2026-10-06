@@ -1,30 +1,18 @@
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { AppShell } from '@property-studio/ui';
 
-import { AppHeader } from '@/components/app-header';
-import { createServerApiClient } from '@/lib/api';
-import { getRequestCookieHeader, getSessionUser } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 
-export default async function ApplicationLayout({ children }: { children: ReactNode }) {
+/**
+ * Authenticated /app root. Shells live in nested layouts:
+ * - (workspace) → consumer / org AppShell
+ * - property-admin → dedicated Property Admin DashboardShell
+ */
+export default async function ApplicationRootLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) {
     redirect('/login?next=/app');
   }
 
-  const cookieHeader = await getRequestCookieHeader();
-  let organizations: Awaited<
-    ReturnType<ReturnType<typeof createServerApiClient>['listOrganizations']>
-  >['organizations'] = [];
-  try {
-    const client = createServerApiClient(cookieHeader);
-    const result = await client.listOrganizations();
-    organizations = result.organizations;
-  } catch {
-    organizations = [];
-  }
-
-  return (
-    <AppShell header={<AppHeader user={user} organizations={organizations} />}>{children}</AppShell>
-  );
+  return children;
 }

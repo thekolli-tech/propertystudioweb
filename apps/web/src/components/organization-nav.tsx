@@ -2,6 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
+import {
+  CreditCard,
+  FileText,
+  FolderKanban,
+  Home,
+  LayoutDashboard,
+  Settings,
+  ShieldCheck,
+  Users,
+  UsersRound,
+  ClipboardList,
+  Inbox,
+} from 'lucide-react';
 import { cn } from '@property-studio/ui';
 
 export type OrganizationNavProps = {
@@ -9,27 +23,35 @@ export type OrganizationNavProps = {
   organizationType: 'DEVELOPER' | 'AGENCY';
 };
 
-const DEVELOPER_ITEMS: Array<{ segment: string; label: string }> = [
-  { segment: '', label: 'Overview' },
-  { segment: 'projects', label: 'Projects' },
-  { segment: 'properties', label: 'Properties' },
-  { segment: 'community', label: 'Community' },
-  { segment: 'leads', label: 'Leads' },
-  { segment: 'team', label: 'Team' },
-  { segment: 'documents', label: 'Documents' },
-  { segment: 'billing', label: 'Billing' },
-  { segment: 'settings', label: 'Settings' },
+type NavItem = {
+  segment: string;
+  label: string;
+  icon: ReactNode;
+  comingSoon?: boolean;
+};
+
+const DEVELOPER_ITEMS: NavItem[] = [
+  { segment: '', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
+  { segment: 'projects', label: 'Projects', icon: <FolderKanban className="h-4 w-4" /> },
+  { segment: 'properties', label: 'Properties', icon: <Home className="h-4 w-4" /> },
+  { segment: 'community', label: 'Community', icon: <UsersRound className="h-4 w-4" /> },
+  { segment: 'leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
+  { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
+  { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
+  { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+  { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
+  { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
 ];
 
-const AGENCY_ITEMS: Array<{ segment: string; label: string }> = [
-  { segment: '', label: 'Overview' },
-  { segment: 'properties', label: 'Properties' },
-  { segment: 'requirements', label: 'Requirements' },
-  { segment: 'leads', label: 'Leads' },
-  { segment: 'team', label: 'Team' },
-  { segment: 'verification', label: 'Verification' },
-  { segment: 'documents', label: 'Documents' },
-  { segment: 'settings', label: 'Settings' },
+const AGENCY_ITEMS: NavItem[] = [
+  { segment: '', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
+  { segment: 'properties', label: 'Properties', icon: <Home className="h-4 w-4" /> },
+  { segment: 'requirements', label: 'Requirements', icon: <ClipboardList className="h-4 w-4" /> },
+  { segment: 'leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
+  { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
+  { segment: 'verification', label: 'Verification', icon: <ShieldCheck className="h-4 w-4" /> },
+  { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+  { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
 ];
 
 export function OrganizationNav({ orgPublicId, organizationType }: OrganizationNavProps) {
@@ -42,18 +64,34 @@ export function OrganizationNav({ orgPublicId, organizationType }: OrganizationN
       {items.map((item) => {
         const href = item.segment ? `${base}/${item.segment}` : base;
         const active = item.segment === '' ? pathname === base : pathname.startsWith(href);
+        if (item.comingSoon) {
+          return (
+            <span
+              key={href}
+              className="flex cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted-foreground opacity-60"
+              title="Coming soon"
+            >
+              {item.icon}
+              <span>{item.label}</span>
+              <span className="ml-auto hidden text-[10px] uppercase tracking-wide lg:inline">
+                Soon
+              </span>
+            </span>
+          );
+        }
         return (
           <Link
             key={href}
             href={href}
             className={cn(
-              'whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors',
+              'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors',
               active
-                ? 'bg-accent font-medium text-accent-foreground'
+                ? 'bg-secondary font-medium text-foreground'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
-            {item.label}
+            {item.icon}
+            <span>{item.label}</span>
           </Link>
         );
       })}

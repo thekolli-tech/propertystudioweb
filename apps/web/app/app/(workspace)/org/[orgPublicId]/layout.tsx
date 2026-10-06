@@ -62,10 +62,10 @@ export default async function OrganizationLayout({ children, params }: LayoutPro
   }
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row">
+    <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
       <aside className="w-full shrink-0 lg:w-56">
-        <div className="rounded-lg border border-border bg-card p-2 lg:sticky lg:top-20 lg:border-0 lg:bg-transparent lg:p-0">
-          <p className="mb-2 px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase lg:px-0">
+        <div className="rounded-[var(--radius)] border border-border bg-card p-2 ps-card-elevated lg:sticky lg:top-20 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+          <p className="mb-2 px-3 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase lg:px-0">
             {organization.name}
           </p>
           <div className="flex gap-1 overflow-x-auto lg:block lg:overflow-visible">
