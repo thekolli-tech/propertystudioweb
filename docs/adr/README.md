@@ -24,3 +24,5 @@ Approved architecture decisions for Property Studio V3.
 | [0018](0018-demand-marketplace.md) | Demand marketplace and lead foundation |
 | [0019](0019-crm-lead-operations.md) | CRM and lead operations |
 | [0020](0020-money-monetization.md) | Money, subscriptions, and monetization |
+| [0021](0021-trust-verification-communication.md) | Trust, verification, and communication |
+| [0022](0022-intelligence-ai-foundation.md) | Intelligence and AI foundation |

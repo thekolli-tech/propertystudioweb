@@ -226,6 +226,13 @@ describe('Phase 10 trust verification communication security', () => {
     await prisma.$executeRawUnsafe(
       'ALTER TABLE audit_events ENABLE TRIGGER audit_events_no_delete',
     );
+    await prisma.$executeRawUnsafe('DELETE FROM valuation_estimates');
+    await prisma.$executeRawUnsafe('DELETE FROM floor_plan_analyses');
+    await prisma.$executeRawUnsafe('DELETE FROM document_analyses');
+    await prisma.$executeRawUnsafe('DELETE FROM ai_jobs');
+    await prisma.$executeRawUnsafe('DELETE FROM intelligence_observations');
+    await prisma.$executeRawUnsafe('DELETE FROM infrastructure_assets');
+    await prisma.$executeRawUnsafe('DELETE FROM market_snapshots');
     for (const table of PHASE10_DELETE_ORDER) {
       await prisma.$executeRawUnsafe(`DELETE FROM ${table}`);
     }
