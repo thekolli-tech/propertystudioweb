@@ -2,8 +2,13 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import {
+  IntelligencePanel,
+  propertyIntelligenceToPanelProps,
+} from '@/components/intelligence/intelligence-panel';
 import { VerifiedBadge } from '@/components/verified-badge';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
+import { getRequestCookieHeader } from '@/lib/auth';
 import { isPublicIdForKind } from '@/lib/public-id';
 import {
   Badge,
@@ -33,9 +38,12 @@ export default async function PublicPropertyPage({ params }: PageProps) {
     notFound();
   }
 
-  let property: Awaited<ReturnType<ReturnType<typeof createServerApiClient>['getPublicProperty']>>;
+  const cookie = await getRequestCookieHeader();
+  const client = createServerApiClient(cookie);
+
+  let property: Awaited<ReturnType<typeof client.getPublicProperty>>;
   try {
-    property = await createServerApiClient().getPublicProperty(publicId);
+    property = await client.getPublicProperty(publicId);
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 404) {
       notFound();
@@ -44,10 +52,17 @@ export default async function PublicPropertyPage({ params }: PageProps) {
   }
 
   const related = property.projectPublicId
-    ? await createServerApiClient()
+    ? await client
         .listPublicProperties({ projectPublicId: property.projectPublicId, limit: 3 })
         .catch(() => ({ properties: [], nextCursor: null }))
     : { properties: [], nextCursor: null };
+
+  let intelligence: Awaited<ReturnType<typeof client.getPropertyIntelligence>> | null = null;
+  try {
+    intelligence = await client.getPropertyIntelligence(publicId);
+  } catch {
+    intelligence = null;
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
@@ -234,6 +249,15 @@ export default async function PublicPropertyPage({ params }: PageProps) {
               )}
             </TabsContent>
           </Tabs>
+
+          {intelligence ? (
+            <IntelligencePanel {...propertyIntelligenceToPanelProps(intelligence)} />
+          ) : (
+            <IntelligencePanel
+              unavailable
+              unavailableMessage="Market intelligence is not available for this locality yet."
+            />
+          )}
         </div>
 
         <aside className="h-fit space-y-4 rounded-[var(--radius)] border border-border bg-card p-5 ps-card-elevated lg:sticky lg:top-20">

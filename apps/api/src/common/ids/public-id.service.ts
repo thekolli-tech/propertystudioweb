@@ -141,6 +141,34 @@ export class PublicIdService {
     return this.next('CRPT');
   }
 
+  async nextMarketSnapshotPublicId(): Promise<string> {
+    return this.next('MSNAP');
+  }
+
+  async nextInfrastructurePublicId(): Promise<string> {
+    return this.next('INFRA');
+  }
+
+  async nextIntelligenceObservationPublicId(): Promise<string> {
+    return this.next('IOBS');
+  }
+
+  async nextAiJobPublicId(): Promise<string> {
+    return this.next('AIJOB');
+  }
+
+  async nextDocumentAnalysisPublicId(): Promise<string> {
+    return this.next('DOCA');
+  }
+
+  async nextFloorPlanAnalysisPublicId(): Promise<string> {
+    return this.next('FPA');
+  }
+
+  async nextValuationEstimatePublicId(): Promise<string> {
+    return this.next('VAL');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

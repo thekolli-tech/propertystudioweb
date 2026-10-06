@@ -82,6 +82,13 @@ describe('Phase 8 CRM lead operations security', () => {
     await prisma.$executeRawUnsafe(
       'ALTER TABLE audit_events ENABLE TRIGGER audit_events_no_delete',
     );
+    await prisma.$executeRawUnsafe('DELETE FROM valuation_estimates');
+    await prisma.$executeRawUnsafe('DELETE FROM floor_plan_analyses');
+    await prisma.$executeRawUnsafe('DELETE FROM document_analyses');
+    await prisma.$executeRawUnsafe('DELETE FROM ai_jobs');
+    await prisma.$executeRawUnsafe('DELETE FROM intelligence_observations');
+    await prisma.$executeRawUnsafe('DELETE FROM infrastructure_assets');
+    await prisma.$executeRawUnsafe('DELETE FROM market_snapshots');
     await prisma.$executeRawUnsafe('DELETE FROM messages');
     await prisma.$executeRawUnsafe('DELETE FROM conversation_participants');
     await prisma.$executeRawUnsafe('DELETE FROM conversations');

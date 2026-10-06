@@ -159,6 +159,32 @@ import {
   verificationCaseListResponseSchema,
   verificationDocumentAccessSchema,
   verificationDocumentSummarySchema,
+  aiAssistantRequestSchema,
+  aiAssistantResponseSchema,
+  aiDocumentAnalysisRequestSchema,
+  aiDocumentAnalysisResponseSchema,
+  aiFloorPlanAnalysisRequestSchema,
+  aiFloorPlanAnalysisResponseSchema,
+  aiJobSummarySchema,
+  aiPropertyMatchRequestSchema,
+  aiPropertyMatchResponseSchema,
+  aiPropertySearchRequestSchema,
+  aiPropertySearchResponseSchema,
+  aiValuationRequestSchema,
+  aiValuationResponseSchema,
+  infrastructureListResponseSchema,
+  infrastructureQuerySchema,
+  intelligenceCompareRequestSchema,
+  intelligenceCompareResponseSchema,
+  intelligenceMatchRequestSchema,
+  intelligenceMatchResponseSchema,
+  intelligenceObservationListQuerySchema,
+  intelligenceObservationListResponseSchema,
+  marketQuerySchema,
+  marketSnapshotListResponseSchema,
+  marketTrendResponseSchema,
+  projectIntelligenceDetailSchema,
+  propertyIntelligenceDetailSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -319,6 +345,32 @@ import {
   type VerificationDocumentAccess,
   type VerificationDocumentSummary,
   type ReviewSubjectType,
+  type AiAssistantRequest,
+  type AiAssistantResponse,
+  type AiDocumentAnalysisRequest,
+  type AiDocumentAnalysisResponse,
+  type AiFloorPlanAnalysisRequest,
+  type AiFloorPlanAnalysisResponse,
+  type AiJobSummary,
+  type AiPropertyMatchRequest,
+  type AiPropertyMatchResponse,
+  type AiPropertySearchRequest,
+  type AiPropertySearchResponse,
+  type AiValuationRequest,
+  type AiValuationResponse,
+  type InfrastructureListResponse,
+  type InfrastructureQuery,
+  type IntelligenceCompareRequest,
+  type IntelligenceCompareResponse,
+  type IntelligenceMatchRequest,
+  type IntelligenceMatchResponse,
+  type IntelligenceObservationListQuery,
+  type IntelligenceObservationListResponse,
+  type MarketQuery,
+  type MarketSnapshotListResponse,
+  type MarketTrendResponse,
+  type ProjectIntelligenceDetail,
+  type PropertyIntelligenceDetail,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -1597,6 +1649,202 @@ export class ApiClient {
       leadContactRevealResponseSchema,
       { method: 'POST', body: JSON.stringify(body) },
     );
+  }
+
+  // --- Phase 11: intelligence ---
+
+  async getPropertyIntelligence(publicId: string): Promise<PropertyIntelligenceDetail> {
+    return this.request(
+      `/api/v1/intelligence/properties/${encodeURIComponent(publicId)}`,
+      propertyIntelligenceDetailSchema,
+    );
+  }
+
+  async getProjectIntelligence(publicId: string): Promise<ProjectIntelligenceDetail> {
+    return this.request(
+      `/api/v1/intelligence/projects/${encodeURIComponent(publicId)}`,
+      projectIntelligenceDetailSchema,
+    );
+  }
+
+  async listMarketSnapshots(query: Partial<MarketQuery> = {}): Promise<MarketSnapshotListResponse> {
+    const parsed = marketQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.city) params.set('city', parsed.city);
+    if (parsed.locality) params.set('locality', parsed.locality);
+    if (parsed.microMarket) params.set('microMarket', parsed.microMarket);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.subjectKey) params.set('subjectKey', parsed.subjectKey);
+    if (parsed.propertyPublicId) params.set('propertyPublicId', parsed.propertyPublicId);
+    if (parsed.projectPublicId) params.set('projectPublicId', parsed.projectPublicId);
+    return this.request(
+      `/api/v1/intelligence/market?${params.toString()}`,
+      marketSnapshotListResponseSchema,
+    );
+  }
+
+  async getMarketTrend(query: Partial<MarketQuery> = {}): Promise<MarketTrendResponse> {
+    const parsed = marketQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.city) params.set('city', parsed.city);
+    if (parsed.locality) params.set('locality', parsed.locality);
+    if (parsed.microMarket) params.set('microMarket', parsed.microMarket);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.subjectKey) params.set('subjectKey', parsed.subjectKey);
+    if (parsed.propertyPublicId) params.set('propertyPublicId', parsed.propertyPublicId);
+    if (parsed.projectPublicId) params.set('projectPublicId', parsed.projectPublicId);
+    return this.request(
+      `/api/v1/intelligence/market/trend?${params.toString()}`,
+      marketTrendResponseSchema,
+    );
+  }
+
+  async listInfrastructure(
+    query: Partial<InfrastructureQuery> = {},
+  ): Promise<InfrastructureListResponse> {
+    const parsed = infrastructureQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.city) params.set('city', parsed.city);
+    if (parsed.locality) params.set('locality', parsed.locality);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(
+      `/api/v1/intelligence/infrastructure?${params.toString()}`,
+      infrastructureListResponseSchema,
+    );
+  }
+
+  async compareIntelligence(
+    input: IntelligenceCompareRequest,
+  ): Promise<IntelligenceCompareResponse> {
+    const body = intelligenceCompareRequestSchema.parse(input);
+    return this.request('/api/v1/intelligence/compare', intelligenceCompareResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async matchIntelligence(input: IntelligenceMatchRequest): Promise<IntelligenceMatchResponse> {
+    const body = intelligenceMatchRequestSchema.parse(input);
+    return this.request('/api/v1/intelligence/match', intelligenceMatchResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAdminMarketSnapshots(
+    query: Partial<MarketQuery> = {},
+  ): Promise<MarketSnapshotListResponse> {
+    const parsed = marketQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.city) params.set('city', parsed.city);
+    if (parsed.locality) params.set('locality', parsed.locality);
+    if (parsed.microMarket) params.set('microMarket', parsed.microMarket);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.subjectKey) params.set('subjectKey', parsed.subjectKey);
+    if (parsed.propertyPublicId) params.set('propertyPublicId', parsed.propertyPublicId);
+    if (parsed.projectPublicId) params.set('projectPublicId', parsed.projectPublicId);
+    return this.request(
+      `/api/v1/admin/intelligence/market?${params.toString()}`,
+      marketSnapshotListResponseSchema,
+    );
+  }
+
+  async listAdminInfrastructure(
+    query: Partial<InfrastructureQuery> = {},
+  ): Promise<InfrastructureListResponse> {
+    const parsed = infrastructureQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.city) params.set('city', parsed.city);
+    if (parsed.locality) params.set('locality', parsed.locality);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(
+      `/api/v1/admin/intelligence/infrastructure?${params.toString()}`,
+      infrastructureListResponseSchema,
+    );
+  }
+
+  async listAdminIntelligenceObservations(
+    query: Partial<IntelligenceObservationListQuery> = {},
+  ): Promise<IntelligenceObservationListResponse> {
+    const parsed = intelligenceObservationListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.subjectKey) params.set('subjectKey', parsed.subjectKey);
+    if (parsed.observationKey) params.set('observationKey', parsed.observationKey);
+    return this.request(
+      `/api/v1/admin/intelligence/observations?${params.toString()}`,
+      intelligenceObservationListResponseSchema,
+    );
+  }
+
+  // --- Phase 11: AI ---
+
+  async aiAssistant(input: AiAssistantRequest): Promise<AiAssistantResponse> {
+    const body = aiAssistantRequestSchema.parse(input);
+    return this.request('/api/v1/ai/assistant', aiAssistantResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async aiPropertyMatch(input: AiPropertyMatchRequest): Promise<AiPropertyMatchResponse> {
+    const body = aiPropertyMatchRequestSchema.parse(input);
+    return this.request('/api/v1/ai/property-match', aiPropertyMatchResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async aiDocumentAnalysis(input: AiDocumentAnalysisRequest): Promise<AiDocumentAnalysisResponse> {
+    const body = aiDocumentAnalysisRequestSchema.parse(input);
+    return this.request('/api/v1/ai/document-analysis', aiDocumentAnalysisResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async aiFloorPlanAnalysis(
+    input: AiFloorPlanAnalysisRequest,
+  ): Promise<AiFloorPlanAnalysisResponse> {
+    const body = aiFloorPlanAnalysisRequestSchema.parse(input);
+    return this.request('/api/v1/ai/floorplan-analysis', aiFloorPlanAnalysisResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async aiValuation(input: AiValuationRequest): Promise<AiValuationResponse> {
+    const body = aiValuationRequestSchema.parse(input);
+    return this.request('/api/v1/ai/valuation', aiValuationResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async aiPropertySearch(input: AiPropertySearchRequest): Promise<AiPropertySearchResponse> {
+    const body = aiPropertySearchRequestSchema.parse(input);
+    return this.request('/api/v1/ai/property-search', aiPropertySearchResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getAiJob(publicId: string): Promise<AiJobSummary> {
+    return this.request(`/api/v1/ai/jobs/${encodeURIComponent(publicId)}`, aiJobSummarySchema);
   }
 
   private async request<T>(

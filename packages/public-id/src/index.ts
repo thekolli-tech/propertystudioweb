@@ -32,6 +32,13 @@ export const PUBLIC_ID_PREFIXES = {
   MSG: 'MSG',
   LACC: 'LACC',
   CRPT: 'CRPT',
+  MSNAP: 'MSNAP',
+  INFRA: 'INFRA',
+  IOBS: 'IOBS',
+  AIJOB: 'AIJOB',
+  DOCA: 'DOCA',
+  FPA: 'FPA',
+  VAL: 'VAL',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -125,7 +132,14 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'CONV'
   | 'MSG'
   | 'LACC'
-  | 'CRPT',
+  | 'CRPT'
+  | 'MSNAP'
+  | 'INFRA'
+  | 'IOBS'
+  | 'AIJOB'
+  | 'DOCA'
+  | 'FPA'
+  | 'VAL',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -161,4 +175,11 @@ export const PUBLIC_ID_SEQUENCES: Record<
   MSG: 'public_id_msg_seq',
   LACC: 'public_id_lacc_seq',
   CRPT: 'public_id_crpt_seq',
+  MSNAP: 'public_id_msnap_seq',
+  INFRA: 'public_id_infra_seq',
+  IOBS: 'public_id_iobs_seq',
+  AIJOB: 'public_id_aijob_seq',
+  DOCA: 'public_id_doca_seq',
+  FPA: 'public_id_fpa_seq',
+  VAL: 'public_id_val_seq',
 };

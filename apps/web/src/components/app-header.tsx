@@ -17,6 +17,7 @@ const APP_NAV: Array<{ href: string; label: string; exact?: boolean }> = [
   { href: '/app/saved', label: 'Saved' },
   { href: '/app/messages', label: 'Messages' },
   { href: '/app/inbox', label: 'Inbox' },
+  { href: '/app/ai', label: 'AI' },
   { href: '/app/me', label: 'Profile' },
 ];
 

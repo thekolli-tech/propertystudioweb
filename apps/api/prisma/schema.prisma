@@ -498,6 +498,72 @@ enum ContentReportStatus {
   DISMISSED
 }
 
+enum IntelligenceSubjectType {
+  PROPERTY
+  PROJECT
+  LOCALITY
+  CITY
+  MICRO_MARKET
+}
+
+enum IntelligenceDataState {
+  READY
+  INSUFFICIENT_DATA
+  UNAVAILABLE
+}
+
+enum IntelligenceSourceType {
+  INTERNAL_CATALOG
+  MANUAL_ADMIN
+  EXTERNAL_PROVIDER
+  MARKET_OBSERVATION
+  DERIVED
+}
+
+enum InfrastructureCategory {
+  ROAD
+  METRO
+  AIRPORT
+  HOSPITAL
+  SCHOOL
+  SHOPPING
+  IT_PARK
+  UPCOMING
+  OTHER
+}
+
+enum InfrastructureStatus {
+  PLANNED
+  UNDER_CONSTRUCTION
+  OPERATIONAL
+  UNKNOWN
+}
+
+enum AiJobType {
+  ASSISTANT
+  PROPERTY_MATCH
+  DOCUMENT_ANALYSIS
+  FLOORPLAN_ANALYSIS
+  VALUATION
+  PROPERTY_SEARCH
+  COMPARE
+}
+
+enum AiJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DocumentAnalysisFindingKind {
+  EXTRACTED_FACT
+  POTENTIAL_INCONSISTENCY
+  MISSING_INFORMATION
+  MODEL_OBSERVATION
+}
+
 
 model User {
   id              String        @id @db.Uuid
@@ -533,6 +599,10 @@ model User {
   reviewReports ReviewReport[] @relation("ReviewReporter")
   leadAccessGrants LeadAccessGrant[]
   contentReports ContentReport[] @relation("ContentReporter")
+  aiJobs AiJob[]
+  documentAnalyses DocumentAnalysis[]
+  floorPlanAnalyses FloorPlanAnalysis[]
+  valuationEstimates ValuationEstimate[]
 
   @@map("users")
 }
@@ -624,6 +694,11 @@ model Organization {
   reviews             Review[]
   conversations       Conversation[]
   leadAccessGrants    LeadAccessGrant[]
+  marketSnapshots     MarketSnapshot[]
+  infrastructureAssets InfrastructureAsset[]
+  intelligenceObservations IntelligenceObservation[]
+  aiJobs              AiJob[]
+  valuationEstimates  ValuationEstimate[]
 
   @@map("organizations")
 }
@@ -961,6 +1036,8 @@ model DocumentAsset {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   verificationDocuments VerificationDocument[]
+  documentAnalyses DocumentAnalysis[]
+  floorPlanAnalyses FloorPlanAnalysis[]
 
   @@index([organizationId])
   @@index([entityType, entityId])
@@ -1802,3 +1879,220 @@ model ContentReport {
   @@map("content_reports")
 }
 
+
+model MarketSnapshot {
+  id                 String                  @id @db.Uuid
+  publicId           String                  @unique @map("public_id") @db.VarChar(32)
+  organizationId     String?                 @map("organization_id") @db.Uuid
+  subjectType        IntelligenceSubjectType @map("subject_type")
+  subjectKey         String                  @map("subject_key") @db.VarChar(160)
+  propertyId         String?                 @map("property_id") @db.Uuid
+  projectId          String?                 @map("project_id") @db.Uuid
+  city               String?                 @db.VarChar(80)
+  locality           String?                 @db.VarChar(120)
+  microMarket        String?                 @map("micro_market") @db.VarChar(120)
+  medianPriceMinor   BigInt?                 @map("median_price_minor")
+  medianPricePerSqftMinor BigInt?            @map("median_price_per_sqft_minor")
+  currency           String                  @default("INR") @db.VarChar(3)
+  inventorySignal    String?                 @map("inventory_signal") @db.VarChar(64)
+  demandSignal       String?                 @map("demand_signal") @db.VarChar(64)
+  rentalYieldBps     Int?                    @map("rental_yield_bps")
+  appreciationBps    Int?                    @map("appreciation_bps")
+  coverageState      IntelligenceDataState   @default(INSUFFICIENT_DATA) @map("coverage_state")
+  sourceType         IntelligenceSourceType  @map("source_type")
+  sourceReference    String?                 @map("source_reference") @db.VarChar(320)
+  observedAt         DateTime                @map("observed_at") @db.Timestamptz(3)
+  effectiveAt        DateTime?               @map("effective_at") @db.Timestamptz(3)
+  confidenceBps      Int?                    @map("confidence_bps")
+  metadata           Json?
+  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy          String?                 @map("created_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([subjectType, subjectKey])
+  @@index([city, locality])
+  @@index([microMarket])
+  @@index([propertyId])
+  @@index([projectId])
+  @@index([observedAt])
+  @@index([organizationId])
+  @@map("market_snapshots")
+}
+
+model InfrastructureAsset {
+  id              String                 @id @db.Uuid
+  publicId        String                 @unique @map("public_id") @db.VarChar(32)
+  organizationId  String?                @map("organization_id") @db.Uuid
+  name            String                 @db.VarChar(200)
+  category        InfrastructureCategory
+  status          InfrastructureStatus   @default(UNKNOWN)
+  city            String?                @db.VarChar(80)
+  locality        String?                @db.VarChar(120)
+  addressLine     String?                @map("address_line") @db.VarChar(320)
+  latitude        Decimal?               @db.Decimal(10, 7)
+  longitude       Decimal?               @db.Decimal(10, 7)
+  expectedAt      DateTime?              @map("expected_at") @db.Date
+  actualAt        DateTime?              @map("actual_at") @db.Date
+  sourceType      IntelligenceSourceType @map("source_type")
+  sourceReference String?                @map("source_reference") @db.VarChar(320)
+  sourceUrl       String?                @map("source_url") @db.VarChar(512)
+  lastVerifiedAt  DateTime?              @map("last_verified_at") @db.Timestamptz(3)
+  confidenceBps   Int?                   @map("confidence_bps")
+  metadata        Json?
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       String?                @map("created_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([status])
+  @@index([city, locality])
+  @@index([organizationId])
+  @@map("infrastructure_assets")
+}
+
+model IntelligenceObservation {
+  id              String                  @id @db.Uuid
+  publicId        String                  @unique @map("public_id") @db.VarChar(32)
+  organizationId  String?                 @map("organization_id") @db.Uuid
+  subjectType     IntelligenceSubjectType @map("subject_type")
+  subjectId       String?                 @map("subject_id") @db.Uuid
+  subjectKey      String                  @map("subject_key") @db.VarChar(160)
+  observationKey  String                  @map("observation_key") @db.VarChar(120)
+  valueJson       Json                    @map("value_json")
+  coverageState   IntelligenceDataState   @default(INSUFFICIENT_DATA) @map("coverage_state")
+  sourceType      IntelligenceSourceType  @map("source_type")
+  sourceReference String?                 @map("source_reference") @db.VarChar(320)
+  observedAt      DateTime                @map("observed_at") @db.Timestamptz(3)
+  effectiveAt     DateTime?               @map("effective_at") @db.Timestamptz(3)
+  confidenceBps   Int?                    @map("confidence_bps")
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy       String?                 @map("created_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([subjectType, subjectKey])
+  @@index([subjectType, subjectId])
+  @@index([observationKey])
+  @@index([observedAt])
+  @@index([organizationId])
+  @@map("intelligence_observations")
+}
+
+model AiJob {
+  id             String      @id @db.Uuid
+  publicId       String      @unique @map("public_id") @db.VarChar(32)
+  organizationId String?     @map("organization_id") @db.Uuid
+  actorUserId    String      @map("actor_user_id") @db.Uuid
+  type           AiJobType
+  status         AiJobStatus @default(PENDING)
+  provider       String      @default("DETERMINISTIC") @db.VarChar(64)
+  inputJson      Json        @map("input_json")
+  outputJson     Json?       @map("output_json")
+  errorMessage   String?     @map("error_message") @db.VarChar(1000)
+  coverageState  IntelligenceDataState @default(INSUFFICIENT_DATA) @map("coverage_state")
+  startedAt      DateTime?   @map("started_at") @db.Timestamptz(3)
+  completedAt    DateTime?   @map("completed_at") @db.Timestamptz(3)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actorUser    User          @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  documentAnalyses DocumentAnalysis[]
+  floorPlanAnalyses FloorPlanAnalysis[]
+  valuationEstimates ValuationEstimate[]
+
+  @@index([actorUserId])
+  @@index([organizationId])
+  @@index([type, status])
+  @@index([createdAt])
+  @@map("ai_jobs")
+}
+
+model DocumentAnalysis {
+  id              String       @id @db.Uuid
+  publicId        String       @unique @map("public_id") @db.VarChar(32)
+  aiJobId         String       @map("ai_job_id") @db.Uuid
+  documentAssetId String       @map("document_asset_id") @db.Uuid
+  actorUserId     String       @map("actor_user_id") @db.Uuid
+  status          AiJobStatus  @default(PENDING)
+  findingsJson    Json?        @map("findings_json")
+  warningsJson    Json?        @map("warnings_json")
+  coverageState   IntelligenceDataState @default(INSUFFICIENT_DATA) @map("coverage_state")
+  disclaimer      String       @default("Informational only. Not legal verification.") @db.VarChar(320)
+  analyzedAt      DateTime?    @map("analyzed_at") @db.Timestamptz(3)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  aiJob         AiJob         @relation(fields: [aiJobId], references: [id], onDelete: Cascade)
+  documentAsset DocumentAsset @relation(fields: [documentAssetId], references: [id], onDelete: Restrict)
+  actorUser     User          @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([aiJobId])
+  @@index([documentAssetId])
+  @@index([actorUserId])
+  @@index([status])
+  @@map("document_analyses")
+}
+
+model FloorPlanAnalysis {
+  id              String      @id @db.Uuid
+  publicId        String      @unique @map("public_id") @db.VarChar(32)
+  aiJobId         String      @map("ai_job_id") @db.Uuid
+  documentAssetId String?     @map("document_asset_id") @db.Uuid
+  actorUserId     String      @map("actor_user_id") @db.Uuid
+  status          AiJobStatus @default(PENDING)
+  observationsJson Json?      @map("observations_json")
+  uncertaintyNotes String?    @map("uncertainty_notes") @db.VarChar(2000)
+  coverageState   IntelligenceDataState @default(INSUFFICIENT_DATA) @map("coverage_state")
+  disclaimer      String      @default("Informational observations only. Not architectural certification.") @db.VarChar(320)
+  analyzedAt      DateTime?   @map("analyzed_at") @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  aiJob         AiJob          @relation(fields: [aiJobId], references: [id], onDelete: Cascade)
+  documentAsset DocumentAsset? @relation(fields: [documentAssetId], references: [id], onDelete: Restrict)
+  actorUser     User           @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([aiJobId])
+  @@index([documentAssetId])
+  @@index([actorUserId])
+  @@index([status])
+  @@map("floor_plan_analyses")
+}
+
+model ValuationEstimate {
+  id               String     @id @db.Uuid
+  publicId         String     @unique @map("public_id") @db.VarChar(32)
+  aiJobId          String?    @map("ai_job_id") @db.Uuid
+  organizationId   String?    @map("organization_id") @db.Uuid
+  actorUserId      String     @map("actor_user_id") @db.Uuid
+  propertyId       String?    @map("property_id") @db.Uuid
+  projectId        String?    @map("project_id") @db.Uuid
+  coverageState    IntelligenceDataState @default(INSUFFICIENT_DATA) @map("coverage_state")
+  lowEstimateMinor BigInt?    @map("low_estimate_minor")
+  highEstimateMinor BigInt?   @map("high_estimate_minor")
+  midpointMinor    BigInt?    @map("midpoint_minor")
+  currency         String     @default("INR") @db.VarChar(3)
+  confidenceBps    Int?       @map("confidence_bps")
+  factorsJson      Json?      @map("factors_json")
+  comparablesJson  Json?      @map("comparables_json")
+  disclaimer       String     @default("Estimate/range only. Not a guaranteed market value.") @db.VarChar(320)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  aiJob        AiJob?         @relation(fields: [aiJobId], references: [id], onDelete: SetNull)
+  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actorUser    User           @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([propertyId])
+  @@index([projectId])
+  @@index([actorUserId])
+  @@index([organizationId])
+  @@index([coverageState])
+  @@map("valuation_estimates")
+}
