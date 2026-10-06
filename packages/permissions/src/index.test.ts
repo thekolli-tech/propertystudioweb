@@ -81,4 +81,27 @@ describe('permissions catalog', () => {
     expect(staff.has('crm:contacts:create')).toBe(true);
     expect(staff.has('crm:followups:update')).toBe(true);
   });
+
+  it('grants billing permissions to org owners but not PROPERTY_ADMIN', () => {
+    const developer = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER',
+    });
+    expect(developer.has('billing:read')).toBe(true);
+    expect(developer.has('wallet:manage')).toBe(true);
+    expect(developer.has('lead:purchases:create')).toBe(true);
+
+    const staff = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER_STAFF',
+    });
+    expect(staff.has('billing:read')).toBe(true);
+    expect(staff.has('wallet:manage')).toBe(false);
+
+    const propertyAdmin = collectPermissions({
+      platformRoles: ['PROPERTY_ADMIN'],
+    });
+    expect(propertyAdmin.has('billing:read')).toBe(false);
+    expect(propertyAdmin.has('admin:billing:read')).toBe(false);
+  });
 });

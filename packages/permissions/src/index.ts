@@ -75,6 +75,20 @@ export const PERMISSIONS = [
   'crm:sitevisits:update',
   'crm:deals:create',
   'crm:deals:update',
+  'subscriptions:read',
+  'subscriptions:manage',
+  'billing:read',
+  'billing:manage',
+  'wallet:read',
+  'wallet:manage',
+  'payments:read',
+  'payments:manage',
+  'invoices:read',
+  'invoices:manage',
+  'lead:purchases:create',
+  'lead:purchases:read',
+  'admin:billing:read',
+  'admin:billing:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -109,6 +123,24 @@ const CRM_PERMISSIONS = [
   'crm:deals:update',
 ] as const satisfies readonly Permission[];
 
+const BILLING_READ_PERMISSIONS = [
+  'subscriptions:read',
+  'billing:read',
+  'wallet:read',
+  'payments:read',
+  'invoices:read',
+  'lead:purchases:read',
+] as const satisfies readonly Permission[];
+
+const BILLING_MANAGE_PERMISSIONS = [
+  'subscriptions:manage',
+  'billing:manage',
+  'wallet:manage',
+  'payments:manage',
+  'invoices:manage',
+  'lead:purchases:create',
+] as const satisfies readonly Permission[];
+
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
   ADMIN: [
@@ -136,6 +168,10 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'admin:requirements:read',
     'admin:leads:read',
     ...CRM_PERMISSIONS,
+    ...BILLING_READ_PERMISSIONS,
+    ...BILLING_MANAGE_PERMISSIONS,
+    'admin:billing:read',
+    'admin:billing:manage',
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -167,6 +203,8 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     'lead:assign',
     ...CRM_PERMISSIONS,
+    ...BILLING_READ_PERMISSIONS,
+    ...BILLING_MANAGE_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -181,6 +219,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'community:update',
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     ...CRM_PERMISSIONS,
+    ...BILLING_READ_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -189,8 +228,15 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
     'lead:assign',
     ...CRM_PERMISSIONS,
+    ...BILLING_READ_PERMISSIONS,
+    ...BILLING_MANAGE_PERMISSIONS,
   ],
-  AGENT_STAFF: ['organization:read', ...MARKETPLACE_PARTICIPANT_PERMISSIONS, ...CRM_PERMISSIONS],
+  AGENT_STAFF: [
+    'organization:read',
+    ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
+    ...CRM_PERMISSIONS,
+    ...BILLING_READ_PERMISSIONS,
+  ],
 };
 
 /** Persona grants for demand-side requirement ownership (Phase 7). */

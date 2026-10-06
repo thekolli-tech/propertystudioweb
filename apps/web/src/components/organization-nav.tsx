@@ -52,6 +52,7 @@ const AGENCY_ITEMS: NavItem[] = [
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
   { segment: 'verification', label: 'Verification', icon: <ShieldCheck className="h-4 w-4" /> },
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+  { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
 ];
 

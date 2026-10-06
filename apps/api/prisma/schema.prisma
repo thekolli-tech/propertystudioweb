@@ -275,6 +275,97 @@ enum DealStatus {
   LOST
 }
 
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+enum EntitlementKey {
+  LEAD_MARKETPLACE_ACCESS
+  LEAD_PURCHASE
+  CRM_ACCESS
+  ADVANCED_LEAD_ACCESS
+  PROJECT_CLAIM
+  PREMIUM_PROJECT_COMMUNITY
+  ANALYTICS
+  EXPORTS
+}
+
+enum WalletLedgerEntryType {
+  CREDIT
+  DEBIT
+  REFUND
+  ADJUSTMENT
+  EXPIRATION
+}
+
+enum FinancialTransactionType {
+  SUBSCRIPTION
+  WALLET_TOPUP
+  LEAD_PURCHASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum FinancialTransactionStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+  OVERDUE
+}
+
+enum PaymentProviderCode {
+  NONE
+  RAZORPAY
+  MANUAL
+  SANDBOX
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum LeadPurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -378,6 +469,13 @@ model Organization {
   crmFollowUps        CrmFollowUp[]
   crmSiteVisits       CrmSiteVisit[]
   crmDeals            CrmDeal[]
+  subscriptions       OrganizationSubscription[]
+  wallets             Wallet[]
+  walletLedgerEntries WalletLedgerEntry[]
+  financialTransactions FinancialTransaction[]
+  invoices            Invoice[]
+  refunds             Refund[]
+  leadPurchases       LeadPurchase[]
 
   @@map("organizations")
 }
@@ -816,6 +914,7 @@ model Lead {
   crmFollowUps          CrmFollowUp[]
   crmSiteVisits         CrmSiteVisit[]
   crmDeals              CrmDeal[]
+  leadPurchases         LeadPurchase[]
 
   @@unique([requirementId, recipientOrganizationId])
   @@index([recipientOrganizationId])
@@ -1003,3 +1102,279 @@ model CrmDeal {
   @@map("crm_deals")
 }
 
+
+model SubscriptionPlan {
+  id               String          @id @db.Uuid
+  publicId         String          @unique @map("public_id") @db.VarChar(32)
+  name             String          @db.VarChar(120)
+  description      String?         @db.VarChar(2000)
+  code             String          @unique @db.VarChar(64)
+  billingInterval  BillingInterval @map("billing_interval")
+  priceMinor       BigInt          @map("price_minor")
+  currency         String          @default("INR") @db.VarChar(3)
+  includedCredits  BigInt          @default(0) @map("included_credits")
+  leadPurchasePriceMinor BigInt    @default(50000) @map("lead_purchase_price_minor")
+  active           Boolean         @default(true)
+  metadata         Json?
+  version          Int             @default(1)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy        String?         @map("created_by") @db.Uuid
+  updatedBy        String?         @map("updated_by") @db.Uuid
+
+  entitlements  PlanEntitlement[]
+  subscriptions OrganizationSubscription[]
+
+  @@index([active])
+  @@index([billingInterval])
+  @@map("subscription_plans")
+}
+
+model PlanEntitlement {
+  id        String         @id @db.Uuid
+  planId    String         @map("plan_id") @db.Uuid
+  key       EntitlementKey
+  enabled   Boolean        @default(true)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, key])
+  @@index([key])
+  @@map("plan_entitlements")
+}
+
+model OrganizationSubscription {
+  id                     String             @id @db.Uuid
+  publicId               String             @unique @map("public_id") @db.VarChar(32)
+  organizationId         String             @map("organization_id") @db.Uuid
+  planId                 String             @map("plan_id") @db.Uuid
+  status                 SubscriptionStatus @default(TRIALING)
+  provider               PaymentProviderCode @default(NONE)
+  providerCustomerId     String?            @map("provider_customer_id") @db.VarChar(128)
+  providerSubscriptionId String?            @map("provider_subscription_id") @db.VarChar(128)
+  currentPeriodStart     DateTime           @map("current_period_start") @db.Timestamptz(3)
+  currentPeriodEnd       DateTime           @map("current_period_end") @db.Timestamptz(3)
+  cancelAtPeriodEnd      Boolean            @default(false) @map("cancel_at_period_end")
+  cancelledAt            DateTime?          @map("cancelled_at") @db.Timestamptz(3)
+  version                Int                @default(1)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy              String?            @map("created_by") @db.Uuid
+  updatedBy              String?            @map("updated_by") @db.Uuid
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  plan         SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([planId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@index([providerSubscriptionId])
+  @@map("organization_subscriptions")
+}
+
+model Wallet {
+  id           String   @id @db.Uuid
+  publicId     String   @unique @map("public_id") @db.VarChar(32)
+  organizationId String @unique @map("organization_id") @db.Uuid
+  currency     String   @default("INR") @db.VarChar(3)
+  balanceMinor BigInt   @default(0) @map("balance_minor")
+  version      Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  ledgerEntries WalletLedgerEntry[]
+
+  @@index([currency])
+  @@map("wallets")
+}
+
+model WalletLedgerEntry {
+  id                 String                @id @db.Uuid
+  publicId           String                @unique @map("public_id") @db.VarChar(32)
+  walletId           String                @map("wallet_id") @db.Uuid
+  organizationId     String                @map("organization_id") @db.Uuid
+  entryType          WalletLedgerEntryType @map("entry_type")
+  amountMinor        BigInt                @map("amount_minor")
+  balanceAfterMinor  BigInt                @map("balance_after_minor")
+  currency           String                @default("INR") @db.VarChar(3)
+  referenceType      String?               @map("reference_type") @db.VarChar(64)
+  referenceId        String?               @map("reference_id") @db.Uuid
+  description        String?               @db.VarChar(500)
+  idempotencyKey     String?               @map("idempotency_key") @db.VarChar(128)
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy          String?               @map("created_by") @db.Uuid
+
+  wallet       Wallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([walletId])
+  @@index([organizationId])
+  @@index([entryType])
+  @@index([referenceType, referenceId])
+  @@index([createdAt])
+  @@map("wallet_ledger_entries")
+}
+
+model FinancialTransaction {
+  id                    String                      @id @db.Uuid
+  publicId              String                      @unique @map("public_id") @db.VarChar(32)
+  organizationId        String                      @map("organization_id") @db.Uuid
+  type                  FinancialTransactionType
+  status                FinancialTransactionStatus  @default(PENDING)
+  provider              PaymentProviderCode         @default(NONE)
+  providerTransactionId String?                     @map("provider_transaction_id") @db.VarChar(128)
+  amountMinor           BigInt                      @map("amount_minor")
+  currency              String                      @default("INR") @db.VarChar(3)
+  description           String?                     @db.VarChar(500)
+  metadata              Json?
+  idempotencyKey        String?                     @map("idempotency_key") @db.VarChar(128)
+  version               Int                         @default(1)
+  createdAt             DateTime                    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy             String?                     @map("created_by") @db.Uuid
+  updatedBy             String?                     @map("updated_by") @db.Uuid
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  refunds       Refund[]
+  leadPurchases LeadPurchase[]
+  invoices      Invoice[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+  @@index([type])
+  @@index([status])
+  @@index([provider])
+  @@index([providerTransactionId])
+  @@index([createdAt])
+  @@map("financial_transactions")
+}
+
+model Invoice {
+  id                String        @id @db.Uuid
+  publicId          String        @unique @map("public_id") @db.VarChar(32)
+  organizationId    String        @map("organization_id") @db.Uuid
+  invoiceNumber     String        @unique @map("invoice_number") @db.VarChar(64)
+  status            InvoiceStatus @default(DRAFT)
+  subtotalMinor     BigInt        @map("subtotal_minor")
+  taxMinor          BigInt        @default(0) @map("tax_minor")
+  totalMinor        BigInt        @map("total_minor")
+  currency          String        @default("INR") @db.VarChar(3)
+  issuedAt          DateTime?     @map("issued_at") @db.Timestamptz(3)
+  dueAt             DateTime?     @map("due_at") @db.Timestamptz(3)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz(3)
+  providerInvoiceId String?       @map("provider_invoice_id") @db.VarChar(128)
+  financialTransactionId String?  @map("financial_transaction_id") @db.Uuid
+  metadata          Json?
+  version           Int           @default(1)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy         String?       @map("created_by") @db.Uuid
+  updatedBy         String?       @map("updated_by") @db.Uuid
+
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  financialTransaction FinancialTransaction? @relation(fields: [financialTransactionId], references: [id], onDelete: SetNull)
+  items                InvoiceItem[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([issuedAt])
+  @@index([dueAt])
+  @@index([financialTransactionId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String   @id @db.Uuid
+  invoiceId       String   @map("invoice_id") @db.Uuid
+  description     String   @db.VarChar(500)
+  quantity        Int      @default(1)
+  unitAmountMinor BigInt   @map("unit_amount_minor")
+  amountMinor     BigInt   @map("amount_minor")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Refund {
+  id                     String       @id @db.Uuid
+  publicId               String       @unique @map("public_id") @db.VarChar(32)
+  organizationId         String       @map("organization_id") @db.Uuid
+  financialTransactionId String       @map("financial_transaction_id") @db.Uuid
+  type                   RefundType
+  status                 RefundStatus @default(PENDING)
+  amountMinor            BigInt       @map("amount_minor")
+  currency               String       @default("INR") @db.VarChar(3)
+  providerRefundId       String?      @map("provider_refund_id") @db.VarChar(128)
+  reason                 String?      @db.VarChar(500)
+  idempotencyKey         String?      @map("idempotency_key") @db.VarChar(128)
+  version                Int          @default(1)
+  createdAt              DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy              String?      @map("created_by") @db.Uuid
+  updatedBy              String?      @map("updated_by") @db.Uuid
+
+  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  financialTransaction FinancialTransaction @relation(fields: [financialTransactionId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+  @@index([financialTransactionId])
+  @@index([status])
+  @@map("refunds")
+}
+
+model PaymentWebhookEvent {
+  id              String                  @id @db.Uuid
+  provider        PaymentProviderCode
+  externalEventId String                  @map("external_event_id") @db.VarChar(128)
+  eventType       String                  @map("event_type") @db.VarChar(128)
+  payloadHash     String                  @map("payload_hash") @db.VarChar(64)
+  status          WebhookProcessingStatus @default(RECEIVED)
+  payload         Json
+  processedAt     DateTime?               @map("processed_at") @db.Timestamptz(3)
+  errorMessage    String?                 @map("error_message") @db.VarChar(1000)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([provider, externalEventId])
+  @@index([status])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("payment_webhook_events")
+}
+
+model LeadPurchase {
+  id                     String             @id @db.Uuid
+  publicId               String             @unique @map("public_id") @db.VarChar(32)
+  organizationId         String             @map("organization_id") @db.Uuid
+  leadId                 String             @map("lead_id") @db.Uuid
+  financialTransactionId String?            @map("financial_transaction_id") @db.Uuid
+  status                 LeadPurchaseStatus @default(PENDING)
+  amountMinor            BigInt             @map("amount_minor")
+  currency               String             @default("INR") @db.VarChar(3)
+  idempotencyKey         String?            @map("idempotency_key") @db.VarChar(128)
+  version                Int                @default(1)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy              String?            @map("created_by") @db.Uuid
+  updatedBy              String?            @map("updated_by") @db.Uuid
+
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lead                 Lead                  @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  financialTransaction FinancialTransaction? @relation(fields: [financialTransactionId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, leadId])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([status])
+  @@index([financialTransactionId])
+  @@map("lead_purchases")
+}

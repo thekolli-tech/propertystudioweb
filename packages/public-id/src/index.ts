@@ -18,6 +18,12 @@ export const PUBLIC_ID_PREFIXES = {
   TASK: 'TASK',
   VISIT: 'VISIT',
   DEAL: 'DEAL',
+  PLAN: 'PLAN',
+  WAL: 'WAL',
+  WLED: 'WLED',
+  INV: 'INV',
+  REF: 'REF',
+  LPUR: 'LPUR',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -94,7 +100,15 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'ACT'
   | 'TASK'
   | 'VISIT'
-  | 'DEAL',
+  | 'DEAL'
+  | 'PLAN'
+  | 'SUB'
+  | 'WAL'
+  | 'WLED'
+  | 'PAY'
+  | 'INV'
+  | 'REF'
+  | 'LPUR',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -113,4 +127,12 @@ export const PUBLIC_ID_SEQUENCES: Record<
   TASK: 'public_id_task_seq',
   VISIT: 'public_id_visit_seq',
   DEAL: 'public_id_deal_seq',
+  PLAN: 'public_id_plan_seq',
+  SUB: 'public_id_sub_seq',
+  WAL: 'public_id_wal_seq',
+  WLED: 'public_id_wled_seq',
+  PAY: 'public_id_pay_seq',
+  INV: 'public_id_inv_seq',
+  REF: 'public_id_ref_seq',
+  LPUR: 'public_id_lpur_seq',
 };
