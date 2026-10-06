@@ -74,7 +74,7 @@ export function isValidPublicId(publicId: string): boolean {
 
 /** Sequence names used by the API for concurrency-safe public ID allocation. */
 export const PUBLIC_ID_SEQUENCES: Record<
-  'USER' | 'ORG' | 'DEV' | 'AGT' | 'PROJ' | 'PROP' | 'COM' | 'MED' | 'DOC',
+  'USER' | 'ORG' | 'DEV' | 'AGT' | 'PROJ' | 'PROP' | 'COM' | 'MED' | 'DOC' | 'REQ' | 'LEAD',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -86,4 +86,6 @@ export const PUBLIC_ID_SEQUENCES: Record<
   COM: 'public_id_com_seq',
   MED: 'public_id_med_seq',
   DOC: 'public_id_doc_seq',
+  REQ: 'public_id_req_seq',
+  LEAD: 'public_id_lead_seq',
 };

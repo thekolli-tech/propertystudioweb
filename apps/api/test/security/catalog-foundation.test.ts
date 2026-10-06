@@ -84,6 +84,8 @@ describe('Phase 5 catalog foundation', () => {
     await prisma.$executeRawUnsafe('DELETE FROM document_assets');
     await prisma.$executeRawUnsafe('DELETE FROM resource_assignments');
     await prisma.$executeRawUnsafe('DELETE FROM communities');
+    await prisma.$executeRawUnsafe('DELETE FROM leads');
+    await prisma.$executeRawUnsafe('DELETE FROM requirements');
     await prisma.$executeRawUnsafe('DELETE FROM properties');
     await prisma.$executeRawUnsafe('DELETE FROM projects');
     await prisma.$executeRawUnsafe('DELETE FROM idempotency_keys');

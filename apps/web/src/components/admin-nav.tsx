@@ -7,6 +7,7 @@ import {
   ClipboardList,
   CreditCard,
   FileText,
+  Inbox,
   LayoutDashboard,
   ScrollText,
   Settings,
@@ -35,6 +36,13 @@ const SECTIONS = [
       { href: '/admin/projects', label: 'Projects' },
       { href: '/admin/properties', label: 'Properties' },
       { href: '/admin/communities', label: 'Communities' },
+    ],
+  },
+  {
+    title: 'Marketplace',
+    items: [
+      { href: '/admin/requirements', label: 'Requirements', icon: <ClipboardList className="h-4 w-4" /> },
+      { href: '/admin/leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
     ],
   },
   {

@@ -365,7 +365,7 @@ export class AuthService {
       activeOrganizationId,
       activeOrganizationPublicId,
       organizationRole,
-      permissions: buildActorPermissions({ platformRoles, organizationRole }),
+      permissions: buildActorPermissions({ platformRoles, organizationRole, personas }),
     };
   }
 
