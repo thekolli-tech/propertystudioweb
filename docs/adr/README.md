@@ -26,3 +26,4 @@ Approved architecture decisions for Property Studio V3.
 | [0020](0020-money-monetization.md) | Money, subscriptions, and monetization |
 | [0021](0021-trust-verification-communication.md) | Trust, verification, and communication |
 | [0022](0022-intelligence-ai-foundation.md) | Intelligence and AI foundation |
+| [0023](0023-media-cms-broadcast-studio.md) | Media CMS and Broadcast Studio |

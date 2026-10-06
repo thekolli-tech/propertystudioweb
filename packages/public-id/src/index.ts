@@ -39,6 +39,14 @@ export const PUBLIC_ID_PREFIXES = {
   DOCA: 'DOCA',
   FPA: 'FPA',
   VAL: 'VAL',
+  CRT: 'CRT',
+  EDC: 'EDC',
+  EDCR: 'EDCR',
+  MCOL: 'MCOL',
+  MCIT: 'MCIT',
+  MAEV: 'MAEV',
+  EMAP: 'EMAP',
+  BCFG: 'BCFG',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -139,7 +147,15 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'AIJOB'
   | 'DOCA'
   | 'FPA'
-  | 'VAL',
+  | 'VAL'
+  | 'CRT'
+  | 'EDC'
+  | 'EDCR'
+  | 'MCOL'
+  | 'MCIT'
+  | 'MAEV'
+  | 'EMAP'
+  | 'BCFG',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -182,4 +198,12 @@ export const PUBLIC_ID_SEQUENCES: Record<
   DOCA: 'public_id_doca_seq',
   FPA: 'public_id_fpa_seq',
   VAL: 'public_id_val_seq',
+  CRT: 'public_id_crt_seq',
+  EDC: 'public_id_edc_seq',
+  EDCR: 'public_id_edcr_seq',
+  MCOL: 'public_id_mcol_seq',
+  MCIT: 'public_id_mcit_seq',
+  MAEV: 'public_id_maev_seq',
+  EMAP: 'public_id_emap_seq',
+  BCFG: 'public_id_bcfg_seq',
 };

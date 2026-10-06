@@ -384,8 +384,84 @@ export const catalogEntityTypeSchema = z.enum([
   'COMMUNITY',
   'VERIFICATION_CASE',
 ]);
-export const mediaTypeSchema = z.enum(['IMAGE', 'VIDEO', 'FLOOR_PLAN', 'OTHER']);
+export const mediaTypeSchema = z.enum([
+  'IMAGE',
+  'VIDEO',
+  'FLOOR_PLAN',
+  'AUDIO',
+  'DOCUMENT',
+  'EMBED',
+  'OTHER',
+]);
 export const assetVisibilitySchema = z.enum(['PRIVATE', 'PUBLIC']);
+export const mediaLifecycleStatusSchema = z.enum([
+  'DRAFT',
+  'PROCESSING',
+  'READY',
+  'PUBLISHED',
+  'ARCHIVED',
+  'REJECTED',
+]);
+export const mediaModerationStatusSchema = z.enum([
+  'PENDING_REVIEW',
+  'APPROVED',
+  'REJECTED',
+  'FLAGGED',
+  'ARCHIVED',
+]);
+export const editorialContentStatusSchema = z.enum([
+  'DRAFT',
+  'IN_REVIEW',
+  'APPROVED',
+  'PUBLISHED',
+  'ARCHIVED',
+]);
+export const editorialContentKindSchema = z.enum([
+  'MARKET_ARTICLE',
+  'PROJECT_ANALYSIS',
+  'LOCALITY_GUIDE',
+  'INVESTMENT_EXPLAINER',
+  'CONSTRUCTION_UPDATE',
+  'BUILDER_INTERVIEW',
+  'PROPERTY_WALKTHROUGH',
+  'LEGAL_EXPLAINER',
+  'INFRASTRUCTURE_STORY',
+  'PLATFORM_REPORT',
+  'OTHER',
+]);
+export const mediaCollectionStatusSchema = z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
+export const mediaCollectionItemKindSchema = z.enum(['MEDIA', 'EDITORIAL']);
+export const mediaAnalyticsEventTypeSchema = z.enum([
+  'VIEW',
+  'PLAY',
+  'COMPLETION',
+  'CLICK',
+  'SHARE',
+  'SAVE',
+  'ENGAGEMENT',
+]);
+export const externalMediaProviderKindSchema = z.enum([
+  'YOUTUBE',
+  'VIMEO',
+  'INSTAGRAM',
+  'FACEBOOK',
+  'OTHER',
+]);
+export type ExternalMediaProviderKind = z.infer<typeof externalMediaProviderKindSchema>;
+export const externalMediaProviderStatusSchema = z.enum([
+  'UNAVAILABLE',
+  'CONFIGURED',
+  'DISABLED',
+]);
+export type ExternalMediaProviderStatus = z.infer<typeof externalMediaProviderStatusSchema>;
+
+export type MediaLifecycleStatus = z.infer<typeof mediaLifecycleStatusSchema>;
+export type MediaModerationStatus = z.infer<typeof mediaModerationStatusSchema>;
+export type EditorialContentStatus = z.infer<typeof editorialContentStatusSchema>;
+export type EditorialContentKind = z.infer<typeof editorialContentKindSchema>;
+export type MediaCollectionStatus = z.infer<typeof mediaCollectionStatusSchema>;
+export type MediaCollectionItemKind = z.infer<typeof mediaCollectionItemKindSchema>;
+export type MediaAnalyticsEventType = z.infer<typeof mediaAnalyticsEventTypeSchema>;
 
 export const cursorPageMetaSchema = z.object({
   nextCursor: z.string().nullable(),
@@ -475,6 +551,9 @@ export const mediaAssetSummarySchema = z.object({
   sortOrder: z.number().int(),
   altText: z.string().nullable(),
   visibility: assetVisibilitySchema,
+  title: z.string().nullable().optional(),
+  lifecycleStatus: mediaLifecycleStatusSchema.optional(),
+  slug: z.string().nullable().optional(),
 });
 
 export const documentAssetSummarySchema = z.object({
@@ -3156,3 +3235,450 @@ export const aiPropertySearchResponseSchema = z.object({
   disclaimer: z.string(),
 });
 export type AiPropertySearchResponse = z.infer<typeof aiPropertySearchResponseSchema>;
+
+// --- Phase 12: Media CMS, editorial, collections, analytics, providers, Broadcast Studio ---
+
+export const seoMetadataSchema = z.object({
+  seoTitle: z.string().nullable(),
+  seoDescription: z.string().nullable(),
+  canonicalPath: z.string().nullable(),
+  ogTitle: z.string().nullable(),
+  ogDescription: z.string().nullable(),
+  twitterTitle: z.string().nullable(),
+  twitterDescription: z.string().nullable(),
+  indexable: z.boolean(),
+});
+export type SeoMetadata = z.infer<typeof seoMetadataSchema>;
+
+export const mediaCmsDetailSchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  mediaType: mediaTypeSchema,
+  mimeType: z.string(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  caption: z.string().nullable(),
+  altText: z.string().nullable(),
+  slug: z.string().nullable(),
+  durationSeconds: z.number().int().nullable(),
+  widthPx: z.number().int().nullable(),
+  heightPx: z.number().int().nullable(),
+  source: z.string().nullable(),
+  sourceUrl: z.string().nullable(),
+  lifecycleStatus: mediaLifecycleStatusSchema,
+  moderationStatus: mediaModerationStatusSchema,
+  visibility: assetVisibilitySchema,
+  category: z.string().nullable(),
+  tags: z.array(z.string()),
+  publishedAt: z.string().datetime().nullable(),
+  authorPublicId: z.string().nullable(),
+  authorDisplayName: z.string().nullable(),
+  entityType: catalogEntityTypeSchema.nullable(),
+  entityPublicId: z.string().nullable(),
+  sortOrder: z.number().int(),
+  seo: seoMetadataSchema,
+  accessUrlAvailable: z.boolean(),
+});
+export type MediaCmsDetail = z.infer<typeof mediaCmsDetailSchema>;
+
+export const mediaCmsListQuerySchema = cursorPaginationQuerySchema.extend({
+  mediaType: mediaTypeSchema.optional(),
+  category: z.string().trim().max(80).optional(),
+  tag: z.string().trim().max(80).optional(),
+  lifecycleStatus: mediaLifecycleStatusSchema.optional(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+});
+export type MediaCmsListQuery = z.infer<typeof mediaCmsListQuerySchema>;
+
+export const mediaCmsListResponseSchema = z.object({
+  media: z.array(mediaCmsDetailSchema),
+  nextCursor: z.string().nullable(),
+});
+export type MediaCmsListResponse = z.infer<typeof mediaCmsListResponseSchema>;
+
+export const createMediaCmsRequestSchema = z.object({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  entityType: catalogEntityTypeSchema.optional().nullable(),
+  entityPublicId: z
+    .string()
+    .regex(/^PS-(PROJ|PROP|COM)-\d+$/)
+    .optional()
+    .nullable(),
+  storageKey: z.string().trim().min(1).max(512),
+  mimeType: z.string().trim().min(3).max(120),
+  mediaType: mediaTypeSchema,
+  fileSizeBytes: moneyMinorSchema,
+  sortOrder: z.number().int().min(0).default(0),
+  title: z.string().trim().min(1).max(200).optional().nullable(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  caption: z.string().trim().max(500).optional().nullable(),
+  altText: z.string().trim().max(240).optional().nullable(),
+  slug: slugSchema.optional().nullable(),
+  durationSeconds: z.number().int().min(0).optional().nullable(),
+  widthPx: z.number().int().min(0).optional().nullable(),
+  heightPx: z.number().int().min(0).optional().nullable(),
+  thumbnailStorageKey: z.string().trim().max(512).optional().nullable(),
+  posterStorageKey: z.string().trim().max(512).optional().nullable(),
+  source: z.string().trim().max(80).optional().nullable(),
+  sourceUrl: z.string().trim().url().max(1000).optional().nullable(),
+  category: z.string().trim().max(80).optional().nullable(),
+  tags: z.array(z.string().trim().max(80)).max(40).default([]),
+  visibility: assetVisibilitySchema.default('PRIVATE'),
+  seoTitle: z.string().trim().max(200).optional().nullable(),
+  seoDescription: z.string().trim().max(320).optional().nullable(),
+  canonicalPath: z.string().trim().max(320).optional().nullable(),
+  ogTitle: z.string().trim().max(200).optional().nullable(),
+  ogDescription: z.string().trim().max(320).optional().nullable(),
+  twitterTitle: z.string().trim().max(200).optional().nullable(),
+  twitterDescription: z.string().trim().max(320).optional().nullable(),
+});
+export type CreateMediaCmsRequest = z.infer<typeof createMediaCmsRequestSchema>;
+
+export const updateMediaCmsRequestSchema = createMediaCmsRequestSchema
+  .omit({ storageKey: true, mimeType: true, mediaType: true, fileSizeBytes: true })
+  .partial();
+export type UpdateMediaCmsRequest = z.infer<typeof updateMediaCmsRequestSchema>;
+
+export const moderateMediaRequestSchema = z.object({
+  moderationStatus: mediaModerationStatusSchema,
+  reason: z.string().trim().max(1000).optional().nullable(),
+});
+export type ModerateMediaRequest = z.infer<typeof moderateMediaRequestSchema>;
+
+export const mediaAccessUrlResponseSchema = z.object({
+  publicId: z.string(),
+  url: z.string(),
+  expiresAt: z.string().datetime(),
+});
+export type MediaAccessUrlResponse = z.infer<typeof mediaAccessUrlResponseSchema>;
+
+export const creatorProfileSummarySchema = z.object({
+  publicId: z.string(),
+  userPublicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  displayName: z.string(),
+  bio: z.string().nullable(),
+  headline: z.string().nullable(),
+  isActive: z.boolean(),
+});
+export type CreatorProfileSummary = z.infer<typeof creatorProfileSummarySchema>;
+
+export const createCreatorProfileRequestSchema = z.object({
+  displayName: z.string().trim().min(2).max(120),
+  bio: z.string().trim().max(1000).optional().nullable(),
+  headline: z.string().trim().max(200).optional().nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type CreateCreatorProfileRequest = z.infer<typeof createCreatorProfileRequestSchema>;
+
+export const editorialContentSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  kind: editorialContentKindSchema,
+  status: editorialContentStatusSchema,
+  title: z.string(),
+  slug: z.string(),
+  excerpt: z.string().nullable(),
+  category: z.string().nullable(),
+  tags: z.array(z.string()),
+  featured: z.boolean(),
+  publishedAt: z.string().datetime().nullable(),
+  authorPublicId: z.string(),
+  authorDisplayName: z.string().nullable(),
+  coverMediaPublicId: z.string().nullable(),
+  moderationStatus: mediaModerationStatusSchema,
+  seo: seoMetadataSchema,
+});
+export type EditorialContentSummary = z.infer<typeof editorialContentSummarySchema>;
+
+export const editorialContentDetailSchema = editorialContentSummarySchema.extend({
+  bodyMarkdown: z.string(),
+  relatedPropertyPublicIds: z.array(z.string()),
+  relatedProjectPublicIds: z.array(z.string()),
+  relatedLocalities: z.array(z.string()),
+  scheduledAt: z.string().datetime().nullable(),
+});
+export type EditorialContentDetail = z.infer<typeof editorialContentDetailSchema>;
+
+export const createEditorialContentRequestSchema = z.object({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  kind: editorialContentKindSchema,
+  title: z.string().trim().min(2).max(240),
+  slug: slugSchema.optional(),
+  excerpt: z.string().trim().max(500).optional().nullable(),
+  bodyMarkdown: z.string().trim().min(1).max(200000),
+  coverMediaPublicId: z
+    .string()
+    .regex(/^PS-MED-\d+$/)
+    .optional()
+    .nullable(),
+  category: z.string().trim().max(80).optional().nullable(),
+  tags: z.array(z.string().trim().max(80)).max(40).default([]),
+  featured: z.boolean().default(false),
+  relatedPropertyPublicIds: z.array(z.string().regex(/^PS-PROP-\d+$/)).max(20).default([]),
+  relatedProjectPublicIds: z.array(z.string().regex(/^PS-PROJ-\d+$/)).max(20).default([]),
+  relatedLocalities: z.array(z.string().trim().max(120)).max(20).default([]),
+  scheduledAt: z.string().datetime().optional().nullable(),
+  seoTitle: z.string().trim().max(200).optional().nullable(),
+  seoDescription: z.string().trim().max(320).optional().nullable(),
+  canonicalPath: z.string().trim().max(320).optional().nullable(),
+  ogTitle: z.string().trim().max(200).optional().nullable(),
+  ogDescription: z.string().trim().max(320).optional().nullable(),
+  twitterTitle: z.string().trim().max(200).optional().nullable(),
+  twitterDescription: z.string().trim().max(320).optional().nullable(),
+});
+export type CreateEditorialContentRequest = z.infer<typeof createEditorialContentRequestSchema>;
+
+export const updateEditorialContentRequestSchema = createEditorialContentRequestSchema.partial();
+export type UpdateEditorialContentRequest = z.infer<typeof updateEditorialContentRequestSchema>;
+
+export const editorialListQuerySchema = cursorPaginationQuerySchema.extend({
+  kind: editorialContentKindSchema.optional(),
+  status: editorialContentStatusSchema.optional(),
+  category: z.string().trim().max(80).optional(),
+  featured: z.coerce.boolean().optional(),
+});
+export type EditorialListQuery = z.infer<typeof editorialListQuerySchema>;
+
+export const editorialListResponseSchema = z.object({
+  contents: z.array(editorialContentSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type EditorialListResponse = z.infer<typeof editorialListResponseSchema>;
+
+export const mediaCollectionItemSchema = z.object({
+  publicId: z.string(),
+  itemKind: mediaCollectionItemKindSchema,
+  mediaPublicId: z.string().nullable(),
+  editorialPublicId: z.string().nullable(),
+  sortOrder: z.number().int(),
+  title: z.string().nullable(),
+});
+export type MediaCollectionItem = z.infer<typeof mediaCollectionItemSchema>;
+
+export const mediaCollectionSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string().nullable(),
+  title: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  coverMediaPublicId: z.string().nullable(),
+  visibility: assetVisibilitySchema,
+  status: mediaCollectionStatusSchema,
+  publishedAt: z.string().datetime().nullable(),
+  category: z.string().nullable(),
+  tags: z.array(z.string()),
+  itemCount: z.number().int(),
+  seo: seoMetadataSchema,
+});
+export type MediaCollectionSummary = z.infer<typeof mediaCollectionSummarySchema>;
+
+export const mediaCollectionDetailSchema = mediaCollectionSummarySchema.extend({
+  items: z.array(mediaCollectionItemSchema),
+});
+export type MediaCollectionDetail = z.infer<typeof mediaCollectionDetailSchema>;
+
+export const createMediaCollectionRequestSchema = z.object({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  title: z.string().trim().min(2).max(200),
+  slug: slugSchema.optional(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  coverMediaPublicId: z
+    .string()
+    .regex(/^PS-MED-\d+$/)
+    .optional()
+    .nullable(),
+  visibility: assetVisibilitySchema.default('PRIVATE'),
+  category: z.string().trim().max(80).optional().nullable(),
+  tags: z.array(z.string().trim().max(80)).max(40).default([]),
+  seoTitle: z.string().trim().max(200).optional().nullable(),
+  seoDescription: z.string().trim().max(320).optional().nullable(),
+});
+export type CreateMediaCollectionRequest = z.infer<typeof createMediaCollectionRequestSchema>;
+
+export const updateMediaCollectionRequestSchema = createMediaCollectionRequestSchema.partial();
+export type UpdateMediaCollectionRequest = z.infer<typeof updateMediaCollectionRequestSchema>;
+
+export const addMediaCollectionItemRequestSchema = z.object({
+  itemKind: mediaCollectionItemKindSchema,
+  mediaPublicId: z
+    .string()
+    .regex(/^PS-MED-\d+$/)
+    .optional()
+    .nullable(),
+  editorialPublicId: z
+    .string()
+    .regex(/^PS-EDC-\d+$/)
+    .optional()
+    .nullable(),
+  sortOrder: z.number().int().min(0).default(0),
+});
+export type AddMediaCollectionItemRequest = z.infer<typeof addMediaCollectionItemRequestSchema>;
+
+export const mediaCollectionListResponseSchema = z.object({
+  collections: z.array(mediaCollectionSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type MediaCollectionListResponse = z.infer<typeof mediaCollectionListResponseSchema>;
+
+export const createMediaAnalyticsEventRequestSchema = z.object({
+  eventType: mediaAnalyticsEventTypeSchema,
+  mediaPublicId: z
+    .string()
+    .regex(/^PS-MED-\d+$/)
+    .optional()
+    .nullable(),
+  editorialPublicId: z
+    .string()
+    .regex(/^PS-EDC-\d+$/)
+    .optional()
+    .nullable(),
+  collectionPublicId: z
+    .string()
+    .regex(/^PS-MCOL-\d+$/)
+    .optional()
+    .nullable(),
+  sessionKey: z.string().trim().max(64).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+export type CreateMediaAnalyticsEventRequest = z.infer<typeof createMediaAnalyticsEventRequestSchema>;
+
+export const mediaAnalyticsEventSummarySchema = z.object({
+  publicId: z.string(),
+  eventType: mediaAnalyticsEventTypeSchema,
+  mediaPublicId: z.string().nullable(),
+  editorialPublicId: z.string().nullable(),
+  collectionPublicId: z.string().nullable(),
+  organizationPublicId: z.string().nullable(),
+  occurredAt: z.string().datetime(),
+});
+export type MediaAnalyticsEventSummary = z.infer<typeof mediaAnalyticsEventSummarySchema>;
+
+export const mediaAnalyticsListResponseSchema = z.object({
+  events: z.array(mediaAnalyticsEventSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type MediaAnalyticsListResponse = z.infer<typeof mediaAnalyticsListResponseSchema>;
+
+export const externalMediaProviderSummarySchema = z.object({
+  provider: externalMediaProviderKindSchema,
+  status: externalMediaProviderStatusSchema,
+  message: z.string(),
+});
+export type ExternalMediaProviderSummary = z.infer<typeof externalMediaProviderSummarySchema>;
+
+export const externalMediaProviderListResponseSchema = z.object({
+  providers: z.array(externalMediaProviderSummarySchema),
+});
+export type ExternalMediaProviderListResponse = z.infer<
+  typeof externalMediaProviderListResponseSchema
+>;
+
+export const createExternalMediaMappingRequestSchema = z.object({
+  mediaPublicId: z.string().regex(/^PS-MED-\d+$/),
+  provider: externalMediaProviderKindSchema,
+  externalMediaId: z.string().trim().max(160).optional().nullable(),
+  externalUrl: z.string().trim().url().max(1000).optional().nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type CreateExternalMediaMappingRequest = z.infer<
+  typeof createExternalMediaMappingRequestSchema
+>;
+
+export const externalMediaMappingSummarySchema = z.object({
+  publicId: z.string(),
+  mediaPublicId: z.string(),
+  provider: externalMediaProviderKindSchema,
+  providerStatus: externalMediaProviderStatusSchema,
+  externalMediaId: z.string().nullable(),
+  externalUrl: z.string().nullable(),
+  lastSyncedAt: z.string().datetime().nullable(),
+});
+export type ExternalMediaMappingSummary = z.infer<typeof externalMediaMappingSummarySchema>;
+
+export const externalMediaMetricsResponseSchema = z.object({
+  mappingPublicId: z.string(),
+  provider: externalMediaProviderKindSchema,
+  status: externalMediaProviderStatusSchema,
+  metrics: z.record(z.string(), z.unknown()).nullable(),
+  message: z.string(),
+});
+export type ExternalMediaMetricsResponse = z.infer<typeof externalMediaMetricsResponseSchema>;
+
+export const broadcastStudioConfigSchema = z.object({
+  publicId: z.string().nullable(),
+  name: z.string(),
+  defaultHomeRoute: z.string(),
+  touchTargetMinPx: z.number().int(),
+  enabledSections: z.array(z.string()),
+});
+export type BroadcastStudioConfig = z.infer<typeof broadcastStudioConfigSchema>;
+
+export const updateBroadcastStudioConfigRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  defaultHomeRoute: z.string().trim().max(120).optional(),
+  touchTargetMinPx: z.number().int().min(44).max(120).optional(),
+  enabledSections: z.array(z.string().trim().max(80)).max(40).optional(),
+});
+export type UpdateBroadcastStudioConfigRequest = z.infer<
+  typeof updateBroadcastStudioConfigRequestSchema
+>;
+
+export const broadcastPresentationSectionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  available: z.boolean(),
+  unavailableReason: z.string().nullable(),
+  data: z.record(z.string(), z.unknown()).nullable(),
+});
+export type BroadcastPresentationSection = z.infer<typeof broadcastPresentationSectionSchema>;
+
+export const broadcastPropertyPresentationSchema = z.object({
+  propertyPublicId: z.string(),
+  title: z.string(),
+  sections: z.array(broadcastPresentationSectionSchema),
+});
+export type BroadcastPropertyPresentation = z.infer<typeof broadcastPropertyPresentationSchema>;
+
+export const broadcastProjectPresentationSchema = z.object({
+  projectPublicId: z.string(),
+  name: z.string(),
+  sections: z.array(broadcastPresentationSectionSchema),
+});
+export type BroadcastProjectPresentation = z.infer<typeof broadcastProjectPresentationSchema>;
+
+export const sitemapEntrySchema = z.object({
+  path: z.string(),
+  lastModified: z.string().datetime().nullable(),
+  changeFrequency: z.enum(['always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never']),
+  priority: z.number().min(0).max(1),
+});
+export type SitemapEntry = z.infer<typeof sitemapEntrySchema>;
+
+export const publicMediaSitemapResponseSchema = z.object({
+  entries: z.array(sitemapEntrySchema),
+});
+export type PublicMediaSitemapResponse = z.infer<typeof publicMediaSitemapResponseSchema>;

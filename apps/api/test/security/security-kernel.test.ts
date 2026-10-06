@@ -73,6 +73,20 @@ describe('Phase 2 security kernel', () => {
     await prisma.$executeRawUnsafe('DELETE FROM verification_cases');
     await prisma.$executeRawUnsafe('DELETE FROM lead_access_grants');
     await prisma.$executeRawUnsafe('DELETE FROM content_reports');
+
+    for (const table of [
+      'media_analytics_events',
+      'external_media_mappings',
+      'media_collection_items',
+      'media_collections',
+      'editorial_content_revisions',
+      'editorial_contents',
+      'creator_profiles',
+      'broadcast_studio_configs',
+    ] as const) {
+      await prisma.$executeRawUnsafe(`DELETE FROM ${table}`);
+    }
+
     await prisma.$executeRawUnsafe('DELETE FROM media_assets');
     await prisma.$executeRawUnsafe('DELETE FROM document_assets');
     await prisma.$executeRawUnsafe('DELETE FROM resource_assignments');

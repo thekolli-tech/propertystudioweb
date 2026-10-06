@@ -131,6 +131,34 @@ export const PERMISSIONS = [
   'ai:search',
   'admin:ai:read',
   'admin:ai:manage',
+  'media:read',
+  'media:create',
+  'media:update',
+  'media:publish',
+  'media:archive',
+  'media:moderate',
+  'content:read',
+  'content:create',
+  'content:update',
+  'content:publish',
+  'content:archive',
+  'content:moderate',
+  'collections:read',
+  'collections:create',
+  'collections:update',
+  'collections:publish',
+  'creators:read',
+  'creators:manage',
+  'media:analytics:read',
+  'media:analytics:write',
+  'admin:media:read',
+  'admin:media:manage',
+  'admin:content:read',
+  'admin:content:manage',
+  'admin:broadcast:read',
+  'admin:broadcast:manage',
+  'external-media:read',
+  'external-media:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -271,6 +299,91 @@ const ADMIN_INTELLIGENCE_AI_PERMISSIONS = [
   'admin:ai:manage',
 ] as const satisfies readonly Permission[];
 
+const MEDIA_CMS_ORG_MANAGE_PERMISSIONS = [
+  'media:read',
+  'media:create',
+  'media:update',
+  'media:publish',
+  'media:archive',
+  'content:read',
+  'content:create',
+  'content:update',
+  'content:publish',
+  'content:archive',
+  'collections:read',
+  'collections:create',
+  'collections:update',
+  'collections:publish',
+  'creators:read',
+  'media:analytics:read',
+  'media:analytics:write',
+  'external-media:read',
+] as const satisfies readonly Permission[];
+
+const MEDIA_CMS_ORG_STAFF_PERMISSIONS = [
+  'media:read',
+  'media:create',
+  'media:update',
+  'content:read',
+  'content:create',
+  'content:update',
+  'collections:read',
+  'collections:create',
+  'collections:update',
+  'creators:read',
+  'media:analytics:read',
+  'media:analytics:write',
+] as const satisfies readonly Permission[];
+
+const MEDIA_CMS_EDITOR_PERMISSIONS = [
+  'media:read',
+  'media:create',
+  'media:update',
+  'media:publish',
+  'media:archive',
+  'content:read',
+  'content:create',
+  'content:update',
+  'content:publish',
+  'content:archive',
+  'collections:read',
+  'collections:create',
+  'collections:update',
+  'collections:publish',
+  'creators:read',
+  'creators:manage',
+  'media:analytics:read',
+  'admin:media:read',
+  'admin:content:read',
+  'admin:broadcast:read',
+] as const satisfies readonly Permission[];
+
+const MEDIA_CMS_MODERATOR_PERMISSIONS = [
+  'media:read',
+  'media:moderate',
+  'content:read',
+  'content:moderate',
+  'collections:read',
+  'creators:read',
+  'media:analytics:read',
+  'admin:media:read',
+  'admin:content:read',
+] as const satisfies readonly Permission[];
+
+const ADMIN_MEDIA_CMS_PERMISSIONS = [
+  'admin:media:read',
+  'admin:media:manage',
+  'admin:content:read',
+  'admin:content:manage',
+  'admin:broadcast:read',
+  'admin:broadcast:manage',
+  'media:moderate',
+  'content:moderate',
+  'creators:manage',
+  'external-media:manage',
+  'media:analytics:read',
+] as const satisfies readonly Permission[];
+
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
   ADMIN: [
@@ -319,6 +432,10 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
     ...AI_FULL_PERMISSIONS,
     ...ADMIN_INTELLIGENCE_AI_PERMISSIONS,
+    ...MEDIA_CMS_EDITOR_PERMISSIONS,
+    ...MEDIA_CMS_MODERATOR_PERMISSIONS,
+    ...ADMIN_MEDIA_CMS_PERMISSIONS,
+    ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -326,8 +443,16 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'property:create',
     'property:update',
     'property:publish',
+    'media:read',
+    'media:analytics:write',
   ],
-  CONTENT_EDITOR: ['project:read', 'property:read', 'property:update', 'community:read'],
+  CONTENT_EDITOR: [
+    'project:read',
+    'property:read',
+    'property:update',
+    'community:read',
+    ...MEDIA_CMS_EDITOR_PERMISSIONS,
+  ],
   MODERATOR: [
     'project:read',
     'property:read',
@@ -339,6 +464,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'admin:reviews:read',
     'communications:moderate',
     ...INTELLIGENCE_READ_PERMISSIONS,
+    ...MEDIA_CMS_MODERATOR_PERMISSIONS,
   ],
 };
 
@@ -372,6 +498,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...AI_MATCH_VALUATION_PERMISSIONS,
     'ai:document:analyze',
     'ai:floorplan:analyze',
+    ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -394,6 +521,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...LEAD_ACCESS_PERMISSIONS,
     ...INTELLIGENCE_READ_PERMISSIONS,
     ...AI_CORE_PERMISSIONS,
+    ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -413,6 +541,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...AI_MATCH_VALUATION_PERMISSIONS,
     'ai:document:analyze',
     'ai:floorplan:analyze',
+    ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
   ],
   AGENT_STAFF: [
     'organization:read',
@@ -426,6 +555,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...LEAD_ACCESS_PERMISSIONS,
     ...INTELLIGENCE_READ_PERMISSIONS,
     ...AI_CORE_PERMISSIONS,
+    ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
   ],
 };
 
@@ -436,12 +566,14 @@ export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>
     ...PERSONA_PHASE10_PERMISSIONS,
     ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
     ...AI_MATCH_VALUATION_PERMISSIONS,
+    'media:analytics:write',
   ],
   INVESTOR: [
     ...REQUIREMENT_OWNER_PERMISSIONS,
     ...PERSONA_PHASE10_PERMISSIONS,
     ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
     ...AI_MATCH_VALUATION_PERMISSIONS,
+    'media:analytics:write',
   ],
 };
 

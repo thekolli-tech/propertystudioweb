@@ -514,6 +514,8 @@ export class PropertiesService {
         sortOrder: body.sortOrder,
         altText: body.altText ?? null,
         visibility: body.visibility,
+        lifecycleStatus: 'READY',
+        moderationStatus: 'APPROVED',
         createdBy: actor.userId,
       },
     });
@@ -600,7 +602,7 @@ export class PropertiesService {
     if (!asset) {
       return await this.access.deny(actor, publicId, request);
     }
-    if (asset.entityType === 'PROPERTY') {
+    if (asset.entityType === 'PROPERTY' && asset.entityId) {
       const property = await this.prisma.property.findFirst({
         where: { id: asset.entityId, deletedAt: null },
       });
@@ -608,7 +610,7 @@ export class PropertiesService {
         return await this.access.deny(actor, publicId, request);
       }
       await this.access.requirePropertyAccess(actor, property, 'property:read', request);
-    } else if (asset.entityType === 'PROJECT') {
+    } else if (asset.entityType === 'PROJECT' && asset.entityId) {
       const project = await this.prisma.project.findFirst({
         where: { id: asset.entityId, deletedAt: null },
         include: { organization: true },
@@ -937,7 +939,7 @@ export class PropertiesService {
     projectPublicId: string | null,
     media: Array<{
       publicId: string;
-      mediaType: 'IMAGE' | 'VIDEO' | 'FLOOR_PLAN' | 'OTHER';
+      mediaType: 'IMAGE' | 'VIDEO' | 'FLOOR_PLAN' | 'AUDIO' | 'DOCUMENT' | 'EMBED' | 'OTHER';
       mimeType: string;
       sortOrder: number;
       altText: string | null;
