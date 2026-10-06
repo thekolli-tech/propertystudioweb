@@ -10,11 +10,13 @@ import { RequestIdMiddleware } from './common/request-context/request-id.middlew
 import { OriginCheckMiddleware } from './common/security/origin-check.middleware';
 import { SecurityKernelModule } from './common/security/security-kernel.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AiModule } from './modules/ai/ai.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
@@ -71,6 +73,8 @@ import { VerificationModule } from './modules/verification/verification.module';
     VerificationModule,
     ReviewsModule,
     CommunicationsModule,
+    IntelligenceModule,
+    AiModule,
   ],
   providers: [OriginCheckMiddleware],
 })

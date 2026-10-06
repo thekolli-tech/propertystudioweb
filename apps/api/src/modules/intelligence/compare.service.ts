@@ -44,7 +44,22 @@ export class CompareService {
     publicIds: string[],
     request?: AuthenticatedRequest,
   ): Promise<IntelligenceCompareResponse> {
-    const properties = [];
+    const properties: Array<{
+      publicId: string;
+      title: string;
+      priceMinor: bigint;
+      carpetAreaSqft: { toString(): string } | null;
+      builtUpAreaSqft: { toString(): string } | null;
+      bedrooms: number | null;
+      bathrooms: number | null;
+      configuration: string | null;
+      propertyType: string;
+      listingType: string;
+      city: string | null;
+      locality: string | null;
+      availabilityStatus: string;
+      trustStatus: string;
+    }> = [];
     for (const publicId of publicIds) {
       const property = await this.prisma.property.findFirst({
         where: { publicId, deletedAt: null },
@@ -187,7 +202,17 @@ export class CompareService {
     publicIds: string[],
     request?: AuthenticatedRequest,
   ): Promise<IntelligenceCompareResponse> {
-    const projects = [];
+    const projects: Array<{
+      publicId: string;
+      name: string;
+      startingPriceMinor: bigint | null;
+      projectType: string;
+      lifecycleStatus: string;
+      city: string | null;
+      locality: string | null;
+      microMarket: string | null;
+      trustStatus: string;
+    }> = [];
     for (const publicId of publicIds) {
       const project = await this.prisma.project.findFirst({
         where: { publicId, deletedAt: null },

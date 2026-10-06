@@ -67,5 +67,5 @@ export function pricePerSqftMinor(
   if (priceMinor === null || priceMinor === undefined || !areaSqft || areaSqft <= 0) {
     return null;
   }
-  return (priceMinor / BigInt(Math.round(areaSqft))).toString();
+  return BigInt(Math.round(Number(priceMinor) / areaSqft)).toString();
 }

@@ -18,17 +18,17 @@ export class RateLimitGuard implements CanActivate {
     const response = http.getResponse<Response>();
 
     const path = request.path || '';
-    const isAuthRoute = path.includes('/auth/');
-    const windowMs = isAuthRoute
+    const isStrictRoute = path.includes('/auth/') || path.includes('/ai/');
+    const windowMs = isStrictRoute
       ? this.config.values.AUTH_RATE_LIMIT_WINDOW_MS
       : this.config.values.RATE_LIMIT_WINDOW_MS;
-    const maxRequests = isAuthRoute
+    const maxRequests = isStrictRoute
       ? this.config.values.AUTH_RATE_LIMIT_MAX_REQUESTS
       : this.config.values.RATE_LIMIT_MAX_REQUESTS;
 
     const clientIp = this.resolveClientIp(request);
     const bucket = Math.floor(Date.now() / windowMs);
-    const key = `rate-limit:${isAuthRoute ? 'auth' : 'api'}:${clientIp}:${bucket}`;
+    const key = `rate-limit:${isStrictRoute ? 'auth' : 'api'}:${clientIp}:${bucket}`;
 
     const count = await this.redis.client.incr(key);
     if (count === 1) {

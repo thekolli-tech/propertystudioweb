@@ -127,7 +127,7 @@ export class IntelligenceMatchService {
         requirement.ownerUserId === actor.userId &&
         actorHasPermission(actor, 'requirement:read:own');
       const canReadMarketplace =
-        requirement.visibility === 'PUBLIC' &&
+        requirement.visibility === 'MARKETPLACE' &&
         requirement.status === 'ACTIVE' &&
         actorHasPermission(actor, 'requirement:read:marketplace');
       const isAdmin =
