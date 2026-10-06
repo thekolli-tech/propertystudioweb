@@ -450,6 +450,3 @@ ALTER TABLE "external_media_mappings" ADD CONSTRAINT "external_media_mappings_or
 
 -- AddForeignKey
 ALTER TABLE "external_media_mappings" ADD CONSTRAINT "external_media_mappings_media_asset_id_fkey" FOREIGN KEY ("media_asset_id") REFERENCES "media_assets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- RenameIndex
-ALTER INDEX "verification_cases_subject_type_subject_id_verification_type_id" RENAME TO "verification_cases_subject_type_subject_id_verification_typ_idx";
