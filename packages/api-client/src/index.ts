@@ -121,6 +121,41 @@ import {
   walletSummarySchema,
   walletTopUpRequestSchema,
   walletTopUpResponseSchema,
+  adminVerificationCaseListQuerySchema,
+  attachVerificationDocumentRequestSchema,
+  conversationDetailSchema,
+  conversationListQuerySchema,
+  conversationListResponseSchema,
+  conversationSummarySchema,
+  createConversationRequestSchema,
+  createReviewRequestSchema,
+  createVerificationCaseRequestSchema,
+  leadAccessQuerySchema,
+  leadAccessStatusSchema,
+  leadContactRevealResponseSchema,
+  messageSummarySchema,
+  moderateReviewRequestSchema,
+  notificationListQuerySchema,
+  notificationListResponseSchema,
+  notificationPreferencesResponseSchema,
+  notificationSummarySchema,
+  reportReviewRequestSchema,
+  reviewListQuerySchema,
+  reviewListResponseSchema,
+  reviewReportSummarySchema,
+  reviewSummarySchema,
+  reviewVerificationCaseRequestSchema,
+  sendMessageRequestSchema,
+  submitVerificationCaseRequestSchema,
+  trustScoreResponseSchema,
+  updateNotificationPreferencesRequestSchema,
+  updateOwnReviewRequestSchema,
+  updateVerificationCaseRequestSchema,
+  updateVerificationDocumentRequestSchema,
+  verificationCaseDetailSchema,
+  verificationCaseListQuerySchema,
+  verificationCaseListResponseSchema,
+  verificationDocumentSummarySchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -242,6 +277,43 @@ import {
   type WalletSummary,
   type WalletTopUpRequest,
   type WalletTopUpResponse,
+  type AdminVerificationCaseListQuery,
+  type AttachVerificationDocumentRequest,
+  type ConversationDetail,
+  type ConversationListQuery,
+  type ConversationListResponse,
+  type ConversationSummary,
+  type CreateConversationRequest,
+  type CreateReviewRequest,
+  type CreateVerificationCaseRequest,
+  type LeadAccessQuery,
+  type LeadAccessStatus,
+  type LeadContactRevealResponse,
+  type MessageSummary,
+  type ModerateReviewRequest,
+  type NotificationListQuery,
+  type NotificationListResponse,
+  type NotificationPreferencesResponse,
+  type NotificationSummary,
+  type ReportReviewRequest,
+  type ReviewListQuery,
+  type ReviewListResponse,
+  type ReviewReportSummary,
+  type ReviewSummary,
+  type ReviewVerificationCaseRequest,
+  type SendMessageRequest,
+  type SubmitVerificationCaseRequest,
+  type TrustScoreResponse,
+  type UpdateNotificationPreferencesRequest,
+  type UpdateOwnReviewRequest,
+  type UpdateVerificationCaseRequest,
+  type UpdateVerificationDocumentRequest,
+  type VerificationCaseDetail,
+  type VerificationCaseListQuery,
+  type VerificationCaseListResponse,
+  type VerificationCaseSummary,
+  type VerificationDocumentSummary,
+  type ReviewSubjectType,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -1142,6 +1214,356 @@ export class ApiClient {
     return this.request(
       `/api/v1/admin/wallets?${params.toString()}`,
       adminWalletListResponseSchema,
+    );
+  }
+
+  async listVerificationCases(
+    query: VerificationCaseListQuery = { limit: 20 },
+  ): Promise<VerificationCaseListResponse> {
+    const parsed = verificationCaseListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    return this.request(
+      `/api/v1/verification/cases?${params.toString()}`,
+      verificationCaseListResponseSchema,
+    );
+  }
+
+  async getVerificationCase(publicId: string): Promise<VerificationCaseDetail> {
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(publicId)}`,
+      verificationCaseDetailSchema,
+    );
+  }
+
+  async createVerificationCase(
+    input: CreateVerificationCaseRequest,
+  ): Promise<VerificationCaseDetail> {
+    const body = createVerificationCaseRequestSchema.parse(input);
+    return this.request('/api/v1/verification/cases', verificationCaseDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateVerificationCase(
+    publicId: string,
+    input: UpdateVerificationCaseRequest,
+  ): Promise<VerificationCaseDetail> {
+    const body = updateVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(publicId)}`,
+      verificationCaseDetailSchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async submitVerificationCase(
+    publicId: string,
+    input: SubmitVerificationCaseRequest,
+  ): Promise<VerificationCaseDetail> {
+    const body = submitVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(publicId)}/submit`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async listVerificationDocuments(casePublicId: string): Promise<VerificationDocumentSummary[]> {
+    const detail = await this.getVerificationCase(casePublicId);
+    return detail.documents;
+  }
+
+  async addVerificationDocument(
+    casePublicId: string,
+    input: AttachVerificationDocumentRequest,
+  ): Promise<VerificationDocumentSummary> {
+    const body = attachVerificationDocumentRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(casePublicId)}/documents`,
+      verificationDocumentSummarySchema,
+      {
+        method: 'POST',
+        body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+      },
+    );
+  }
+
+  async updateVerificationDocument(
+    casePublicId: string,
+    documentPublicId: string,
+    input: UpdateVerificationDocumentRequest,
+  ): Promise<VerificationDocumentSummary> {
+    const body = updateVerificationDocumentRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/verification/cases/${encodeURIComponent(casePublicId)}/documents/${encodeURIComponent(documentPublicId)}`,
+      verificationDocumentSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminListVerificationCases(
+    query: AdminVerificationCaseListQuery = { limit: 20 },
+  ): Promise<VerificationCaseListResponse> {
+    const parsed = adminVerificationCaseListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    return this.request(
+      `/api/v1/admin/verification?${params.toString()}`,
+      verificationCaseListResponseSchema,
+    );
+  }
+
+  async adminGetVerificationCase(publicId: string): Promise<VerificationCaseDetail> {
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}`,
+      verificationCaseDetailSchema,
+    );
+  }
+
+  async approveVerificationCase(
+    publicId: string,
+    input: ReviewVerificationCaseRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = reviewVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/approve`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async rejectVerificationCase(
+    publicId: string,
+    input: ReviewVerificationCaseRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = reviewVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/reject`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async requestVerificationChanges(
+    publicId: string,
+    input: ReviewVerificationCaseRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = reviewVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/request-changes`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async revokeVerificationCase(
+    publicId: string,
+    input: ReviewVerificationCaseRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = reviewVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/revoke`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async createReview(input: CreateReviewRequest): Promise<ReviewSummary> {
+    const body = createReviewRequestSchema.parse(input);
+    return this.request('/api/v1/reviews', reviewSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listReviews(query: ReviewListQuery = { limit: 20 }): Promise<ReviewListResponse> {
+    const parsed = reviewListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.subjectType) params.set('subjectType', parsed.subjectType);
+    if (parsed.subjectPublicId) params.set('subjectPublicId', parsed.subjectPublicId);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    return this.request(`/api/v1/reviews?${params.toString()}`, reviewListResponseSchema);
+  }
+
+  async getReview(publicId: string): Promise<ReviewSummary> {
+    return this.request(`/api/v1/reviews/${encodeURIComponent(publicId)}`, reviewSummarySchema);
+  }
+
+  async updateOwnReview(publicId: string, input: UpdateOwnReviewRequest): Promise<ReviewSummary> {
+    const body = updateOwnReviewRequestSchema.parse(input);
+    return this.request(`/api/v1/reviews/${encodeURIComponent(publicId)}`, reviewSummarySchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async reportReview(publicId: string, input: ReportReviewRequest): Promise<ReviewReportSummary> {
+    const body = reportReviewRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/reviews/${encodeURIComponent(publicId)}/report`,
+      reviewReportSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async moderateReview(publicId: string, input: ModerateReviewRequest): Promise<ReviewSummary> {
+    const body = moderateReviewRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/reviews/${encodeURIComponent(publicId)}/moderate`,
+      reviewSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async getTrustScore(
+    subjectType: ReviewSubjectType,
+    subjectPublicId: string,
+  ): Promise<TrustScoreResponse> {
+    const params = new URLSearchParams({ subjectType, subjectPublicId });
+    return this.request(`/api/v1/reviews/trust-score?${params.toString()}`, trustScoreResponseSchema);
+  }
+
+  async adminListReviews(query: ReviewListQuery = { limit: 20 }): Promise<ReviewListResponse> {
+    return this.listReviews(query);
+  }
+
+  async adminListFlaggedReviews(
+    query: Omit<ReviewListQuery, 'status'> = { limit: 20 },
+  ): Promise<ReviewListResponse> {
+    return this.listReviews({ ...query, status: 'FLAGGED' });
+  }
+
+  async listNotifications(
+    query: NotificationListQuery = { limit: 20 },
+  ): Promise<NotificationListResponse> {
+    const parsed = notificationListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.unreadOnly !== undefined) params.set('unreadOnly', String(parsed.unreadOnly));
+    return this.request(`/api/v1/notifications?${params.toString()}`, notificationListResponseSchema);
+  }
+
+  async markNotificationRead(publicId: string): Promise<NotificationSummary> {
+    return this.request(
+      `/api/v1/notifications/${encodeURIComponent(publicId)}/read`,
+      notificationSummarySchema,
+      { method: 'POST', body: JSON.stringify({}) },
+    );
+  }
+
+  async markAllNotificationsRead(): Promise<OkResponse> {
+    return this.request('/api/v1/notifications/read-all', okResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  async getNotificationPreferences(): Promise<NotificationPreferencesResponse> {
+    return this.request('/api/v1/notifications/preferences', notificationPreferencesResponseSchema);
+  }
+
+  async updateNotificationPreferences(
+    input: UpdateNotificationPreferencesRequest,
+  ): Promise<NotificationPreferencesResponse> {
+    const body = updateNotificationPreferencesRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/notifications/preferences',
+      notificationPreferencesResponseSchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async listConversations(
+    query: ConversationListQuery = { limit: 20 },
+  ): Promise<ConversationListResponse> {
+    const parsed = conversationListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.type) params.set('type', parsed.type);
+    return this.request(
+      `/api/v1/conversations?${params.toString()}`,
+      conversationListResponseSchema,
+    );
+  }
+
+  async getConversation(publicId: string): Promise<ConversationDetail> {
+    return this.request(
+      `/api/v1/conversations/${encodeURIComponent(publicId)}`,
+      conversationDetailSchema,
+    );
+  }
+
+  async createConversation(input: CreateConversationRequest): Promise<ConversationSummary> {
+    const body = createConversationRequestSchema.parse(input);
+    return this.request('/api/v1/conversations', conversationSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listMessages(conversationPublicId: string): Promise<MessageSummary[]> {
+    const detail = await this.getConversation(conversationPublicId);
+    return detail.messages;
+  }
+
+  async sendMessage(
+    conversationPublicId: string,
+    input: SendMessageRequest,
+  ): Promise<MessageSummary> {
+    const body = sendMessageRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/conversations/${encodeURIComponent(conversationPublicId)}/messages`,
+      messageSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async markConversationRead(conversationPublicId: string): Promise<ConversationSummary> {
+    return this.request(
+      `/api/v1/conversations/${encodeURIComponent(conversationPublicId)}/read`,
+      conversationSummarySchema,
+      { method: 'POST', body: JSON.stringify({}) },
+    );
+  }
+
+  async getLeadAccess(
+    leadPublicId: string,
+    query: LeadAccessQuery,
+  ): Promise<LeadAccessStatus> {
+    const parsed = leadAccessQuerySchema.parse(query);
+    const params = new URLSearchParams({
+      organizationPublicId: parsed.organizationPublicId,
+    });
+    return this.request(
+      `/api/v1/leads/${encodeURIComponent(leadPublicId)}/access?${params.toString()}`,
+      leadAccessStatusSchema,
+    );
+  }
+
+  async revealLeadContact(
+    leadPublicId: string,
+    input: LeadAccessQuery,
+  ): Promise<LeadContactRevealResponse> {
+    const body = leadAccessQuerySchema.parse(input);
+    return this.request(
+      `/api/v1/leads/${encodeURIComponent(leadPublicId)}/contact`,
+      leadContactRevealResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
     );
   }
 

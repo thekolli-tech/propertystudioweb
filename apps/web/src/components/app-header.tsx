@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { OrganizationSummary, UserSummary } from '@property-studio/contracts';
 import { Button, cn } from '@property-studio/ui';
-import { Bell, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { NotificationBell } from './notifications/notification-bell';
 import { OrganizationSwitcher } from './organization-switcher';
 import { UserMenu } from './user-menu';
 
@@ -14,6 +15,7 @@ const APP_NAV: Array<{ href: string; label: string; exact?: boolean }> = [
   { href: '/app', label: 'Home', exact: true },
   { href: '/app/requirements', label: 'Requirements' },
   { href: '/app/saved', label: 'Saved' },
+  { href: '/app/messages', label: 'Messages' },
   { href: '/app/inbox', label: 'Inbox' },
   { href: '/app/me', label: 'Profile' },
 ];
@@ -87,9 +89,7 @@ export function AppHeader({ user, organizations }: AppHeaderProps) {
               activeOrganizationPublicId={user.activeOrganizationPublicId}
             />
           </div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Notifications">
-            <Bell className="h-4 w-4" />
-          </Button>
+          <NotificationBell />
           <div className="hidden sm:block">
             <UserMenu user={user} />
           </div>

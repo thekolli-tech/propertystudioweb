@@ -11,6 +11,7 @@ import {
   PropertyCard,
 } from '@property-studio/ui';
 
+import { VerifiedBadge } from '@/components/verified-badge';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { isPublicIdForKind } from '@/lib/public-id';
 
@@ -71,6 +72,10 @@ export default async function PublicDeveloperPage({ params }: PageProps) {
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">{profile.publicId}</Badge>
           <Badge variant="outline">{profile.organizationPublicId}</Badge>
+          <VerifiedBadge verified={profile.verifiedBadge} />
+          {!profile.verifiedBadge ? (
+            <Badge variant="outline">Professional verification required</Badge>
+          ) : null}
         </div>
         {profile.description ? (
           <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { Badge, Breadcrumbs, EmptyState, PageHeader } from '@property-studio/ui';
+import { VerifiedBadge } from '@/components/verified-badge';
 import { isPublicIdForKind } from '@/lib/public-id';
 
 export const metadata = { title: 'Agency' };
@@ -42,11 +43,10 @@ export default async function PublicAgentPage({ params }: PageProps) {
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">{profile.publicId}</Badge>
           <Badge variant="outline">{profile.organizationPublicId}</Badge>
-          {profile.verificationStatus === 'VERIFIED' ? (
-            <Badge variant="success">Verified</Badge>
-          ) : (
+          <VerifiedBadge verified={profile.verifiedBadge} />
+          {!profile.verifiedBadge ? (
             <Badge variant="outline">Professional verification required</Badge>
-          )}
+          ) : null}
         </div>
         {profile.description ? (
           <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
