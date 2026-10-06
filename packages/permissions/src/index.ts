@@ -118,6 +118,19 @@ export const PERMISSIONS = [
   'admin:reviews:read',
   'admin:reviews:manage',
   'admin:communications:moderate',
+  'intelligence:read',
+  'intelligence:compare',
+  'intelligence:match',
+  'admin:intelligence:read',
+  'admin:intelligence:manage',
+  'ai:assistant',
+  'ai:match',
+  'ai:document:analyze',
+  'ai:floorplan:analyze',
+  'ai:valuation',
+  'ai:search',
+  'admin:ai:read',
+  'admin:ai:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -223,6 +236,42 @@ const PERSONA_PHASE10_PERMISSIONS = [
   'communications:message',
 ] as const satisfies readonly Permission[];
 
+const INTELLIGENCE_READ_PERMISSIONS = ['intelligence:read'] as const satisfies readonly Permission[];
+
+const INTELLIGENCE_COMPARE_MATCH_PERMISSIONS = [
+  'intelligence:read',
+  'intelligence:compare',
+  'intelligence:match',
+] as const satisfies readonly Permission[];
+
+const AI_CORE_PERMISSIONS = [
+  'ai:assistant',
+  'ai:search',
+] as const satisfies readonly Permission[];
+
+const AI_MATCH_VALUATION_PERMISSIONS = [
+  'ai:assistant',
+  'ai:match',
+  'ai:search',
+  'ai:valuation',
+] as const satisfies readonly Permission[];
+
+const AI_FULL_PERMISSIONS = [
+  'ai:assistant',
+  'ai:match',
+  'ai:document:analyze',
+  'ai:floorplan:analyze',
+  'ai:valuation',
+  'ai:search',
+] as const satisfies readonly Permission[];
+
+const ADMIN_INTELLIGENCE_AI_PERMISSIONS = [
+  'admin:intelligence:read',
+  'admin:intelligence:manage',
+  'admin:ai:read',
+  'admin:ai:manage',
+] as const satisfies readonly Permission[];
+
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
   ADMIN: [
@@ -268,6 +317,9 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'communications:moderate',
     'admin:communications:moderate',
     ...LEAD_ACCESS_PERMISSIONS,
+    ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
+    ...AI_FULL_PERMISSIONS,
+    ...ADMIN_INTELLIGENCE_AI_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -287,6 +339,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'reviews:moderate',
     'admin:reviews:read',
     'communications:moderate',
+    ...INTELLIGENCE_READ_PERMISSIONS,
   ],
 };
 
@@ -316,6 +369,10 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...NOTIFICATION_PERMISSIONS,
     ...COMMUNICATIONS_ORG_OWNER_PERMISSIONS,
     ...LEAD_ACCESS_PERMISSIONS,
+    ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
+    ...AI_MATCH_VALUATION_PERMISSIONS,
+    'ai:document:analyze',
+    'ai:floorplan:analyze',
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -336,6 +393,8 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...NOTIFICATION_PERMISSIONS,
     ...COMMUNICATIONS_ORG_STAFF_PERMISSIONS,
     ...LEAD_ACCESS_PERMISSIONS,
+    ...INTELLIGENCE_READ_PERMISSIONS,
+    ...AI_CORE_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -351,6 +410,10 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...NOTIFICATION_PERMISSIONS,
     ...COMMUNICATIONS_ORG_OWNER_PERMISSIONS,
     ...LEAD_ACCESS_PERMISSIONS,
+    ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
+    ...AI_MATCH_VALUATION_PERMISSIONS,
+    'ai:document:analyze',
+    'ai:floorplan:analyze',
   ],
   AGENT_STAFF: [
     'organization:read',
@@ -362,13 +425,25 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...NOTIFICATION_PERMISSIONS,
     ...COMMUNICATIONS_ORG_STAFF_PERMISSIONS,
     ...LEAD_ACCESS_PERMISSIONS,
+    ...INTELLIGENCE_READ_PERMISSIONS,
+    ...AI_CORE_PERMISSIONS,
   ],
 };
 
 /** Persona grants for demand-side requirement ownership (Phase 7) and Phase 10 trust/comms. */
 export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>> = {
-  PROPERTY_SEEKER: [...REQUIREMENT_OWNER_PERMISSIONS, ...PERSONA_PHASE10_PERMISSIONS],
-  INVESTOR: [...REQUIREMENT_OWNER_PERMISSIONS, ...PERSONA_PHASE10_PERMISSIONS],
+  PROPERTY_SEEKER: [
+    ...REQUIREMENT_OWNER_PERMISSIONS,
+    ...PERSONA_PHASE10_PERMISSIONS,
+    ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
+    ...AI_MATCH_VALUATION_PERMISSIONS,
+  ],
+  INVESTOR: [
+    ...REQUIREMENT_OWNER_PERMISSIONS,
+    ...PERSONA_PHASE10_PERMISSIONS,
+    ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
+    ...AI_MATCH_VALUATION_PERMISSIONS,
+  ],
 };
 
 /** Organization roles allowed for each organization type. */

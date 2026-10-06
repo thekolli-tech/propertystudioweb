@@ -2623,3 +2623,530 @@ export const leadAccessQuerySchema = z.object({
 export type LeadAccessQuery = z.infer<typeof leadAccessQuerySchema>;
 
 export type TrustSubjectStatus = z.infer<typeof trustSubjectStatusSchema>;
+
+// --- Phase 11: intelligence, market data, AI orchestration ---
+
+export const intelligenceSubjectTypeSchema = z.enum([
+  'PROPERTY',
+  'PROJECT',
+  'LOCALITY',
+  'CITY',
+  'MICRO_MARKET',
+]);
+export type IntelligenceSubjectType = z.infer<typeof intelligenceSubjectTypeSchema>;
+
+export const intelligenceDataStateSchema = z.enum(['READY', 'INSUFFICIENT_DATA', 'UNAVAILABLE']);
+export type IntelligenceDataState = z.infer<typeof intelligenceDataStateSchema>;
+
+export const intelligenceSourceTypeSchema = z.enum([
+  'INTERNAL_CATALOG',
+  'MANUAL_ADMIN',
+  'EXTERNAL_PROVIDER',
+  'MARKET_OBSERVATION',
+  'DERIVED',
+]);
+export type IntelligenceSourceType = z.infer<typeof intelligenceSourceTypeSchema>;
+
+export const infrastructureCategorySchema = z.enum([
+  'ROAD',
+  'METRO',
+  'AIRPORT',
+  'HOSPITAL',
+  'SCHOOL',
+  'SHOPPING',
+  'IT_PARK',
+  'UPCOMING',
+  'OTHER',
+]);
+export type InfrastructureCategory = z.infer<typeof infrastructureCategorySchema>;
+
+export const infrastructureStatusSchema = z.enum([
+  'PLANNED',
+  'UNDER_CONSTRUCTION',
+  'OPERATIONAL',
+  'UNKNOWN',
+]);
+export type InfrastructureStatus = z.infer<typeof infrastructureStatusSchema>;
+
+export const aiJobTypeSchema = z.enum([
+  'ASSISTANT',
+  'PROPERTY_MATCH',
+  'DOCUMENT_ANALYSIS',
+  'FLOORPLAN_ANALYSIS',
+  'VALUATION',
+  'PROPERTY_SEARCH',
+  'COMPARE',
+]);
+export type AiJobType = z.infer<typeof aiJobTypeSchema>;
+
+export const aiJobStatusSchema = z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED']);
+export type AiJobStatus = z.infer<typeof aiJobStatusSchema>;
+
+export const documentAnalysisFindingKindSchema = z.enum([
+  'EXTRACTED_FACT',
+  'POTENTIAL_INCONSISTENCY',
+  'MISSING_INFORMATION',
+  'MODEL_OBSERVATION',
+]);
+export type DocumentAnalysisFindingKind = z.infer<typeof documentAnalysisFindingKindSchema>;
+
+export const marketSnapshotSummarySchema = z.object({
+  publicId: z.string(),
+  subjectType: intelligenceSubjectTypeSchema,
+  subjectKey: z.string(),
+  propertyPublicId: z.string().nullable(),
+  projectPublicId: z.string().nullable(),
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  microMarket: z.string().nullable(),
+  medianPriceMinor: z.string().nullable(),
+  medianPricePerSqftMinor: z.string().nullable(),
+  currency: z.string(),
+  inventorySignal: z.string().nullable(),
+  demandSignal: z.string().nullable(),
+  rentalYieldBps: z.number().int().nullable(),
+  appreciationBps: z.number().int().nullable(),
+  coverageState: intelligenceDataStateSchema,
+  sourceType: intelligenceSourceTypeSchema,
+  observedAt: z.string().datetime(),
+  effectiveAt: z.string().datetime().nullable(),
+  confidenceBps: z.number().int().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type MarketSnapshotSummary = z.infer<typeof marketSnapshotSummarySchema>;
+
+export const marketQuerySchema = cursorPaginationQuerySchema.extend({
+  city: z.string().trim().max(80).optional(),
+  locality: z.string().trim().max(120).optional(),
+  microMarket: z.string().trim().max(120).optional(),
+  subjectType: intelligenceSubjectTypeSchema.optional(),
+  subjectKey: z.string().trim().max(160).optional(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional(),
+});
+export type MarketQuery = z.infer<typeof marketQuerySchema>;
+
+export const marketSnapshotListResponseSchema = z.object({
+  snapshots: z.array(marketSnapshotSummarySchema),
+  coverageState: intelligenceDataStateSchema,
+  nextCursor: z.string().nullable(),
+});
+export type MarketSnapshotListResponse = z.infer<typeof marketSnapshotListResponseSchema>;
+
+export const marketTrendPointSchema = z.object({
+  observedAt: z.string().datetime(),
+  medianPriceMinor: z.string().nullable(),
+  medianPricePerSqftMinor: z.string().nullable(),
+  coverageState: intelligenceDataStateSchema,
+});
+export type MarketTrendPoint = z.infer<typeof marketTrendPointSchema>;
+
+export const marketTrendResponseSchema = z.object({
+  points: z.array(marketTrendPointSchema),
+  coverageState: intelligenceDataStateSchema,
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  microMarket: z.string().nullable(),
+});
+export type MarketTrendResponse = z.infer<typeof marketTrendResponseSchema>;
+
+export const infrastructureAssetSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  category: infrastructureCategorySchema,
+  status: infrastructureStatusSchema,
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  addressLine: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  expectedAt: z.string().nullable(),
+  actualAt: z.string().nullable(),
+  sourceType: intelligenceSourceTypeSchema,
+  confidenceBps: z.number().int().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type InfrastructureAssetSummary = z.infer<typeof infrastructureAssetSummarySchema>;
+
+export const infrastructureQuerySchema = cursorPaginationQuerySchema.extend({
+  city: z.string().trim().max(80).optional(),
+  locality: z.string().trim().max(120).optional(),
+  category: infrastructureCategorySchema.optional(),
+  status: infrastructureStatusSchema.optional(),
+});
+export type InfrastructureQuery = z.infer<typeof infrastructureQuerySchema>;
+
+export const infrastructureListResponseSchema = z.object({
+  assets: z.array(infrastructureAssetSummarySchema),
+  coverageState: intelligenceDataStateSchema,
+  nextCursor: z.string().nullable(),
+});
+export type InfrastructureListResponse = z.infer<typeof infrastructureListResponseSchema>;
+
+export const intelligenceObservationSummarySchema = z.object({
+  publicId: z.string(),
+  subjectType: intelligenceSubjectTypeSchema,
+  subjectKey: z.string(),
+  observationKey: z.string(),
+  valueJson: z.unknown(),
+  coverageState: intelligenceDataStateSchema,
+  sourceType: intelligenceSourceTypeSchema,
+  observedAt: z.string().datetime(),
+  confidenceBps: z.number().int().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type IntelligenceObservationSummary = z.infer<typeof intelligenceObservationSummarySchema>;
+
+export const intelligenceObservationListQuerySchema = cursorPaginationQuerySchema.extend({
+  subjectType: intelligenceSubjectTypeSchema.optional(),
+  subjectKey: z.string().trim().max(160).optional(),
+  observationKey: z.string().trim().max(120).optional(),
+});
+export type IntelligenceObservationListQuery = z.infer<
+  typeof intelligenceObservationListQuerySchema
+>;
+
+export const intelligenceObservationListResponseSchema = z.object({
+  observations: z.array(intelligenceObservationSummarySchema),
+  coverageState: intelligenceDataStateSchema,
+  nextCursor: z.string().nullable(),
+});
+export type IntelligenceObservationListResponse = z.infer<
+  typeof intelligenceObservationListResponseSchema
+>;
+
+export const propertyIntelligenceDetailSchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  projectPublicId: z.string().nullable(),
+  title: z.string(),
+  propertyType: propertyTypeSchema,
+  listingType: listingTypeSchema,
+  configuration: propertyConfigurationSchema.nullable(),
+  bedrooms: z.number().nullable(),
+  bathrooms: z.number().nullable(),
+  priceMinor: z.string(),
+  pricePerSqftMinor: z.string().nullable(),
+  currency: z.string(),
+  availabilityStatus: propertyAvailabilityStatusSchema,
+  publicationStatus: propertyPublicationStatusSchema,
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  carpetAreaSqft: z.number().nullable(),
+  builtUpAreaSqft: z.number().nullable(),
+  trustStatus: trustSubjectStatusSchema,
+  trustScore: trustScoreResponseSchema.nullable(),
+  market: marketSnapshotSummarySchema.nullable(),
+  marketCoverageState: intelligenceDataStateSchema,
+  infrastructure: z.array(infrastructureAssetSummarySchema).default([]),
+  infrastructureCoverageState: intelligenceDataStateSchema,
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type PropertyIntelligenceDetail = z.infer<typeof propertyIntelligenceDetailSchema>;
+
+export const projectIntelligenceDetailSchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  name: z.string(),
+  projectType: projectTypeSchema,
+  lifecycleStatus: projectLifecycleStatusSchema,
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  microMarket: z.string().nullable(),
+  startingPriceMinor: z.string().nullable(),
+  currency: z.string(),
+  trustStatus: trustSubjectStatusSchema,
+  trustScore: trustScoreResponseSchema.nullable(),
+  market: marketSnapshotSummarySchema.nullable(),
+  marketCoverageState: intelligenceDataStateSchema,
+  infrastructure: z.array(infrastructureAssetSummarySchema).default([]),
+  infrastructureCoverageState: intelligenceDataStateSchema,
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type ProjectIntelligenceDetail = z.infer<typeof projectIntelligenceDetailSchema>;
+
+export const intelligenceCompareSubjectTypeSchema = z.enum(['PROPERTY', 'PROJECT']);
+export type IntelligenceCompareSubjectType = z.infer<typeof intelligenceCompareSubjectTypeSchema>;
+
+export const intelligenceCompareRequestSchema = z.object({
+  subjectType: intelligenceCompareSubjectTypeSchema.default('PROPERTY'),
+  publicIds: z
+    .array(z.string().regex(/^PS-(PROP|PROJ)-\d+$/))
+    .min(2)
+    .max(5),
+});
+export type IntelligenceCompareRequest = z.infer<typeof intelligenceCompareRequestSchema>;
+
+export const intelligenceCompareFieldSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  values: z.array(
+    z.object({
+      publicId: z.string(),
+      value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
+      available: z.boolean(),
+    }),
+  ),
+});
+export type IntelligenceCompareField = z.infer<typeof intelligenceCompareFieldSchema>;
+
+export const intelligenceCompareResponseSchema = z.object({
+  subjectType: intelligenceCompareSubjectTypeSchema,
+  subjects: z.array(
+    z.object({
+      publicId: z.string(),
+      title: z.string(),
+      coverageState: intelligenceDataStateSchema,
+    }),
+  ),
+  fields: z.array(intelligenceCompareFieldSchema),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type IntelligenceCompareResponse = z.infer<typeof intelligenceCompareResponseSchema>;
+
+export const intelligenceMatchCriteriaSchema = z.object({
+  propertyType: propertyTypeSchema.optional(),
+  transactionType: requirementTransactionTypeSchema.optional(),
+  configuration: propertyConfigurationSchema.optional().nullable(),
+  bedrooms: z.number().int().min(0).max(50).optional().nullable(),
+  budgetMinMinor: optionalMoneyMinorSchema,
+  budgetMaxMinor: optionalMoneyMinorSchema,
+  city: z.string().trim().min(2).max(80).optional(),
+  locality: z.string().trim().max(120).optional().nullable(),
+  microMarket: z.string().trim().max(120).optional().nullable(),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
+});
+export type IntelligenceMatchCriteria = z.infer<typeof intelligenceMatchCriteriaSchema>;
+
+export const intelligenceMatchRequestSchema = z.object({
+  requirementPublicId: z
+    .string()
+    .regex(/^PS-REQ-\d+$/)
+    .optional(),
+  criteria: intelligenceMatchCriteriaSchema.optional(),
+  limit: z.number().int().min(1).max(50).default(10),
+});
+export type IntelligenceMatchRequest = z.infer<typeof intelligenceMatchRequestSchema>;
+
+export const intelligenceMatchItemSchema = z.object({
+  propertyPublicId: z.string(),
+  title: z.string(),
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  priceMinor: z.string(),
+  currency: z.string(),
+  score: z.number().int().min(0).max(100),
+  reasons: z.array(z.string()),
+  unmatched: z.array(z.string()),
+});
+export type IntelligenceMatchItem = z.infer<typeof intelligenceMatchItemSchema>;
+
+export const intelligenceMatchResponseSchema = z.object({
+  matches: z.array(intelligenceMatchItemSchema),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type IntelligenceMatchResponse = z.infer<typeof intelligenceMatchResponseSchema>;
+
+export const aiJobSummarySchema = z.object({
+  publicId: z.string(),
+  type: aiJobTypeSchema,
+  status: aiJobStatusSchema,
+  provider: z.string(),
+  coverageState: intelligenceDataStateSchema,
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AiJobSummary = z.infer<typeof aiJobSummarySchema>;
+
+export const aiAssistantRequestSchema = z.object({
+  message: z.string().trim().min(1).max(4000),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  contextPropertyPublicIds: z.array(z.string().regex(/^PS-PROP-\d+$/)).max(5).default([]),
+  contextProjectPublicIds: z.array(z.string().regex(/^PS-PROJ-\d+$/)).max(5).default([]),
+});
+export type AiAssistantRequest = z.infer<typeof aiAssistantRequestSchema>;
+
+export const aiReferenceSchema = z.object({
+  kind: z.enum(['PROPERTY', 'PROJECT', 'MARKET', 'INFRASTRUCTURE', 'REVIEW', 'TOOL']),
+  publicId: z.string().nullable(),
+  label: z.string(),
+});
+export type AiReference = z.infer<typeof aiReferenceSchema>;
+
+export const aiAssistantResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  answer: z.string(),
+  references: z.array(aiReferenceSchema).default([]),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiAssistantResponse = z.infer<typeof aiAssistantResponseSchema>;
+
+export const aiPropertyMatchRequestSchema = intelligenceMatchRequestSchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type AiPropertyMatchRequest = z.infer<typeof aiPropertyMatchRequestSchema>;
+
+export const aiPropertyMatchResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  matches: z.array(intelligenceMatchItemSchema),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiPropertyMatchResponse = z.infer<typeof aiPropertyMatchResponseSchema>;
+
+export const aiDocumentAnalysisRequestSchema = z.object({
+  documentPublicId: z.string().regex(/^PS-DOC-\d+$/),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type AiDocumentAnalysisRequest = z.infer<typeof aiDocumentAnalysisRequestSchema>;
+
+export const documentAnalysisFindingSchema = z.object({
+  kind: documentAnalysisFindingKindSchema,
+  field: z.string().nullable(),
+  value: z.string().nullable(),
+  confidenceBps: z.number().int().nullable(),
+  note: z.string().nullable(),
+});
+export type DocumentAnalysisFinding = z.infer<typeof documentAnalysisFindingSchema>;
+
+export const aiDocumentAnalysisResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  analysisPublicId: z.string(),
+  status: aiJobStatusSchema,
+  findings: z.array(documentAnalysisFindingSchema).default([]),
+  warnings: z.array(z.string()).default([]),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiDocumentAnalysisResponse = z.infer<typeof aiDocumentAnalysisResponseSchema>;
+
+export const aiFloorPlanAnalysisRequestSchema = z.object({
+  documentPublicId: z
+    .string()
+    .regex(/^PS-DOC-\d+$/)
+    .optional()
+    .nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type AiFloorPlanAnalysisRequest = z.infer<typeof aiFloorPlanAnalysisRequestSchema>;
+
+export const aiFloorPlanAnalysisResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  analysisPublicId: z.string(),
+  status: aiJobStatusSchema,
+  observations: z.array(z.string()).default([]),
+  uncertaintyNotes: z.string().nullable(),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiFloorPlanAnalysisResponse = z.infer<typeof aiFloorPlanAnalysisResponseSchema>;
+
+export const aiValuationRequestSchema = z.object({
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type AiValuationRequest = z.infer<typeof aiValuationRequestSchema>;
+
+export const aiValuationResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  valuationPublicId: z.string(),
+  coverageState: intelligenceDataStateSchema,
+  lowEstimateMinor: z.string().nullable(),
+  highEstimateMinor: z.string().nullable(),
+  midpointMinor: z.string().nullable(),
+  currency: z.string(),
+  confidenceBps: z.number().int().nullable(),
+  factors: z.array(z.string()).default([]),
+  disclaimer: z.string(),
+});
+export type AiValuationResponse = z.infer<typeof aiValuationResponseSchema>;
+
+export const aiPropertySearchRequestSchema = z.object({
+  query: z.string().trim().min(1).max(500),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+export type AiPropertySearchRequest = z.infer<typeof aiPropertySearchRequestSchema>;
+
+export const aiPropertySearchParsedSchema = z.object({
+  city: z.string().nullable(),
+  locality: z.string().nullable(),
+  bedrooms: z.number().int().nullable(),
+  configuration: propertyConfigurationSchema.nullable(),
+  propertyType: propertyTypeSchema.nullable(),
+  budgetMinMinor: z.string().nullable(),
+  budgetMaxMinor: z.string().nullable(),
+  amenities: z.array(z.string()).default([]),
+});
+export type AiPropertySearchParsed = z.infer<typeof aiPropertySearchParsedSchema>;
+
+export const aiPropertySearchResponseSchema = z.object({
+  job: aiJobSummarySchema,
+  parsed: aiPropertySearchParsedSchema,
+  properties: z.array(
+    z.object({
+      publicId: z.string(),
+      title: z.string(),
+      city: z.string().nullable(),
+      locality: z.string().nullable(),
+      bedrooms: z.number().nullable(),
+      configuration: propertyConfigurationSchema.nullable(),
+      priceMinor: z.string(),
+      currency: z.string(),
+    }),
+  ),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiPropertySearchResponse = z.infer<typeof aiPropertySearchResponseSchema>;

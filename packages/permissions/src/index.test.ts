@@ -104,4 +104,48 @@ describe('permissions catalog', () => {
     expect(propertyAdmin.has('billing:read')).toBe(false);
     expect(propertyAdmin.has('admin:billing:read')).toBe(false);
   });
+
+  it('grants Phase 11 intelligence and AI permissions by role', () => {
+    const admin = collectPermissions({ platformRoles: ['ADMIN'] });
+    expect(admin.has('intelligence:read')).toBe(true);
+    expect(admin.has('admin:intelligence:manage')).toBe(true);
+    expect(admin.has('ai:assistant')).toBe(true);
+    expect(admin.has('admin:ai:read')).toBe(true);
+
+    const developer = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER',
+    });
+    expect(developer.has('intelligence:compare')).toBe(true);
+    expect(developer.has('ai:match')).toBe(true);
+    expect(developer.has('ai:document:analyze')).toBe(true);
+    expect(developer.has('admin:intelligence:read')).toBe(false);
+
+    const staff = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER_STAFF',
+    });
+    expect(staff.has('intelligence:read')).toBe(true);
+    expect(staff.has('ai:assistant')).toBe(true);
+    expect(staff.has('ai:match')).toBe(false);
+    expect(staff.has('intelligence:compare')).toBe(false);
+
+    const seeker = collectPermissions({
+      platformRoles: [],
+      personas: ['PROPERTY_SEEKER'],
+    });
+    expect(seeker.has('intelligence:match')).toBe(true);
+    expect(seeker.has('ai:valuation')).toBe(true);
+    expect(seeker.has('ai:document:analyze')).toBe(false);
+
+    const propertyAdmin = collectPermissions({
+      platformRoles: ['PROPERTY_ADMIN'],
+    });
+    expect(propertyAdmin.has('intelligence:read')).toBe(false);
+    expect(propertyAdmin.has('admin:ai:manage')).toBe(false);
+
+    const moderator = collectPermissions({ platformRoles: ['MODERATOR'] });
+    expect(moderator.has('intelligence:read')).toBe(true);
+    expect(moderator.has('ai:assistant')).toBe(false);
+  });
 });
