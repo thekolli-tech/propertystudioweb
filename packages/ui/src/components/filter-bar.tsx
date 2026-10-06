@@ -35,7 +35,10 @@ export type FilterFieldProps = {
 export function FilterField({ label, children, className }: FilterFieldProps) {
   return (
     <label
-      className={cn('flex flex-col gap-1.5 text-[11px] font-semibold text-muted-foreground', className)}
+      className={cn(
+        'flex flex-col gap-1.5 text-[11px] font-semibold text-muted-foreground',
+        className,
+      )}
     >
       <span className="tracking-[0.12em] uppercase">{label}</span>
       {children}

@@ -69,7 +69,10 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               {[0, 1, 2, 3].map((index) => (
-                <div key={index} className="overflow-hidden rounded-[var(--radius)] border border-border">
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-[var(--radius)] border border-border"
+                >
                   <ImagePlaceholder
                     ratio="square"
                     label={

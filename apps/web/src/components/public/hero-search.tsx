@@ -120,22 +120,24 @@ export function HeroSearch() {
             />
           </>
         )}
-        <Button
-          type="submit"
-          size="lg"
-          className="h-11 min-w-[7.5rem] w-full px-5 md:w-auto"
-        >
+        <Button type="submit" size="lg" className="h-11 min-w-[7.5rem] w-full px-5 md:w-auto">
           <Search className="h-4 w-4 shrink-0" aria-hidden />
           <span>Search</span>
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
         Live catalog only.{' '}
-        <Link href="/properties" className="font-medium text-foreground underline-offset-2 hover:underline">
+        <Link
+          href="/properties"
+          className="font-medium text-foreground underline-offset-2 hover:underline"
+        >
           Browse properties
         </Link>
         {' · '}
-        <Link href="/projects" className="font-medium text-foreground underline-offset-2 hover:underline">
+        <Link
+          href="/projects"
+          className="font-medium text-foreground underline-offset-2 hover:underline"
+        >
           Browse projects
         </Link>
       </p>

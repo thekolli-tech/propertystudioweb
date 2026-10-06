@@ -25,8 +25,13 @@
   --color-success: hsl(var(--success));
   --color-warning: hsl(var(--warning));
   --color-info: hsl(var(--info));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-border: hsl(var(--sidebar-border));
   --radius-lg: var(--radius);
-  --font-family-display: var(--font-display), 'Plus Jakarta Sans', sans-serif;
+  --font-family-display: var(--font-display), 'DM Sans', sans-serif;
   --font-family-body: var(--font-body), 'DM Sans', sans-serif;
 }
 
@@ -42,8 +47,9 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display), 'DM Sans', sans-serif;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
 .ps-hero-surface {
@@ -56,6 +62,29 @@ body {
 
 .bg-premium {
   background-color: hsl(var(--premium));
+}
+
+/* Explicit sidebar utilities — ensures Super Admin navy shell renders in Turbopack/dev */
+.bg-sidebar {
+  background-color: hsl(var(--sidebar));
+}
+.text-sidebar-foreground {
+  color: hsl(var(--sidebar-foreground));
+}
+.text-sidebar-muted {
+  color: hsl(var(--sidebar-muted));
+}
+.bg-sidebar-accent {
+  background-color: hsl(var(--sidebar-accent));
+}
+.border-sidebar-border {
+  border-color: hsl(var(--sidebar-border));
+}
+.hover\:bg-sidebar-accent:hover {
+  background-color: hsl(var(--sidebar-accent));
+}
+.hover\:text-sidebar-foreground:hover {
+  color: hsl(var(--sidebar-foreground));
 }
 
 .ps-page {

@@ -36,7 +36,7 @@
   --radius: 0.5rem;
   --shadow-card: 0 1px 2px hsl(222 30% 12% / 0.04), 0 6px 18px hsl(222 30% 12% / 0.05);
   --shadow-elevated: 0 2px 6px hsl(222 30% 12% / 0.06), 0 14px 32px hsl(222 30% 12% / 0.08);
-  --font-display: 'Plus Jakarta Sans', 'DM Sans', 'Segoe UI', sans-serif;
+  --font-display: 'DM Sans', 'Segoe UI', sans-serif;
   --font-body: 'DM Sans', 'Segoe UI', sans-serif;
   --broadcast-scale: 1;
   --broadcast-weight: 600;

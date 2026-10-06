@@ -45,7 +45,7 @@ export function SidebarNav({
       className={cn(
         'flex h-full flex-col border-r transition-[width] duration-200',
         dark
-          ? 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))]'
+          ? 'border-sidebar-border bg-sidebar text-sidebar-foreground'
           : 'border-border bg-card text-foreground',
         collapsed ? 'w-[72px]' : 'w-60',
         className,
@@ -59,7 +59,7 @@ export function SidebarNav({
           variant="ghost"
           className={cn(
             'shrink-0',
-            dark && 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-accent))]',
+            dark && 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={() => setCollapsed((value) => !value)}
@@ -78,7 +78,7 @@ export function SidebarNav({
               <p
                 className={cn(
                   'px-3 pb-1 text-[11px] font-semibold tracking-[0.16em] uppercase',
-                  dark ? 'text-[hsl(var(--sidebar-muted))]' : 'text-muted-foreground',
+                  dark ? 'text-sidebar-muted' : 'text-muted-foreground',
                 )}
               >
                 {section.title}
@@ -110,8 +110,8 @@ export function SidebarNav({
                     key={item.href + item.label}
                     title={item.label}
                     className={cn(
-                      'flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm opacity-55',
-                      dark ? 'text-[hsl(var(--sidebar-muted))]' : 'text-muted-foreground',
+                      'flex cursor-not-allowed items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm opacity-55',
+                      dark ? 'text-sidebar-muted' : 'text-muted-foreground',
                     )}
                   >
                     {content}
@@ -125,13 +125,13 @@ export function SidebarNav({
                   href={item.href}
                   title={item.label}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors',
                     active
                       ? dark
-                        ? 'bg-[hsl(var(--sidebar-accent))] text-white'
+                        ? 'bg-sidebar-accent text-white'
                         : 'bg-secondary text-foreground'
                       : dark
-                        ? 'text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-accent))] hover:text-white'
+                        ? 'text-sidebar-muted hover:bg-sidebar-accent hover:text-white'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   )}
                 >
