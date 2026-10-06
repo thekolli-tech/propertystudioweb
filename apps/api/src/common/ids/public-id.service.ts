@@ -73,6 +73,38 @@ export class PublicIdService {
     return this.next('DEAL');
   }
 
+  async nextPlanPublicId(): Promise<string> {
+    return this.next('PLAN');
+  }
+
+  async nextSubscriptionPublicId(): Promise<string> {
+    return this.next('SUB');
+  }
+
+  async nextWalletPublicId(): Promise<string> {
+    return this.next('WAL');
+  }
+
+  async nextWalletLedgerPublicId(): Promise<string> {
+    return this.next('WLED');
+  }
+
+  async nextPaymentPublicId(): Promise<string> {
+    return this.next('PAY');
+  }
+
+  async nextInvoicePublicId(): Promise<string> {
+    return this.next('INV');
+  }
+
+  async nextRefundPublicId(): Promise<string> {
+    return this.next('REF');
+  }
+
+  async nextLeadPurchasePublicId(): Promise<string> {
+    return this.next('LPUR');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

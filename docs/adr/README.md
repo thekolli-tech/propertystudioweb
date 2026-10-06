@@ -23,3 +23,4 @@ Approved architecture decisions for Property Studio V3.
 | [0017](0017-phase-6-product-ui.md) | Phase 6 product UI + dynamic frontend |
 | [0018](0018-demand-marketplace.md) | Demand marketplace and lead foundation |
 | [0019](0019-crm-lead-operations.md) | CRM and lead operations |
+| [0020](0020-money-monetization.md) | Money, subscriptions, and monetization |

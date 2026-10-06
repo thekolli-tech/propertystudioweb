@@ -15,6 +15,7 @@ import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -39,6 +40,8 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
               'token',
               'refreshToken',
               'accessToken',
+              'RAZORPAY_KEY_SECRET',
+              'RAZORPAY_WEBHOOK_SECRET',
             ],
             remove: true,
           },
@@ -59,6 +62,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     CatalogModule,
     MarketplaceModule,
     CrmModule,
+    BillingModule,
   ],
   providers: [OriginCheckMiddleware],
 })

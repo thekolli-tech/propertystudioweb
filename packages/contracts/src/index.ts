@@ -1696,3 +1696,385 @@ export const crmOverviewSchema = z.object({
 });
 
 export type CrmOverview = z.infer<typeof crmOverviewSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 9 — Money, subscriptions & monetization
+// ---------------------------------------------------------------------------
+
+export const billingIntervalSchema = z.enum(['MONTHLY', 'YEARLY']);
+export const subscriptionStatusSchema = z.enum([
+  'TRIALING',
+  'ACTIVE',
+  'PAST_DUE',
+  'PAUSED',
+  'CANCELLED',
+  'EXPIRED',
+]);
+export const entitlementKeySchema = z.enum([
+  'LEAD_MARKETPLACE_ACCESS',
+  'LEAD_PURCHASE',
+  'CRM_ACCESS',
+  'ADVANCED_LEAD_ACCESS',
+  'PROJECT_CLAIM',
+  'PREMIUM_PROJECT_COMMUNITY',
+  'ANALYTICS',
+  'EXPORTS',
+]);
+export const walletLedgerEntryTypeSchema = z.enum([
+  'CREDIT',
+  'DEBIT',
+  'REFUND',
+  'ADJUSTMENT',
+  'EXPIRATION',
+]);
+export const financialTransactionTypeSchema = z.enum([
+  'SUBSCRIPTION',
+  'WALLET_TOPUP',
+  'LEAD_PURCHASE',
+  'REFUND',
+  'ADJUSTMENT',
+]);
+export const financialTransactionStatusSchema = z.enum([
+  'PENDING',
+  'AUTHORIZED',
+  'CAPTURED',
+  'FAILED',
+  'REFUNDED',
+  'PARTIALLY_REFUNDED',
+  'CANCELLED',
+]);
+export const invoiceStatusSchema = z.enum(['DRAFT', 'ISSUED', 'PAID', 'VOID', 'OVERDUE']);
+export const paymentProviderCodeSchema = z.enum(['NONE', 'RAZORPAY', 'MANUAL', 'SANDBOX']);
+export const refundTypeSchema = z.enum(['FULL', 'PARTIAL']);
+export const refundStatusSchema = z.enum(['PENDING', 'SUCCEEDED', 'FAILED']);
+export const leadPurchaseStatusSchema = z.enum(['PENDING', 'COMPLETED', 'REFUNDED', 'FAILED']);
+
+export const createSubscriptionPlanRequestSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+  code: z
+    .string()
+    .trim()
+    .min(2)
+    .max(64)
+    .regex(/^[A-Z0-9_]+$/, 'Plan code must be uppercase snake-case.'),
+  billingInterval: billingIntervalSchema,
+  priceMinor: moneyMinorSchema,
+  currency: z.string().length(3).default('INR'),
+  includedCredits: moneyMinorSchema.default(0n),
+  leadPurchasePriceMinor: moneyMinorSchema.default(50_000n),
+  active: z.boolean().default(true),
+  entitlements: z.array(entitlementKeySchema).default([]),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+export type CreateSubscriptionPlanRequest = z.infer<typeof createSubscriptionPlanRequestSchema>;
+
+export const updateSubscriptionPlanRequestSchema = createSubscriptionPlanRequestSchema
+  .partial()
+  .extend({
+    expectedVersion: z.number().int().positive().optional(),
+  });
+export type UpdateSubscriptionPlanRequest = z.infer<typeof updateSubscriptionPlanRequestSchema>;
+
+export const subscriptionPlanSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  code: z.string(),
+  billingInterval: billingIntervalSchema,
+  priceMinor: z.string(),
+  currency: z.string(),
+  includedCredits: z.string(),
+  leadPurchasePriceMinor: z.string(),
+  active: z.boolean(),
+  entitlements: z.array(entitlementKeySchema),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type SubscriptionPlanSummary = z.infer<typeof subscriptionPlanSummarySchema>;
+
+export const subscriptionPlanListQuerySchema = cursorPaginationQuerySchema.extend({
+  active: z.preprocess((value) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return value;
+  }, z.boolean().optional()),
+});
+export type SubscriptionPlanListQuery = z.infer<typeof subscriptionPlanListQuerySchema>;
+
+export const subscriptionPlanListResponseSchema = z.object({
+  plans: z.array(subscriptionPlanSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type SubscriptionPlanListResponse = z.infer<typeof subscriptionPlanListResponseSchema>;
+
+export const createOrganizationSubscriptionRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  planPublicId: z.string().regex(/^PS-PLAN-\d+$/),
+  provider: paymentProviderCodeSchema.default('SANDBOX'),
+  idempotencyKey: z.string().trim().min(8).max(128).optional(),
+});
+export type CreateOrganizationSubscriptionRequest = z.infer<
+  typeof createOrganizationSubscriptionRequestSchema
+>;
+
+export const cancelOrganizationSubscriptionRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  cancelAtPeriodEnd: z.boolean().default(true),
+});
+export type CancelOrganizationSubscriptionRequest = z.infer<
+  typeof cancelOrganizationSubscriptionRequestSchema
+>;
+
+export const organizationSubscriptionSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  planPublicId: z.string(),
+  planName: z.string(),
+  planCode: z.string(),
+  status: subscriptionStatusSchema,
+  provider: paymentProviderCodeSchema,
+  currentPeriodStart: z.string().datetime(),
+  currentPeriodEnd: z.string().datetime(),
+  cancelAtPeriodEnd: z.boolean(),
+  cancelledAt: z.string().datetime().nullable(),
+  entitlements: z.array(entitlementKeySchema),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type OrganizationSubscriptionSummary = z.infer<typeof organizationSubscriptionSummarySchema>;
+
+export const billingOverviewQuerySchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+});
+export type BillingOverviewQuery = z.infer<typeof billingOverviewQuerySchema>;
+
+export const billingOverviewSchema = z.object({
+  organizationPublicId: z.string(),
+  subscription: organizationSubscriptionSummarySchema.nullable(),
+  walletBalanceMinor: z.string(),
+  walletCurrency: z.string(),
+  openInvoices: z.number().int().nonnegative(),
+  pendingPayments: z.number().int().nonnegative(),
+  completedLeadPurchases: z.number().int().nonnegative(),
+  entitlements: z.array(entitlementKeySchema),
+});
+export type BillingOverview = z.infer<typeof billingOverviewSchema>;
+
+export const walletSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  currency: z.string(),
+  balanceMinor: z.string(),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type WalletSummary = z.infer<typeof walletSummarySchema>;
+
+export const walletLedgerEntrySchema = z.object({
+  publicId: z.string(),
+  walletPublicId: z.string(),
+  organizationPublicId: z.string(),
+  entryType: walletLedgerEntryTypeSchema,
+  amountMinor: z.string(),
+  balanceAfterMinor: z.string(),
+  currency: z.string(),
+  referenceType: z.string().nullable(),
+  referenceId: z.string().nullable(),
+  description: z.string().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type WalletLedgerEntry = z.infer<typeof walletLedgerEntrySchema>;
+
+export const walletLedgerListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  entryType: walletLedgerEntryTypeSchema.optional(),
+});
+export type WalletLedgerListQuery = z.infer<typeof walletLedgerListQuerySchema>;
+
+export const walletLedgerListResponseSchema = z.object({
+  entries: z.array(walletLedgerEntrySchema),
+  nextCursor: z.string().nullable(),
+});
+export type WalletLedgerListResponse = z.infer<typeof walletLedgerListResponseSchema>;
+
+export const walletTopUpRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  amountMinor: moneyMinorSchema.refine((value) => value > 0n, {
+    message: 'Top-up amount must be positive.',
+  }),
+  currency: z.string().length(3).default('INR'),
+  idempotencyKey: z.string().trim().min(8).max(128),
+  description: z.string().trim().max(500).optional(),
+});
+export type WalletTopUpRequest = z.infer<typeof walletTopUpRequestSchema>;
+
+export const financialTransactionSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  type: financialTransactionTypeSchema,
+  status: financialTransactionStatusSchema,
+  provider: paymentProviderCodeSchema,
+  providerTransactionId: z.string().nullable(),
+  amountMinor: z.string(),
+  currency: z.string(),
+  description: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type FinancialTransactionSummary = z.infer<typeof financialTransactionSummarySchema>;
+
+export const financialTransactionListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  type: financialTransactionTypeSchema.optional(),
+  status: financialTransactionStatusSchema.optional(),
+});
+export type FinancialTransactionListQuery = z.infer<typeof financialTransactionListQuerySchema>;
+
+export const financialTransactionListResponseSchema = z.object({
+  transactions: z.array(financialTransactionSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type FinancialTransactionListResponse = z.infer<
+  typeof financialTransactionListResponseSchema
+>;
+
+export const invoiceItemSchema = z.object({
+  description: z.string(),
+  quantity: z.number().int().positive(),
+  unitAmountMinor: z.string(),
+  amountMinor: z.string(),
+});
+export type InvoiceItemSummary = z.infer<typeof invoiceItemSchema>;
+
+export const invoiceSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  invoiceNumber: z.string(),
+  status: invoiceStatusSchema,
+  subtotalMinor: z.string(),
+  taxMinor: z.string(),
+  totalMinor: z.string(),
+  currency: z.string(),
+  issuedAt: z.string().datetime().nullable(),
+  dueAt: z.string().datetime().nullable(),
+  paidAt: z.string().datetime().nullable(),
+  financialTransactionPublicId: z.string().nullable(),
+  items: z.array(invoiceItemSchema),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type InvoiceSummary = z.infer<typeof invoiceSummarySchema>;
+
+export const invoiceListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  status: invoiceStatusSchema.optional(),
+});
+export type InvoiceListQuery = z.infer<typeof invoiceListQuerySchema>;
+
+export const invoiceListResponseSchema = z.object({
+  invoices: z.array(invoiceSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type InvoiceListResponse = z.infer<typeof invoiceListResponseSchema>;
+
+export const createRefundRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  transactionPublicId: z.string().regex(/^PS-PAY-\d+$/),
+  type: refundTypeSchema,
+  amountMinor: moneyMinorSchema.optional(),
+  reason: z.string().trim().max(500).optional().nullable(),
+  idempotencyKey: z.string().trim().min(8).max(128),
+});
+export type CreateRefundRequest = z.infer<typeof createRefundRequestSchema>;
+
+export const refundSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  transactionPublicId: z.string(),
+  type: refundTypeSchema,
+  status: refundStatusSchema,
+  amountMinor: z.string(),
+  currency: z.string(),
+  reason: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type RefundSummary = z.infer<typeof refundSummarySchema>;
+
+export const createLeadPurchaseRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  leadPublicId: z.string().regex(/^PS-LEAD-\d+$/),
+  idempotencyKey: z.string().trim().min(8).max(128),
+});
+export type CreateLeadPurchaseRequest = z.infer<typeof createLeadPurchaseRequestSchema>;
+
+export const leadPurchaseSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  leadPublicId: z.string(),
+  financialTransactionPublicId: z.string().nullable(),
+  status: leadPurchaseStatusSchema,
+  amountMinor: z.string(),
+  currency: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type LeadPurchaseSummary = z.infer<typeof leadPurchaseSummarySchema>;
+
+export const adminWalletListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+});
+export type AdminWalletListQuery = z.infer<typeof adminWalletListQuerySchema>;
+
+export const adminWalletListResponseSchema = z.object({
+  wallets: z.array(walletSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type AdminWalletListResponse = z.infer<typeof adminWalletListResponseSchema>;
+
+export const adminSubscriptionListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  status: subscriptionStatusSchema.optional(),
+});
+export type AdminSubscriptionListQuery = z.infer<typeof adminSubscriptionListQuerySchema>;
+
+export const adminSubscriptionListResponseSchema = z.object({
+  subscriptions: z.array(organizationSubscriptionSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type AdminSubscriptionListResponse = z.infer<typeof adminSubscriptionListResponseSchema>;
+
+export type BillingInterval = z.infer<typeof billingIntervalSchema>;
+export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
+export type EntitlementKey = z.infer<typeof entitlementKeySchema>;
+export type WalletLedgerEntryType = z.infer<typeof walletLedgerEntryTypeSchema>;
+export type FinancialTransactionType = z.infer<typeof financialTransactionTypeSchema>;
+export type FinancialTransactionStatus = z.infer<typeof financialTransactionStatusSchema>;
+export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
+export type PaymentProviderCode = z.infer<typeof paymentProviderCodeSchema>;
+export type RefundType = z.infer<typeof refundTypeSchema>;
+export type RefundStatus = z.infer<typeof refundStatusSchema>;
+export type LeadPurchaseStatus = z.infer<typeof leadPurchaseStatusSchema>;
+
+export const walletTopUpResponseSchema = z.object({
+  transaction: financialTransactionSummarySchema,
+  wallet: walletSummarySchema,
+});
+export type WalletTopUpResponse = z.infer<typeof walletTopUpResponseSchema>;

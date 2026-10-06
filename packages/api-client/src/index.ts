@@ -92,6 +92,35 @@ import {
   updateCrmFollowUpRequestSchema,
   updateCrmLeadStatusRequestSchema,
   updateCrmSiteVisitRequestSchema,
+  adminSubscriptionListQuerySchema,
+  adminSubscriptionListResponseSchema,
+  adminWalletListQuerySchema,
+  adminWalletListResponseSchema,
+  billingOverviewQuerySchema,
+  billingOverviewSchema,
+  cancelOrganizationSubscriptionRequestSchema,
+  createLeadPurchaseRequestSchema,
+  createOrganizationSubscriptionRequestSchema,
+  createRefundRequestSchema,
+  createSubscriptionPlanRequestSchema,
+  financialTransactionListQuerySchema,
+  financialTransactionListResponseSchema,
+  financialTransactionSummarySchema,
+  invoiceListQuerySchema,
+  invoiceListResponseSchema,
+  invoiceSummarySchema,
+  leadPurchaseSummarySchema,
+  organizationSubscriptionSummarySchema,
+  refundSummarySchema,
+  subscriptionPlanListQuerySchema,
+  subscriptionPlanListResponseSchema,
+  subscriptionPlanSummarySchema,
+  updateSubscriptionPlanRequestSchema,
+  walletLedgerListQuerySchema,
+  walletLedgerListResponseSchema,
+  walletSummarySchema,
+  walletTopUpRequestSchema,
+  walletTopUpResponseSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -184,6 +213,35 @@ import {
   type UpdateCrmFollowUpRequest,
   type UpdateCrmLeadStatusRequest,
   type UpdateCrmSiteVisitRequest,
+  type AdminSubscriptionListQuery,
+  type AdminSubscriptionListResponse,
+  type AdminWalletListQuery,
+  type AdminWalletListResponse,
+  type BillingOverview,
+  type BillingOverviewQuery,
+  type CancelOrganizationSubscriptionRequest,
+  type CreateLeadPurchaseRequest,
+  type CreateOrganizationSubscriptionRequest,
+  type CreateRefundRequest,
+  type CreateSubscriptionPlanRequest,
+  type FinancialTransactionListQuery,
+  type FinancialTransactionListResponse,
+  type FinancialTransactionSummary,
+  type InvoiceListQuery,
+  type InvoiceListResponse,
+  type InvoiceSummary,
+  type LeadPurchaseSummary,
+  type OrganizationSubscriptionSummary,
+  type RefundSummary,
+  type SubscriptionPlanListQuery,
+  type SubscriptionPlanListResponse,
+  type SubscriptionPlanSummary,
+  type UpdateSubscriptionPlanRequest,
+  type WalletLedgerListQuery,
+  type WalletLedgerListResponse,
+  type WalletSummary,
+  type WalletTopUpRequest,
+  type WalletTopUpResponse,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -870,6 +928,221 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async listSubscriptionPlans(
+    query: SubscriptionPlanListQuery = { limit: 20 },
+  ): Promise<SubscriptionPlanListResponse> {
+    const parsed = subscriptionPlanListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.active !== undefined) params.set('active', String(parsed.active));
+    return this.request(
+      `/api/v1/subscriptions/plans?${params.toString()}`,
+      subscriptionPlanListResponseSchema,
+    );
+  }
+
+  async getBillingOverview(query: BillingOverviewQuery): Promise<BillingOverview> {
+    const parsed = billingOverviewQuerySchema.parse(query);
+    return this.request(
+      `/api/v1/billing/overview?organizationPublicId=${encodeURIComponent(parsed.organizationPublicId)}`,
+      billingOverviewSchema,
+    );
+  }
+
+  async getCurrentSubscription(
+    organizationPublicId: string,
+  ): Promise<OrganizationSubscriptionSummary | null> {
+    return this.request(
+      `/api/v1/subscriptions/current?organizationPublicId=${encodeURIComponent(organizationPublicId)}`,
+      organizationSubscriptionSummarySchema.nullable(),
+    );
+  }
+
+  async createOrganizationSubscription(
+    input: CreateOrganizationSubscriptionRequest,
+  ): Promise<OrganizationSubscriptionSummary> {
+    const body = createOrganizationSubscriptionRequestSchema.parse(input);
+    return this.request('/api/v1/subscriptions', organizationSubscriptionSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async cancelOrganizationSubscription(
+    input: CancelOrganizationSubscriptionRequest,
+  ): Promise<OrganizationSubscriptionSummary> {
+    const body = cancelOrganizationSubscriptionRequestSchema.parse(input);
+    return this.request('/api/v1/subscriptions/cancel', organizationSubscriptionSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getWallet(organizationPublicId: string): Promise<WalletSummary> {
+    return this.request(
+      `/api/v1/wallet?organizationPublicId=${encodeURIComponent(organizationPublicId)}`,
+      walletSummarySchema,
+    );
+  }
+
+  async listWalletLedger(query: WalletLedgerListQuery): Promise<WalletLedgerListResponse> {
+    const parsed = walletLedgerListQuerySchema.parse(query);
+    const params = new URLSearchParams({
+      organizationPublicId: parsed.organizationPublicId,
+      limit: String(parsed.limit),
+    });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.entryType) params.set('entryType', parsed.entryType);
+    return this.request(
+      `/api/v1/wallet/ledger?${params.toString()}`,
+      walletLedgerListResponseSchema,
+    );
+  }
+
+  async topUpWallet(input: WalletTopUpRequest): Promise<WalletTopUpResponse> {
+    const body = walletTopUpRequestSchema.parse(input);
+    return this.request('/api/v1/wallet/topup', walletTopUpResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listPayments(
+    query: FinancialTransactionListQuery,
+  ): Promise<FinancialTransactionListResponse> {
+    const parsed = financialTransactionListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.type) params.set('type', parsed.type);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(
+      `/api/v1/payments?${params.toString()}`,
+      financialTransactionListResponseSchema,
+    );
+  }
+
+  async getPayment(
+    publicId: string,
+    organizationPublicId: string,
+  ): Promise<FinancialTransactionSummary> {
+    return this.request(
+      `/api/v1/payments/${encodeURIComponent(publicId)}?organizationPublicId=${encodeURIComponent(organizationPublicId)}`,
+      financialTransactionSummarySchema,
+    );
+  }
+
+  async createRefund(input: CreateRefundRequest): Promise<RefundSummary> {
+    const body = createRefundRequestSchema.parse(input);
+    return this.request('/api/v1/payments/refunds', refundSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listInvoices(query: InvoiceListQuery): Promise<InvoiceListResponse> {
+    const parsed = invoiceListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(`/api/v1/invoices?${params.toString()}`, invoiceListResponseSchema);
+  }
+
+  async getInvoice(publicId: string, organizationPublicId: string): Promise<InvoiceSummary> {
+    return this.request(
+      `/api/v1/invoices/${encodeURIComponent(publicId)}?organizationPublicId=${encodeURIComponent(organizationPublicId)}`,
+      invoiceSummarySchema,
+    );
+  }
+
+  async purchaseLead(input: CreateLeadPurchaseRequest): Promise<LeadPurchaseSummary> {
+    const body = createLeadPurchaseRequestSchema.parse(input);
+    return this.request('/api/v1/lead-purchases', leadPurchaseSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminCreateSubscriptionPlan(
+    input: CreateSubscriptionPlanRequest,
+  ): Promise<SubscriptionPlanSummary> {
+    const body = createSubscriptionPlanRequestSchema.parse(input);
+    return this.request('/api/v1/admin/subscriptions/plans', subscriptionPlanSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateSubscriptionPlan(
+    publicId: string,
+    input: UpdateSubscriptionPlanRequest,
+  ): Promise<SubscriptionPlanSummary> {
+    const body = updateSubscriptionPlanRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/subscriptions/plans/${encodeURIComponent(publicId)}`,
+      subscriptionPlanSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminListSubscriptions(
+    query: AdminSubscriptionListQuery = { limit: 20 },
+  ): Promise<AdminSubscriptionListResponse> {
+    const parsed = adminSubscriptionListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(
+      `/api/v1/admin/subscriptions?${params.toString()}`,
+      adminSubscriptionListResponseSchema,
+    );
+  }
+
+  async adminListPayments(
+    query: FinancialTransactionListQuery = { limit: 20 },
+  ): Promise<FinancialTransactionListResponse> {
+    const parsed = financialTransactionListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.type) params.set('type', parsed.type);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(
+      `/api/v1/admin/payments?${params.toString()}`,
+      financialTransactionListResponseSchema,
+    );
+  }
+
+  async adminListInvoices(query: InvoiceListQuery = { limit: 20 }): Promise<InvoiceListResponse> {
+    const parsed = invoiceListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    if (parsed.status) params.set('status', parsed.status);
+    return this.request(`/api/v1/admin/invoices?${params.toString()}`, invoiceListResponseSchema);
+  }
+
+  async adminListWallets(
+    query: AdminWalletListQuery = { limit: 20 },
+  ): Promise<AdminWalletListResponse> {
+    const parsed = adminWalletListQuerySchema.parse(query);
+    const params = new URLSearchParams({ limit: String(parsed.limit) });
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.organizationPublicId)
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    return this.request(
+      `/api/v1/admin/wallets?${params.toString()}`,
+      adminWalletListResponseSchema,
+    );
   }
 
   private async request<T>(
