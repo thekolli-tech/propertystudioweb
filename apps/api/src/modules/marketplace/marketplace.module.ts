@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { CrmModule } from '../crm/crm.module';
 import { LeadAccessService } from './lead-access.service';
 import { LeadEligibilityService } from './lead-eligibility.service';
 import { LeadsController } from './leads.controller';
@@ -9,6 +10,7 @@ import { RequirementsController } from './requirements.controller';
 import { RequirementsService } from './requirements.service';
 
 @Module({
+  imports: [CrmModule],
   controllers: [RequirementsController, LeadsController],
   providers: [
     RequirementsService,

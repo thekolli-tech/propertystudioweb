@@ -13,6 +13,11 @@ export const PUBLIC_ID_PREFIXES = {
   PAY: 'PAY',
   REV: 'REV',
   MED: 'MED',
+  CONTACT: 'CONTACT',
+  ACT: 'ACT',
+  TASK: 'TASK',
+  VISIT: 'VISIT',
+  DEAL: 'DEAL',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -74,7 +79,22 @@ export function isValidPublicId(publicId: string): boolean {
 
 /** Sequence names used by the API for concurrency-safe public ID allocation. */
 export const PUBLIC_ID_SEQUENCES: Record<
-  'USER' | 'ORG' | 'DEV' | 'AGT' | 'PROJ' | 'PROP' | 'COM' | 'MED' | 'DOC' | 'REQ' | 'LEAD',
+  | 'USER'
+  | 'ORG'
+  | 'DEV'
+  | 'AGT'
+  | 'PROJ'
+  | 'PROP'
+  | 'COM'
+  | 'MED'
+  | 'DOC'
+  | 'REQ'
+  | 'LEAD'
+  | 'CONTACT'
+  | 'ACT'
+  | 'TASK'
+  | 'VISIT'
+  | 'DEAL',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -88,4 +108,9 @@ export const PUBLIC_ID_SEQUENCES: Record<
   DOC: 'public_id_doc_seq',
   REQ: 'public_id_req_seq',
   LEAD: 'public_id_lead_seq',
+  CONTACT: 'public_id_contact_seq',
+  ACT: 'public_id_act_seq',
+  TASK: 'public_id_task_seq',
+  VISIT: 'public_id_visit_seq',
+  DEAL: 'public_id_deal_seq',
 };

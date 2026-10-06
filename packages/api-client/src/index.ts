@@ -61,6 +61,37 @@ import {
   requirementListResponseSchema,
   updateLeadStatusRequestSchema,
   updateRequirementRequestSchema,
+  assignCrmLeadRequestSchema,
+  createCrmActivityRequestSchema,
+  createCrmContactRequestSchema,
+  createCrmDealRequestSchema,
+  createCrmFollowUpRequestSchema,
+  createCrmSiteVisitRequestSchema,
+  crmActivityListQuerySchema,
+  crmActivityListResponseSchema,
+  crmActivitySummarySchema,
+  crmContactListQuerySchema,
+  crmContactListResponseSchema,
+  crmContactSummarySchema,
+  crmDealListQuerySchema,
+  crmDealListResponseSchema,
+  crmDealSummarySchema,
+  crmFollowUpListQuerySchema,
+  crmFollowUpListResponseSchema,
+  crmFollowUpSummarySchema,
+  crmLeadDetailSchema,
+  crmLeadListQuerySchema,
+  crmLeadListResponseSchema,
+  crmLeadSummarySchema,
+  crmOverviewQuerySchema,
+  crmOverviewSchema,
+  crmSiteVisitListQuerySchema,
+  crmSiteVisitListResponseSchema,
+  crmSiteVisitSummarySchema,
+  updateCrmDealRequestSchema,
+  updateCrmFollowUpRequestSchema,
+  updateCrmLeadStatusRequestSchema,
+  updateCrmSiteVisitRequestSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -122,6 +153,37 @@ import {
   type RequirementListResponse,
   type UpdateLeadStatusRequest,
   type UpdateRequirementRequest,
+  type AssignCrmLeadRequest,
+  type CreateCrmActivityRequest,
+  type CreateCrmContactRequest,
+  type CreateCrmDealRequest,
+  type CreateCrmFollowUpRequest,
+  type CreateCrmSiteVisitRequest,
+  type CrmActivityListQuery,
+  type CrmActivityListResponse,
+  type CrmActivitySummary,
+  type CrmContactListQuery,
+  type CrmContactListResponse,
+  type CrmContactSummary,
+  type CrmDealListQuery,
+  type CrmDealListResponse,
+  type CrmDealSummary,
+  type CrmFollowUpListQuery,
+  type CrmFollowUpListResponse,
+  type CrmFollowUpSummary,
+  type CrmLeadDetail,
+  type CrmLeadListQuery,
+  type CrmLeadListResponse,
+  type CrmLeadSummary,
+  type CrmOverview,
+  type CrmOverviewQuery,
+  type CrmSiteVisitListQuery,
+  type CrmSiteVisitListResponse,
+  type CrmSiteVisitSummary,
+  type UpdateCrmDealRequest,
+  type UpdateCrmFollowUpRequest,
+  type UpdateCrmLeadStatusRequest,
+  type UpdateCrmSiteVisitRequest,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -620,6 +682,194 @@ export class ApiClient {
       if (value !== undefined && value !== null) params.set(key, String(value));
     });
     return this.request(`/api/v1/admin/leads?${params.toString()}`, adminLeadListResponseSchema);
+  }
+
+  async getCrmOverview(query: CrmOverviewQuery): Promise<CrmOverview> {
+    const parsed = crmOverviewQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/crm/overview?${params.toString()}`, crmOverviewSchema);
+  }
+
+  async listCrmContacts(
+    query: Partial<CrmContactListQuery> & Pick<CrmContactListQuery, 'organizationPublicId'>,
+  ): Promise<CrmContactListResponse> {
+    const parsed = crmContactListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/crm/contacts?${params.toString()}`, crmContactListResponseSchema);
+  }
+
+  async getCrmContact(publicId: string): Promise<CrmContactSummary> {
+    return this.request(
+      `/api/v1/crm/contacts/${encodeURIComponent(publicId)}`,
+      crmContactSummarySchema,
+    );
+  }
+
+  async createCrmContact(input: CreateCrmContactRequest): Promise<CrmContactSummary> {
+    const body = createCrmContactRequestSchema.parse(input);
+    return this.request('/api/v1/crm/contacts', crmContactSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listCrmLeads(
+    query: Partial<CrmLeadListQuery> & Pick<CrmLeadListQuery, 'organizationPublicId'>,
+  ): Promise<CrmLeadListResponse> {
+    const parsed = crmLeadListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/crm/leads?${params.toString()}`, crmLeadListResponseSchema);
+  }
+
+  async getCrmLeadDetail(publicId: string): Promise<CrmLeadDetail> {
+    return this.request(`/api/v1/crm/leads/${encodeURIComponent(publicId)}`, crmLeadDetailSchema);
+  }
+
+  async assignCrmLead(publicId: string, input: AssignCrmLeadRequest): Promise<CrmLeadSummary> {
+    const body = assignCrmLeadRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/crm/leads/${encodeURIComponent(publicId)}/assign`,
+      crmLeadSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async updateCrmLeadStatus(
+    publicId: string,
+    input: UpdateCrmLeadStatusRequest,
+  ): Promise<CrmLeadSummary> {
+    const body = updateCrmLeadStatusRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/crm/leads/${encodeURIComponent(publicId)}/status`,
+      crmLeadSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async listCrmFollowUps(
+    query: Partial<CrmFollowUpListQuery> & Pick<CrmFollowUpListQuery, 'organizationPublicId'>,
+  ): Promise<CrmFollowUpListResponse> {
+    const parsed = crmFollowUpListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(
+      `/api/v1/crm/follow-ups?${params.toString()}`,
+      crmFollowUpListResponseSchema,
+    );
+  }
+
+  async createCrmFollowUp(input: CreateCrmFollowUpRequest): Promise<CrmFollowUpSummary> {
+    const body = createCrmFollowUpRequestSchema.parse(input);
+    return this.request('/api/v1/crm/follow-ups', crmFollowUpSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateCrmFollowUp(
+    publicId: string,
+    input: UpdateCrmFollowUpRequest,
+  ): Promise<CrmFollowUpSummary> {
+    const body = updateCrmFollowUpRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/crm/follow-ups/${encodeURIComponent(publicId)}`,
+      crmFollowUpSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async listCrmSiteVisits(
+    query: Partial<CrmSiteVisitListQuery> & Pick<CrmSiteVisitListQuery, 'organizationPublicId'>,
+  ): Promise<CrmSiteVisitListResponse> {
+    const parsed = crmSiteVisitListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(
+      `/api/v1/crm/site-visits?${params.toString()}`,
+      crmSiteVisitListResponseSchema,
+    );
+  }
+
+  async createCrmSiteVisit(input: CreateCrmSiteVisitRequest): Promise<CrmSiteVisitSummary> {
+    const body = createCrmSiteVisitRequestSchema.parse(input);
+    return this.request('/api/v1/crm/site-visits', crmSiteVisitSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateCrmSiteVisit(
+    publicId: string,
+    input: UpdateCrmSiteVisitRequest,
+  ): Promise<CrmSiteVisitSummary> {
+    const body = updateCrmSiteVisitRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/crm/site-visits/${encodeURIComponent(publicId)}`,
+      crmSiteVisitSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async listCrmDeals(
+    query: Partial<CrmDealListQuery> & Pick<CrmDealListQuery, 'organizationPublicId'>,
+  ): Promise<CrmDealListResponse> {
+    const parsed = crmDealListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/crm/deals?${params.toString()}`, crmDealListResponseSchema);
+  }
+
+  async createCrmDeal(input: CreateCrmDealRequest): Promise<CrmDealSummary> {
+    const body = createCrmDealRequestSchema.parse(input);
+    return this.request('/api/v1/crm/deals', crmDealSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async updateCrmDeal(publicId: string, input: UpdateCrmDealRequest): Promise<CrmDealSummary> {
+    const body = updateCrmDealRequestSchema.parse(input);
+    return this.request(`/api/v1/crm/deals/${encodeURIComponent(publicId)}`, crmDealSummarySchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async listCrmActivities(
+    query: Partial<CrmActivityListQuery> & Pick<CrmActivityListQuery, 'organizationPublicId'>,
+  ): Promise<CrmActivityListResponse> {
+    const parsed = crmActivityListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(
+      `/api/v1/crm/activities?${params.toString()}`,
+      crmActivityListResponseSchema,
+    );
+  }
+
+  async createCrmActivity(input: CreateCrmActivityRequest): Promise<CrmActivitySummary> {
+    const body = createCrmActivityRequestSchema.parse(input);
+    return this.request('/api/v1/crm/activities', crmActivitySummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   }
 
   private async request<T>(

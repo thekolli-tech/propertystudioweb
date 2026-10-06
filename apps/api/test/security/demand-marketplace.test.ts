@@ -109,6 +109,11 @@ describe('Phase 7 demand marketplace security', () => {
     await prisma.$executeRawUnsafe(
       'ALTER TABLE audit_events ENABLE TRIGGER audit_events_no_delete',
     );
+    await prisma.$executeRawUnsafe('DELETE FROM crm_activities');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_follow_ups');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_site_visits');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_deals');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_contacts');
     await prisma.$executeRawUnsafe('DELETE FROM leads');
     await prisma.$executeRawUnsafe('DELETE FROM requirements');
     await prisma.$executeRawUnsafe('DELETE FROM media_assets');

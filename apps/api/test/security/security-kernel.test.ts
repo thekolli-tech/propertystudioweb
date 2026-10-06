@@ -58,6 +58,11 @@ describe('Phase 2 security kernel', () => {
     await prisma.$executeRawUnsafe('DELETE FROM document_assets');
     await prisma.$executeRawUnsafe('DELETE FROM resource_assignments');
     await prisma.$executeRawUnsafe('DELETE FROM communities');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_activities');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_follow_ups');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_site_visits');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_deals');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_contacts');
     await prisma.$executeRawUnsafe('DELETE FROM leads');
     await prisma.$executeRawUnsafe('DELETE FROM requirements');
     await prisma.$executeRawUnsafe('DELETE FROM properties');

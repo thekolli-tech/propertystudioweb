@@ -887,8 +887,10 @@ export const leadStatusSchema = z.enum([
   'CLOSED',
   'LOST',
 ]);
+export type LeadStatus = z.infer<typeof leadStatusSchema>;
 export const leadSourceSchema = z.enum(['REQUIREMENT_MARKETPLACE']);
 export const leadPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH']);
+export type LeadPriority = z.infer<typeof leadPrioritySchema>;
 
 const requirementRequestFieldsSchema = z.object({
   propertyType: propertyTypeSchema,
@@ -1167,3 +1169,530 @@ export type AdminLeadSummary = z.infer<typeof adminLeadSummarySchema>;
 export const adminLeadListResponseSchema = leadListResponseSchema;
 
 export type AdminLeadListResponse = z.infer<typeof adminLeadListResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 8 — CRM + lead operations
+// ---------------------------------------------------------------------------
+
+export const contactTypeSchema = z.enum(['BUYER', 'INVESTOR', 'REFERRAL', 'OTHER']);
+export const contactStatusSchema = z.enum(['ACTIVE', 'ARCHIVED']);
+export const preferredContactMethodSchema = z.enum([
+  'PHONE',
+  'EMAIL',
+  'WHATSAPP',
+  'IN_PERSON',
+  'OTHER',
+]);
+export const crmActivityTypeSchema = z.enum([
+  'NOTE',
+  'CALL',
+  'EMAIL',
+  'WHATSAPP',
+  'MEETING',
+  'SITE_VISIT',
+  'STATUS_CHANGE',
+  'ASSIGNMENT',
+  'FOLLOW_UP',
+]);
+export const followUpStatusSchema = z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
+export const followUpPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
+export const siteVisitStatusSchema = z.enum([
+  'SCHEDULED',
+  'CONFIRMED',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW',
+]);
+export const siteVisitOutcomeSchema = z.enum([
+  'INTERESTED',
+  'FOLLOW_UP',
+  'NEGOTIATION',
+  'NOT_INTERESTED',
+  'UNKNOWN',
+]);
+export const dealStatusSchema = z.enum(['OPEN', 'NEGOTIATION', 'BOOKED', 'CLOSED', 'LOST']);
+
+export const createCrmContactRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  sourceLeadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional()
+    .nullable(),
+  contactType: contactTypeSchema.default('BUYER'),
+  displayName: z.string().trim().min(1).max(160),
+  phone: z.string().trim().max(32).optional().nullable(),
+  email: z.email().max(320).optional().nullable(),
+  preferredContactMethod: preferredContactMethodSchema.default('PHONE'),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  ownerUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional()
+    .nullable(),
+});
+
+export type CreateCrmContactRequest = z.infer<typeof createCrmContactRequestSchema>;
+
+export const updateCrmContactRequestSchema = createCrmContactRequestSchema
+  .omit({ organizationPublicId: true })
+  .partial()
+  .extend({
+    status: contactStatusSchema.optional(),
+    expectedVersion: z.number().int().positive().optional(),
+  });
+
+export type UpdateCrmContactRequest = z.infer<typeof updateCrmContactRequestSchema>;
+
+export const crmContactListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: contactStatusSchema.optional(),
+  q: z.string().trim().max(120).optional(),
+  ownerUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional(),
+  sourceLeadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional(),
+});
+
+export type CrmContactListQuery = z.infer<typeof crmContactListQuerySchema>;
+
+export const crmContactSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  sourceLeadPublicId: z.string().nullable(),
+  contactType: contactTypeSchema,
+  displayName: z.string(),
+  phone: z.string().nullable(),
+  email: z.string().nullable(),
+  preferredContactMethod: preferredContactMethodSchema,
+  notes: z.string().nullable(),
+  ownerUserPublicId: z.string().nullable(),
+  status: contactStatusSchema,
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type CrmContactSummary = z.infer<typeof crmContactSummarySchema>;
+
+export const crmContactListResponseSchema = z.object({
+  contacts: z.array(crmContactSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmContactListResponse = z.infer<typeof crmContactListResponseSchema>;
+
+export const createCrmActivityRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional()
+    .nullable(),
+  activityType: crmActivityTypeSchema,
+  subject: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(4000).optional().nullable(),
+  occurredAt: z.string().datetime().optional(),
+});
+
+export type CreateCrmActivityRequest = z.infer<typeof createCrmActivityRequestSchema>;
+
+export const crmActivityListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional(),
+  activityType: crmActivityTypeSchema.optional(),
+});
+
+export type CrmActivityListQuery = z.infer<typeof crmActivityListQuerySchema>;
+
+export const crmActivitySummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  contactPublicId: z.string().nullable(),
+  leadPublicId: z.string().nullable(),
+  actorUserPublicId: z.string(),
+  activityType: crmActivityTypeSchema,
+  subject: z.string(),
+  description: z.string().nullable(),
+  occurredAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+});
+
+export type CrmActivitySummary = z.infer<typeof crmActivitySummarySchema>;
+
+export const crmActivityListResponseSchema = z.object({
+  activities: z.array(crmActivitySummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmActivityListResponse = z.infer<typeof crmActivityListResponseSchema>;
+
+export const createCrmFollowUpRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional()
+    .nullable(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional()
+    .nullable(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).optional().nullable(),
+  dueAt: z.string().datetime(),
+  priority: followUpPrioritySchema.default('MEDIUM'),
+  reminderAt: z.string().datetime().optional().nullable(),
+});
+
+export type CreateCrmFollowUpRequest = z.infer<typeof createCrmFollowUpRequestSchema>;
+
+export const updateCrmFollowUpRequestSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  dueAt: z.string().datetime().optional(),
+  priority: followUpPrioritySchema.optional(),
+  status: followUpStatusSchema.optional(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional()
+    .nullable(),
+  reminderAt: z.string().datetime().optional().nullable(),
+  expectedVersion: z.number().int().positive().optional(),
+});
+
+export type UpdateCrmFollowUpRequest = z.infer<typeof updateCrmFollowUpRequestSchema>;
+
+export const crmFollowUpListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: followUpStatusSchema.optional(),
+  priority: followUpPrioritySchema.optional(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional(),
+  bucket: z.enum(['OVERDUE', 'TODAY', 'UPCOMING', 'COMPLETED']).optional(),
+});
+
+export type CrmFollowUpListQuery = z.infer<typeof crmFollowUpListQuerySchema>;
+
+export const crmFollowUpSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  contactPublicId: z.string().nullable(),
+  leadPublicId: z.string().nullable(),
+  assignedUserPublicId: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  dueAt: z.string().datetime(),
+  priority: followUpPrioritySchema,
+  status: followUpStatusSchema,
+  reminderAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type CrmFollowUpSummary = z.infer<typeof crmFollowUpSummarySchema>;
+
+export const crmFollowUpListResponseSchema = z.object({
+  followUps: z.array(crmFollowUpSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmFollowUpListResponse = z.infer<typeof crmFollowUpListResponseSchema>;
+
+export const createCrmSiteVisitRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  leadPublicId: z.string().regex(/^PS-LEAD-\d+$/),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional()
+    .nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  scheduledAt: z.string().datetime(),
+  notes: z.string().trim().max(2000).optional().nullable(),
+});
+
+export type CreateCrmSiteVisitRequest = z.infer<typeof createCrmSiteVisitRequestSchema>;
+
+export const updateCrmSiteVisitRequestSchema = z.object({
+  scheduledAt: z.string().datetime().optional(),
+  status: siteVisitStatusSchema.optional(),
+  outcome: siteVisitOutcomeSchema.optional().nullable(),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional()
+    .nullable(),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  expectedVersion: z.number().int().positive().optional(),
+});
+
+export type UpdateCrmSiteVisitRequest = z.infer<typeof updateCrmSiteVisitRequestSchema>;
+
+export const crmSiteVisitListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: siteVisitStatusSchema.optional(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional(),
+  bucket: z.enum(['UPCOMING', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional(),
+});
+
+export type CrmSiteVisitListQuery = z.infer<typeof crmSiteVisitListQuerySchema>;
+
+export const crmSiteVisitSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  leadPublicId: z.string(),
+  contactPublicId: z.string().nullable(),
+  assignedUserPublicId: z.string().nullable(),
+  propertyPublicId: z.string().nullable(),
+  projectPublicId: z.string().nullable(),
+  scheduledAt: z.string().datetime(),
+  status: siteVisitStatusSchema,
+  outcome: siteVisitOutcomeSchema.nullable(),
+  notes: z.string().nullable(),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type CrmSiteVisitSummary = z.infer<typeof crmSiteVisitSummarySchema>;
+
+export const crmSiteVisitListResponseSchema = z.object({
+  siteVisits: z.array(crmSiteVisitSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmSiteVisitListResponse = z.infer<typeof crmSiteVisitListResponseSchema>;
+
+export const createCrmDealRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  leadPublicId: z.string().regex(/^PS-LEAD-\d+$/),
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  expectedValueMinor: optionalMoneyMinorSchema,
+  currency: z.string().trim().length(3).default('INR'),
+  expectedCloseDate: z.string().date().optional().nullable(),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  status: dealStatusSchema.default('OPEN'),
+});
+
+export type CreateCrmDealRequest = z.infer<typeof createCrmDealRequestSchema>;
+
+export const updateCrmDealRequestSchema = z.object({
+  contactPublicId: z
+    .string()
+    .regex(/^PS-CONTACT-\d+$/)
+    .optional()
+    .nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  expectedValueMinor: optionalMoneyMinorSchema,
+  currency: z.string().trim().length(3).optional(),
+  expectedCloseDate: z.string().date().optional().nullable(),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  status: dealStatusSchema.optional(),
+  expectedVersion: z.number().int().positive().optional(),
+});
+
+export type UpdateCrmDealRequest = z.infer<typeof updateCrmDealRequestSchema>;
+
+export const crmDealListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: dealStatusSchema.optional(),
+  leadPublicId: z
+    .string()
+    .regex(/^PS-LEAD-\d+$/)
+    .optional(),
+});
+
+export type CrmDealListQuery = z.infer<typeof crmDealListQuerySchema>;
+
+export const crmDealSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  leadPublicId: z.string(),
+  contactPublicId: z.string().nullable(),
+  propertyPublicId: z.string().nullable(),
+  projectPublicId: z.string().nullable(),
+  status: dealStatusSchema,
+  expectedValueMinor: z.string().nullable(),
+  currency: z.string(),
+  expectedCloseDate: z.string().nullable(),
+  closedAt: z.string().datetime().nullable(),
+  notes: z.string().nullable(),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type CrmDealSummary = z.infer<typeof crmDealSummarySchema>;
+
+export const crmDealListResponseSchema = z.object({
+  deals: z.array(crmDealSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmDealListResponse = z.infer<typeof crmDealListResponseSchema>;
+
+export const assignCrmLeadRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  assigneeUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .nullable(),
+  expectedVersion: z.number().int().positive().optional(),
+});
+
+export type AssignCrmLeadRequest = z.infer<typeof assignCrmLeadRequestSchema>;
+
+export const updateCrmLeadStatusRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: leadStatusSchema,
+  expectedVersion: z.number().int().positive().optional(),
+  allowAdminOverride: z.boolean().optional(),
+});
+
+export type UpdateCrmLeadStatusRequest = z.infer<typeof updateCrmLeadStatusRequestSchema>;
+
+export const crmLeadListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  status: leadStatusSchema.optional(),
+  assignedUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional(),
+  q: z.string().trim().max(120).optional(),
+});
+
+export type CrmLeadListQuery = z.infer<typeof crmLeadListQuerySchema>;
+
+export const crmLeadSummarySchema = leadSummarySchema.extend({
+  contactPublicId: z.string().nullable(),
+  contactDisplayName: z.string().nullable(),
+  nextFollowUpAt: z.string().datetime().nullable(),
+  lastActivityAt: z.string().datetime().nullable(),
+});
+
+export type CrmLeadSummary = z.infer<typeof crmLeadSummarySchema>;
+
+export const crmLeadListResponseSchema = z.object({
+  leads: z.array(crmLeadSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type CrmLeadListResponse = z.infer<typeof crmLeadListResponseSchema>;
+
+export const crmLeadDetailSchema = crmLeadSummarySchema.extend({
+  contacts: z.array(crmContactSummarySchema),
+  activities: z.array(crmActivitySummarySchema),
+  followUps: z.array(crmFollowUpSummarySchema),
+  siteVisits: z.array(crmSiteVisitSummarySchema),
+  deals: z.array(crmDealSummarySchema),
+});
+
+export type CrmLeadDetail = z.infer<typeof crmLeadDetailSchema>;
+
+export const crmOverviewQuerySchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+});
+
+export type CrmOverviewQuery = z.infer<typeof crmOverviewQuerySchema>;
+
+export const crmOverviewSchema = z.object({
+  organizationPublicId: z.string(),
+  activeLeads: z.number().int().nonnegative(),
+  newLeads: z.number().int().nonnegative(),
+  followUpsDue: z.number().int().nonnegative(),
+  upcomingSiteVisits: z.number().int().nonnegative(),
+  qualifiedLeads: z.number().int().nonnegative(),
+  openNegotiations: z.number().int().nonnegative(),
+  bookedDeals: z.number().int().nonnegative(),
+  closedDeals: z.number().int().nonnegative(),
+  contacts: z.number().int().nonnegative(),
+});
+
+export type CrmOverview = z.infer<typeof crmOverviewSchema>;

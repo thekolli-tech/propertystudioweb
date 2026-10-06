@@ -205,6 +205,76 @@ enum LeadPriority {
   HIGH
 }
 
+enum ContactType {
+  BUYER
+  INVESTOR
+  REFERRAL
+  OTHER
+}
+
+enum ContactStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum PreferredContactMethod {
+  PHONE
+  EMAIL
+  WHATSAPP
+  IN_PERSON
+  OTHER
+}
+
+enum CrmActivityType {
+  NOTE
+  CALL
+  EMAIL
+  WHATSAPP
+  MEETING
+  SITE_VISIT
+  STATUS_CHANGE
+  ASSIGNMENT
+  FOLLOW_UP
+}
+
+enum FollowUpStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum FollowUpPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SiteVisitStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SiteVisitOutcome {
+  INTERESTED
+  FOLLOW_UP
+  NEGOTIATION
+  NOT_INTERESTED
+  UNKNOWN
+}
+
+enum DealStatus {
+  OPEN
+  NEGOTIATION
+  BOOKED
+  CLOSED
+  LOST
+}
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -224,6 +294,10 @@ model User {
   memberships  OrganizationMembership[]
   requirements Requirement[]
   assignedLeads Lead[] @relation("LeadAssignee")
+  ownedContacts CrmContact[] @relation("ContactOwner")
+  crmActivities CrmActivity[] @relation("ActivityActor")
+  assignedFollowUps CrmFollowUp[] @relation("FollowUpAssignee")
+  assignedSiteVisits CrmSiteVisit[] @relation("SiteVisitAssignee")
 
   @@map("users")
 }
@@ -299,6 +373,11 @@ model Organization {
   documentAssets      DocumentAsset[]
   resourceAssignments ResourceAssignment[]
   leads               Lead[]
+  crmContacts         CrmContact[]
+  crmActivities       CrmActivity[]
+  crmFollowUps        CrmFollowUp[]
+  crmSiteVisits       CrmSiteVisit[]
+  crmDeals            CrmDeal[]
 
   @@map("organizations")
 }
@@ -482,6 +561,8 @@ model Project {
   properties   Property[]
   communities  Community[]
   matchedLeads Lead[]
+  crmSiteVisits CrmSiteVisit[]
+  crmDeals     CrmDeal[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -537,6 +618,8 @@ model Property {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   matchedLeads Lead[]
+  crmSiteVisits CrmSiteVisit[]
+  crmDeals     CrmDeal[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -728,6 +811,11 @@ model Lead {
   recipientUser         User?        @relation("LeadAssignee", fields: [recipientUserId], references: [id], onDelete: SetNull)
   matchedProperty       Property?    @relation(fields: [matchedPropertyId], references: [id], onDelete: SetNull)
   matchedProject        Project?     @relation(fields: [matchedProjectId], references: [id], onDelete: SetNull)
+  crmContacts           CrmContact[]
+  crmActivities         CrmActivity[]
+  crmFollowUps          CrmFollowUp[]
+  crmSiteVisits         CrmSiteVisit[]
+  crmDeals              CrmDeal[]
 
   @@unique([requirementId, recipientOrganizationId])
   @@index([recipientOrganizationId])
@@ -739,5 +827,179 @@ model Lead {
   @@index([matchedPropertyId])
   @@index([matchedProjectId])
   @@map("leads")
+}
+
+model CrmContact {
+  id                     String                 @id @db.Uuid
+  publicId               String                 @unique @map("public_id") @db.VarChar(32)
+  organizationId         String                 @map("organization_id") @db.Uuid
+  sourceLeadId           String?                @map("source_lead_id") @db.Uuid
+  contactType            ContactType            @default(BUYER) @map("contact_type")
+  displayName            String                 @map("display_name") @db.VarChar(160)
+  phone                  String?                @db.VarChar(32)
+  email                  String?                @db.Citext
+  preferredContactMethod PreferredContactMethod @default(PHONE) @map("preferred_contact_method")
+  notes                  String?                @db.VarChar(2000)
+  ownerUserId            String?                @map("owner_user_id") @db.Uuid
+  status                 ContactStatus          @default(ACTIVE)
+  version                Int                    @default(1)
+  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy              String?                @map("created_by") @db.Uuid
+  updatedBy              String?                @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  sourceLead   Lead?        @relation(fields: [sourceLeadId], references: [id], onDelete: SetNull)
+  ownerUser    User?        @relation("ContactOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  activities   CrmActivity[]
+  followUps    CrmFollowUp[]
+  siteVisits   CrmSiteVisit[]
+  deals        CrmDeal[]
+
+  @@index([organizationId])
+  @@index([sourceLeadId])
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([email])
+  @@index([phone])
+  @@index([createdAt])
+  @@map("crm_contacts")
+}
+
+model CrmActivity {
+  id             String          @id @db.Uuid
+  publicId       String          @unique @map("public_id") @db.VarChar(32)
+  organizationId String          @map("organization_id") @db.Uuid
+  contactId      String?         @map("contact_id") @db.Uuid
+  leadId         String?         @map("lead_id") @db.Uuid
+  actorUserId    String          @map("actor_user_id") @db.Uuid
+  activityType   CrmActivityType @map("activity_type")
+  subject        String          @db.VarChar(200)
+  description    String?         @db.VarChar(4000)
+  occurredAt     DateTime        @map("occurred_at") @db.Timestamptz(3)
+  metadata       Json?
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  contact      CrmContact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  actorUser    User         @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([actorUserId])
+  @@index([activityType])
+  @@index([occurredAt])
+  @@map("crm_activities")
+}
+
+model CrmFollowUp {
+  id             String           @id @db.Uuid
+  publicId       String           @unique @map("public_id") @db.VarChar(32)
+  organizationId String           @map("organization_id") @db.Uuid
+  contactId      String?          @map("contact_id") @db.Uuid
+  leadId         String?          @map("lead_id") @db.Uuid
+  assignedUserId String?          @map("assigned_user_id") @db.Uuid
+  title          String           @db.VarChar(200)
+  description    String?          @db.VarChar(2000)
+  dueAt          DateTime         @map("due_at") @db.Timestamptz(3)
+  priority       FollowUpPriority @default(MEDIUM)
+  status         FollowUpStatus   @default(OPEN)
+  reminderAt     DateTime?        @map("reminder_at") @db.Timestamptz(3)
+  completedAt    DateTime?        @map("completed_at") @db.Timestamptz(3)
+  version        Int              @default(1)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?          @map("created_by") @db.Uuid
+  updatedBy      String?          @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  contact      CrmContact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  assignedUser User?        @relation("FollowUpAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([assignedUserId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueAt])
+  @@map("crm_follow_ups")
+}
+
+model CrmSiteVisit {
+  id             String            @id @db.Uuid
+  publicId       String            @unique @map("public_id") @db.VarChar(32)
+  organizationId String            @map("organization_id") @db.Uuid
+  leadId         String            @map("lead_id") @db.Uuid
+  contactId      String?           @map("contact_id") @db.Uuid
+  assignedUserId String?           @map("assigned_user_id") @db.Uuid
+  propertyId     String?           @map("property_id") @db.Uuid
+  projectId      String?           @map("project_id") @db.Uuid
+  scheduledAt    DateTime          @map("scheduled_at") @db.Timestamptz(3)
+  status         SiteVisitStatus   @default(SCHEDULED)
+  outcome        SiteVisitOutcome?
+  notes          String?           @db.VarChar(2000)
+  version        Int               @default(1)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?           @map("created_by") @db.Uuid
+  updatedBy      String?           @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  contact      CrmContact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  assignedUser User?        @relation("SiteVisitAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  property     Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([assignedUserId])
+  @@index([propertyId])
+  @@index([projectId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("crm_site_visits")
+}
+
+model CrmDeal {
+  id               String     @id @db.Uuid
+  publicId         String     @unique @map("public_id") @db.VarChar(32)
+  organizationId   String     @map("organization_id") @db.Uuid
+  leadId           String     @map("lead_id") @db.Uuid
+  contactId        String?    @map("contact_id") @db.Uuid
+  propertyId       String?    @map("property_id") @db.Uuid
+  projectId        String?    @map("project_id") @db.Uuid
+  status           DealStatus @default(OPEN)
+  expectedValueMinor BigInt?  @map("expected_value_minor")
+  currency         String     @default("INR") @db.VarChar(3)
+  expectedCloseDate DateTime? @map("expected_close_date") @db.Date
+  closedAt         DateTime?  @map("closed_at") @db.Timestamptz(3)
+  notes            String?    @db.VarChar(2000)
+  version          Int        @default(1)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy        String?    @map("created_by") @db.Uuid
+  updatedBy        String?    @map("updated_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  contact      CrmContact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  property     Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([propertyId])
+  @@index([projectId])
+  @@index([status])
+  @@index([expectedCloseDate])
+  @@index([createdAt])
+  @@map("crm_deals")
 }
 
