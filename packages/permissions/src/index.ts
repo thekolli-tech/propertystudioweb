@@ -51,9 +51,32 @@ export const PERMISSIONS = [
   'community:create',
   'community:update',
   'audit:read',
+  'requirement:create',
+  'requirement:read:own',
+  'requirement:update:own',
+  'requirement:publish',
+  'requirement:read:marketplace',
+  'lead:read',
+  'lead:update',
+  'lead:assign',
+  'admin:requirements:read',
+  'admin:leads:read',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
+
+const REQUIREMENT_OWNER_PERMISSIONS = [
+  'requirement:create',
+  'requirement:read:own',
+  'requirement:update:own',
+  'requirement:publish',
+] as const satisfies readonly Permission[];
+
+const MARKETPLACE_PARTICIPANT_PERMISSIONS = [
+  'requirement:read:marketplace',
+  'lead:read',
+  'lead:update',
+] as const satisfies readonly Permission[];
 
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
@@ -75,6 +98,12 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     'community:create',
     'community:update',
     'audit:read',
+    'requirement:read:marketplace',
+    'lead:read',
+    'lead:update',
+    'lead:assign',
+    'admin:requirements:read',
+    'admin:leads:read',
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -103,6 +132,8 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'community:read',
     'community:create',
     'community:update',
+    ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
+    'lead:assign',
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -115,10 +146,23 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'community:read',
     'community:create',
     'community:update',
+    ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
   ],
-  // Agency roles: org management only in Phase 5. Catalog mutation is developer-owned.
-  AGENT: ['organization:read', 'organization:manage', 'organization:members:manage'],
-  AGENT_STAFF: ['organization:read'],
+  // Agency roles: org management + marketplace lead participation (verification enforced in services).
+  AGENT: [
+    'organization:read',
+    'organization:manage',
+    'organization:members:manage',
+    ...MARKETPLACE_PARTICIPANT_PERMISSIONS,
+    'lead:assign',
+  ],
+  AGENT_STAFF: ['organization:read', ...MARKETPLACE_PARTICIPANT_PERMISSIONS],
+};
+
+/** Persona grants for demand-side requirement ownership (Phase 7). */
+export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>> = {
+  PROPERTY_SEEKER: REQUIREMENT_OWNER_PERMISSIONS,
+  INVESTOR: REQUIREMENT_OWNER_PERMISSIONS,
 };
 
 /** Organization roles allowed for each organization type. */
@@ -141,6 +185,7 @@ export function organizationRoleHasPermission(
 export function collectPermissions(input: {
   platformRoles: readonly PlatformRole[];
   organizationRole?: OrganizationRole | null;
+  personas?: readonly Persona[];
 }): Set<Permission> {
   const permissions = new Set<Permission>();
   for (const role of input.platformRoles) {
@@ -150,6 +195,11 @@ export function collectPermissions(input: {
   }
   if (input.organizationRole) {
     for (const permission of ORGANIZATION_ROLE_PERMISSIONS[input.organizationRole]) {
+      permissions.add(permission);
+    }
+  }
+  for (const persona of input.personas ?? []) {
+    for (const permission of PERSONA_PERMISSIONS[persona] ?? []) {
       permissions.add(permission);
     }
   }

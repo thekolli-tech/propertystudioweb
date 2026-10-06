@@ -149,6 +149,62 @@ enum ResourceAssignmentType {
   PROJECT
 }
 
+enum RequirementTransactionType {
+  BUY
+  RENT
+}
+
+enum RequirementStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FULFILLED
+  CLOSED
+  CANCELLED
+}
+
+enum RequirementVisibility {
+  PRIVATE
+  MARKETPLACE
+}
+
+enum RequirementPurpose {
+  END_USE
+  INVESTMENT
+  BOTH
+}
+
+enum RequirementTimeline {
+  IMMEDIATE
+  WITHIN_3_MONTHS
+  WITHIN_6_MONTHS
+  WITHIN_1_YEAR
+  FLEXIBLE
+}
+
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  VIEWED
+  CONTACTED
+  QUALIFIED
+  SITE_VISIT
+  NEGOTIATION
+  BOOKED
+  CLOSED
+  LOST
+}
+
+enum LeadSource {
+  REQUIREMENT_MARKETPLACE
+}
+
+enum LeadPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
 model User {
   id              String        @id @db.Uuid
   publicId        String        @unique @map("public_id") @db.VarChar(32)
@@ -166,6 +222,8 @@ model User {
   platformRoles UserPlatformRole[]
   personas     UserPersona[]
   memberships  OrganizationMembership[]
+  requirements Requirement[]
+  assignedLeads Lead[] @relation("LeadAssignee")
 
   @@map("users")
 }
@@ -240,6 +298,7 @@ model Organization {
   mediaAssets         MediaAsset[]
   documentAssets      DocumentAsset[]
   resourceAssignments ResourceAssignment[]
+  leads               Lead[]
 
   @@map("organizations")
 }
@@ -422,6 +481,7 @@ model Project {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   properties   Property[]
   communities  Community[]
+  matchedLeads Lead[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -476,6 +536,7 @@ model Property {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  matchedLeads Lead[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -589,3 +650,94 @@ model ResourceAssignment {
   @@index([resourceType, resourceId])
   @@map("resource_assignments")
 }
+
+model Requirement {
+  id                 String                     @id @db.Uuid
+  publicId           String                     @unique @map("public_id") @db.VarChar(32)
+  ownerUserId        String                     @map("owner_user_id") @db.Uuid
+  propertyType       PropertyType               @map("property_type")
+  transactionType    RequirementTransactionType @map("transaction_type")
+  configuration      PropertyConfiguration?
+  bedrooms           Int?
+  budgetMinMinor     BigInt?                    @map("budget_min_minor")
+  budgetMaxMinor     BigInt?                    @map("budget_max_minor")
+  currency           String                     @default("INR") @db.VarChar(3)
+  city               String                     @db.VarChar(80)
+  locality           String?                    @db.VarChar(120)
+  microMarket        String?                    @map("micro_market") @db.VarChar(120)
+  preferredProject   String?                    @map("preferred_project") @db.VarChar(160)
+  purpose            RequirementPurpose         @default(END_USE)
+  timeline           RequirementTimeline        @default(FLEXIBLE)
+  vaastuRequired     Boolean                    @default(false) @map("vaastu_required")
+  amenities          String[]                   @default([])
+  notes              String?                    @db.VarChar(2000)
+  status             RequirementStatus          @default(DRAFT)
+  visibility         RequirementVisibility      @default(PRIVATE)
+  version            Int                        @default(1)
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy          String?                    @map("created_by") @db.Uuid
+  updatedBy          String?                    @map("updated_by") @db.Uuid
+
+  owner User   @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  leads Lead[]
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([visibility])
+  @@index([status, visibility])
+  @@index([city])
+  @@index([locality])
+  @@index([microMarket])
+  @@index([propertyType])
+  @@index([transactionType])
+  @@index([configuration])
+  @@index([bedrooms])
+  @@index([budgetMinMinor])
+  @@index([budgetMaxMinor])
+  @@index([createdAt])
+  @@map("requirements")
+}
+
+model Lead {
+  id                       String     @id @db.Uuid
+  publicId                 String     @unique @map("public_id") @db.VarChar(32)
+  requirementId            String     @map("requirement_id") @db.Uuid
+  recipientOrganizationId  String     @map("recipient_organization_id") @db.Uuid
+  recipientUserId          String?    @map("recipient_user_id") @db.Uuid
+  matchedPropertyId        String?    @map("matched_property_id") @db.Uuid
+  matchedProjectId         String?    @map("matched_project_id") @db.Uuid
+  matchScore               Int        @map("match_score")
+  matchedCriteria          Json       @map("matched_criteria")
+  unmatchedCriteria        Json       @map("unmatched_criteria")
+  matchExplanation         String     @map("match_explanation") @db.VarChar(1000)
+  source                   LeadSource @default(REQUIREMENT_MARKETPLACE)
+  status                   LeadStatus @default(NEW)
+  priority                 LeadPriority @default(NORMAL)
+  assignedAt               DateTime?  @map("assigned_at") @db.Timestamptz(3)
+  firstViewedAt            DateTime?  @map("first_viewed_at") @db.Timestamptz(3)
+  contactedAt              DateTime?  @map("contacted_at") @db.Timestamptz(3)
+  version                  Int        @default(1)
+  createdAt                DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy                String?    @map("created_by") @db.Uuid
+  updatedBy                String?    @map("updated_by") @db.Uuid
+
+  requirement           Requirement  @relation(fields: [requirementId], references: [id], onDelete: Restrict)
+  recipientOrganization Organization @relation(fields: [recipientOrganizationId], references: [id], onDelete: Restrict)
+  recipientUser         User?        @relation("LeadAssignee", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  matchedProperty       Property?    @relation(fields: [matchedPropertyId], references: [id], onDelete: SetNull)
+  matchedProject        Project?     @relation(fields: [matchedProjectId], references: [id], onDelete: SetNull)
+
+  @@unique([requirementId, recipientOrganizationId])
+  @@index([recipientOrganizationId])
+  @@index([recipientUserId])
+  @@index([status])
+  @@index([source])
+  @@index([matchScore])
+  @@index([createdAt])
+  @@index([matchedPropertyId])
+  @@index([matchedProjectId])
+  @@map("leads")
+}
+

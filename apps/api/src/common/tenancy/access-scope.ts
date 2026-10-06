@@ -27,6 +27,7 @@ export type AuthActor = {
 export function buildActorPermissions(input: {
   platformRoles: PlatformRole[];
   organizationRole?: OrganizationRole | null;
+  personas?: Persona[];
 }): Set<Permission> {
   return collectPermissions(input);
 }

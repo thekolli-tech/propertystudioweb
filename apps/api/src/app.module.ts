@@ -12,6 +12,7 @@ import { SecurityKernelModule } from './common/security/security-kernel.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { HealthModule } from './modules/health/health.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     AuthModule,
     OrganizationsModule,
     CatalogModule,
+    MarketplaceModule,
   ],
   providers: [OriginCheckMiddleware],
 })

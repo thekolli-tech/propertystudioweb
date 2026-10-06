@@ -44,6 +44,23 @@ import {
   updateOrganizationRequestSchema,
   updateProjectRequestSchema,
   updatePropertyRequestSchema,
+  adminLeadListQuerySchema,
+  adminLeadListResponseSchema,
+  adminRequirementListQuerySchema,
+  adminRequirementListResponseSchema,
+  createMarketplaceLeadRequestSchema,
+  createRequirementRequestSchema,
+  leadListQuerySchema,
+  leadListResponseSchema,
+  leadSummarySchema,
+  publicRequirementDetailSchema,
+  publicRequirementListQuerySchema,
+  publicRequirementListResponseSchema,
+  requirementDetailSchema,
+  requirementListQuerySchema,
+  requirementListResponseSchema,
+  updateLeadStatusRequestSchema,
+  updateRequirementRequestSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -88,6 +105,23 @@ import {
   type UpdateOrganizationRequest,
   type UpdateProjectRequest,
   type UpdatePropertyRequest,
+  type AdminLeadListQuery,
+  type AdminLeadListResponse,
+  type AdminRequirementListQuery,
+  type AdminRequirementListResponse,
+  type CreateMarketplaceLeadRequest,
+  type CreateRequirementRequest,
+  type LeadListQuery,
+  type LeadListResponse,
+  type LeadSummary,
+  type PublicRequirementDetail,
+  type PublicRequirementListQuery,
+  type PublicRequirementListResponse,
+  type RequirementDetail,
+  type RequirementListQuery,
+  type RequirementListResponse,
+  type UpdateLeadStatusRequest,
+  type UpdateRequirementRequest,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -447,6 +481,145 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async createRequirement(input: CreateRequirementRequest): Promise<RequirementDetail> {
+    const body = createRequirementRequestSchema.parse(input);
+    return this.request('/api/v1/requirements', requirementDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+    });
+  }
+
+  async listRequirements(
+    query: Partial<RequirementListQuery> = {},
+  ): Promise<RequirementListResponse> {
+    const parsed = requirementListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/requirements?${params.toString()}`, requirementListResponseSchema);
+  }
+
+  async getRequirement(publicId: string): Promise<RequirementDetail> {
+    return this.request(
+      `/api/v1/requirements/${encodeURIComponent(publicId)}`,
+      requirementDetailSchema,
+    );
+  }
+
+  async updateRequirement(
+    publicId: string,
+    input: UpdateRequirementRequest,
+  ): Promise<RequirementDetail> {
+    const body = updateRequirementRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/requirements/${encodeURIComponent(publicId)}`,
+      requirementDetailSchema,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v)),
+      },
+    );
+  }
+
+  async publishRequirement(publicId: string): Promise<RequirementDetail> {
+    return this.request(
+      `/api/v1/requirements/${encodeURIComponent(publicId)}/publish`,
+      requirementDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async pauseRequirement(publicId: string): Promise<RequirementDetail> {
+    return this.request(
+      `/api/v1/requirements/${encodeURIComponent(publicId)}/pause`,
+      requirementDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async closeRequirement(publicId: string): Promise<RequirementDetail> {
+    return this.request(
+      `/api/v1/requirements/${encodeURIComponent(publicId)}/close`,
+      requirementDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async listPublicRequirements(
+    query: Partial<PublicRequirementListQuery> = {},
+  ): Promise<PublicRequirementListResponse> {
+    const parsed = publicRequirementListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/public/requirements${qs ? `?${qs}` : ''}`,
+      publicRequirementListResponseSchema,
+    );
+  }
+
+  async getPublicRequirement(publicId: string): Promise<PublicRequirementDetail> {
+    return this.request(
+      `/api/v1/public/requirements/${encodeURIComponent(publicId)}`,
+      publicRequirementDetailSchema,
+    );
+  }
+
+  async createMarketplaceLead(input: CreateMarketplaceLeadRequest): Promise<LeadSummary> {
+    const body = createMarketplaceLeadRequestSchema.parse(input);
+    return this.request('/api/v1/leads/from-requirement', leadSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listLeads(query: LeadListQuery): Promise<LeadListResponse> {
+    const parsed = leadListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/leads?${params.toString()}`, leadListResponseSchema);
+  }
+
+  async getLead(publicId: string): Promise<LeadSummary> {
+    return this.request(`/api/v1/leads/${encodeURIComponent(publicId)}`, leadSummarySchema);
+  }
+
+  async updateLeadStatus(publicId: string, input: UpdateLeadStatusRequest): Promise<LeadSummary> {
+    const body = updateLeadStatusRequestSchema.parse(input);
+    return this.request(`/api/v1/leads/${encodeURIComponent(publicId)}/status`, leadSummarySchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAdminRequirements(
+    query: Partial<AdminRequirementListQuery> = {},
+  ): Promise<AdminRequirementListResponse> {
+    const parsed = adminRequirementListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(
+      `/api/v1/admin/requirements?${params.toString()}`,
+      adminRequirementListResponseSchema,
+    );
+  }
+
+  async listAdminLeads(query: Partial<AdminLeadListQuery> = {}): Promise<AdminLeadListResponse> {
+    const parsed = adminLeadListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    });
+    return this.request(`/api/v1/admin/leads?${params.toString()}`, adminLeadListResponseSchema);
   }
 
   private async request<T>(

@@ -852,3 +852,318 @@ export const assignResourceRequestSchema = z.object({
 });
 
 export type AssignResourceRequest = z.infer<typeof assignResourceRequestSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 7 — Requirements + Leads (demand marketplace)
+// ---------------------------------------------------------------------------
+
+export const requirementTransactionTypeSchema = z.enum(['BUY', 'RENT']);
+export const requirementStatusSchema = z.enum([
+  'DRAFT',
+  'ACTIVE',
+  'PAUSED',
+  'FULFILLED',
+  'CLOSED',
+  'CANCELLED',
+]);
+export const requirementVisibilitySchema = z.enum(['PRIVATE', 'MARKETPLACE']);
+export const requirementPurposeSchema = z.enum(['END_USE', 'INVESTMENT', 'BOTH']);
+export const requirementTimelineSchema = z.enum([
+  'IMMEDIATE',
+  'WITHIN_3_MONTHS',
+  'WITHIN_6_MONTHS',
+  'WITHIN_1_YEAR',
+  'FLEXIBLE',
+]);
+export const leadStatusSchema = z.enum([
+  'NEW',
+  'ASSIGNED',
+  'VIEWED',
+  'CONTACTED',
+  'QUALIFIED',
+  'SITE_VISIT',
+  'NEGOTIATION',
+  'BOOKED',
+  'CLOSED',
+  'LOST',
+]);
+export const leadSourceSchema = z.enum(['REQUIREMENT_MARKETPLACE']);
+export const leadPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH']);
+
+const requirementRequestFieldsSchema = z.object({
+  propertyType: propertyTypeSchema,
+  transactionType: requirementTransactionTypeSchema,
+  configuration: propertyConfigurationSchema.optional().nullable(),
+  bedrooms: z.number().int().min(0).max(50).optional().nullable(),
+  budgetMinMinor: optionalMoneyMinorSchema,
+  budgetMaxMinor: optionalMoneyMinorSchema,
+  currency: z.string().trim().length(3).default('INR'),
+  city: z.string().trim().min(2).max(80),
+  locality: z.string().trim().max(120).optional().nullable(),
+  microMarket: z.string().trim().max(120).optional().nullable(),
+  preferredProject: z.string().trim().max(160).optional().nullable(),
+  purpose: requirementPurposeSchema.default('END_USE'),
+  timeline: requirementTimelineSchema.default('FLEXIBLE'),
+  vaastuRequired: z.boolean().default(false),
+  amenities: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  visibility: requirementVisibilitySchema.default('PRIVATE'),
+});
+
+function refineRequirementBudget<T extends z.ZodTypeAny>(schema: T) {
+  return schema.superRefine((value, ctx) => {
+    const record = value as {
+      budgetMinMinor?: bigint | null;
+      budgetMaxMinor?: bigint | null;
+    };
+    if (
+      record.budgetMinMinor !== undefined &&
+      record.budgetMinMinor !== null &&
+      record.budgetMaxMinor !== undefined &&
+      record.budgetMaxMinor !== null &&
+      record.budgetMinMinor > record.budgetMaxMinor
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'budgetMinMinor must be less than or equal to budgetMaxMinor.',
+        path: ['budgetMinMinor'],
+      });
+    }
+  });
+}
+
+export const createRequirementRequestSchema = refineRequirementBudget(
+  requirementRequestFieldsSchema,
+);
+
+export type CreateRequirementRequest = z.infer<typeof createRequirementRequestSchema>;
+
+export const updateRequirementRequestSchema = refineRequirementBudget(
+  requirementRequestFieldsSchema.partial().extend({
+    expectedVersion: z.number().int().positive().optional(),
+  }),
+);
+
+export type UpdateRequirementRequest = z.infer<typeof updateRequirementRequestSchema>;
+
+export const requirementListQuerySchema = cursorPaginationQuerySchema.extend({
+  status: requirementStatusSchema.optional(),
+  visibility: requirementVisibilitySchema.optional(),
+  transactionType: requirementTransactionTypeSchema.optional(),
+  propertyType: propertyTypeSchema.optional(),
+  city: z.string().trim().max(80).optional(),
+});
+
+export type RequirementListQuery = z.infer<typeof requirementListQuerySchema>;
+
+export const adminRequirementListQuerySchema = requirementListQuerySchema.extend({
+  ownerUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional(),
+});
+
+export type AdminRequirementListQuery = z.infer<typeof adminRequirementListQuerySchema>;
+
+export const requirementSummarySchema = z.object({
+  publicId: z.string(),
+  propertyType: propertyTypeSchema,
+  transactionType: requirementTransactionTypeSchema,
+  configuration: propertyConfigurationSchema.nullable(),
+  bedrooms: z.number().nullable(),
+  budgetMinMinor: z.string().nullable(),
+  budgetMaxMinor: z.string().nullable(),
+  currency: z.string(),
+  city: z.string(),
+  locality: z.string().nullable(),
+  microMarket: z.string().nullable(),
+  preferredProject: z.string().nullable(),
+  purpose: requirementPurposeSchema,
+  timeline: requirementTimelineSchema,
+  vaastuRequired: z.boolean(),
+  amenities: z.array(z.string()),
+  status: requirementStatusSchema,
+  visibility: requirementVisibilitySchema,
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type RequirementSummary = z.infer<typeof requirementSummarySchema>;
+
+export const requirementDetailSchema = requirementSummarySchema.extend({
+  notes: z.string().nullable(),
+  ownerUserPublicId: z.string(),
+});
+
+export type RequirementDetail = z.infer<typeof requirementDetailSchema>;
+
+export const requirementListResponseSchema = z.object({
+  requirements: z.array(requirementSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type RequirementListResponse = z.infer<typeof requirementListResponseSchema>;
+
+export const adminRequirementSummarySchema = requirementSummarySchema.extend({
+  ownerUserPublicId: z.string(),
+});
+
+export type AdminRequirementSummary = z.infer<typeof adminRequirementSummarySchema>;
+
+export const adminRequirementListResponseSchema = z.object({
+  requirements: z.array(adminRequirementSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type AdminRequirementListResponse = z.infer<typeof adminRequirementListResponseSchema>;
+
+/** Anonymized marketplace projection — never includes PII or private notes. */
+export const publicRequirementSummarySchema = z.object({
+  publicId: z.string(),
+  intentLabel: z.string(),
+  headline: z.string(),
+  propertyType: propertyTypeSchema,
+  transactionType: requirementTransactionTypeSchema,
+  configuration: propertyConfigurationSchema.nullable(),
+  bedrooms: z.number().nullable(),
+  budgetMinMinor: z.string().nullable(),
+  budgetMaxMinor: z.string().nullable(),
+  currency: z.string(),
+  city: z.string(),
+  locality: z.string().nullable(),
+  microMarket: z.string().nullable(),
+  purpose: requirementPurposeSchema,
+  timeline: requirementTimelineSchema,
+  vaastuRequired: z.boolean(),
+  amenities: z.array(z.string()),
+  highIntent: z.boolean(),
+  createdAt: z.string().datetime(),
+});
+
+export type PublicRequirementSummary = z.infer<typeof publicRequirementSummarySchema>;
+
+export const publicRequirementDetailSchema = publicRequirementSummarySchema.extend({
+  preferredProject: z.string().nullable(),
+});
+
+export type PublicRequirementDetail = z.infer<typeof publicRequirementDetailSchema>;
+
+export const publicRequirementListQuerySchema = cursorPaginationQuerySchema.extend({
+  propertyType: propertyTypeSchema.optional(),
+  transactionType: requirementTransactionTypeSchema.optional(),
+  configuration: propertyConfigurationSchema.optional(),
+  bedrooms: z.coerce.number().int().min(0).max(50).optional(),
+  city: z.string().trim().max(80).optional(),
+  locality: z.string().trim().max(120).optional(),
+  microMarket: z.string().trim().max(120).optional(),
+  minBudgetMinor: z.coerce.bigint().optional(),
+  maxBudgetMinor: z.coerce.bigint().optional(),
+  timeline: requirementTimelineSchema.optional(),
+});
+
+export type PublicRequirementListQuery = z.infer<typeof publicRequirementListQuerySchema>;
+
+export const publicRequirementListResponseSchema = z.object({
+  requirements: z.array(publicRequirementSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type PublicRequirementListResponse = z.infer<typeof publicRequirementListResponseSchema>;
+
+export const matchCriteriaSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  weight: z.number().int().nonnegative(),
+});
+
+export const matchResultSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  matched: z.array(matchCriteriaSchema),
+  unmatched: z.array(matchCriteriaSchema),
+  explanation: z.string(),
+});
+
+export type MatchResult = z.infer<typeof matchResultSchema>;
+
+export const createMarketplaceLeadRequestSchema = z.object({
+  requirementPublicId: z.string().regex(/^PS-REQ-\d+$/),
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  matchedPropertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  matchedProjectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+});
+
+export type CreateMarketplaceLeadRequest = z.infer<typeof createMarketplaceLeadRequestSchema>;
+
+export const updateLeadStatusRequestSchema = z.object({
+  status: leadStatusSchema,
+  expectedVersion: z.number().int().positive().optional(),
+});
+
+export type UpdateLeadStatusRequest = z.infer<typeof updateLeadStatusRequestSchema>;
+
+export const leadListQuerySchema = cursorPaginationQuerySchema.extend({
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  status: leadStatusSchema.optional(),
+  requirementPublicId: z
+    .string()
+    .regex(/^PS-REQ-\d+$/)
+    .optional(),
+});
+
+export type LeadListQuery = z.infer<typeof leadListQuerySchema>;
+
+export const adminLeadListQuerySchema = leadListQuerySchema;
+
+export type AdminLeadListQuery = z.infer<typeof adminLeadListQuerySchema>;
+
+export const leadSummarySchema = z.object({
+  publicId: z.string(),
+  requirementPublicId: z.string(),
+  recipientOrganizationPublicId: z.string(),
+  recipientUserPublicId: z.string().nullable(),
+  matchedPropertyPublicId: z.string().nullable(),
+  matchedProjectPublicId: z.string().nullable(),
+  matchScore: z.number().int(),
+  matchedCriteria: z.array(matchCriteriaSchema),
+  unmatchedCriteria: z.array(matchCriteriaSchema),
+  matchExplanation: z.string(),
+  source: leadSourceSchema,
+  status: leadStatusSchema,
+  priority: leadPrioritySchema,
+  requirement: publicRequirementSummarySchema,
+  assignedAt: z.string().datetime().nullable(),
+  firstViewedAt: z.string().datetime().nullable(),
+  contactedAt: z.string().datetime().nullable(),
+  version: z.number().int(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type LeadSummary = z.infer<typeof leadSummarySchema>;
+
+export const leadListResponseSchema = z.object({
+  leads: z.array(leadSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type LeadListResponse = z.infer<typeof leadListResponseSchema>;
+
+export const adminLeadSummarySchema = leadSummarySchema;
+
+export type AdminLeadSummary = z.infer<typeof adminLeadSummarySchema>;
+
+export const adminLeadListResponseSchema = leadListResponseSchema;
+
+export type AdminLeadListResponse = z.infer<typeof adminLeadListResponseSchema>;

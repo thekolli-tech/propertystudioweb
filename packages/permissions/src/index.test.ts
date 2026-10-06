@@ -34,4 +34,33 @@ describe('permissions catalog', () => {
     expect(permissions.has('audit:read')).toBe(true);
     expect(permissions.has('organization:manage')).toBe(true);
   });
+
+  it('grants requirement ownership permissions to seeker personas', () => {
+    const permissions = collectPermissions({
+      platformRoles: [],
+      personas: ['PROPERTY_SEEKER'],
+    });
+    expect(permissions.has('requirement:create')).toBe(true);
+    expect(permissions.has('requirement:publish')).toBe(true);
+    expect(permissions.has('lead:read')).toBe(false);
+  });
+
+  it('grants marketplace lead permissions to developer org roles', () => {
+    const permissions = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER',
+    });
+    expect(permissions.has('requirement:read:marketplace')).toBe(true);
+    expect(permissions.has('lead:read')).toBe(true);
+    expect(permissions.has('lead:assign')).toBe(true);
+  });
+
+  it('does not grant marketplace permissions to PROPERTY_ADMIN', () => {
+    const permissions = collectPermissions({
+      platformRoles: ['PROPERTY_ADMIN'],
+    });
+    expect(permissions.has('requirement:read:marketplace')).toBe(false);
+    expect(permissions.has('lead:read')).toBe(false);
+    expect(permissions.has('admin:requirements:read')).toBe(false);
+  });
 });

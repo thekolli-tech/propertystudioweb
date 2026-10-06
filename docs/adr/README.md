@@ -21,3 +21,4 @@ Approved architecture decisions for Property Studio V3.
 | [0015](0015-org-profiles.md) | Developer and agency organization profiles |
 | [0016](0016-property-project-catalog.md) | Property and project catalog foundation |
 | [0017](0017-phase-6-product-ui.md) | Phase 6 product UI + dynamic frontend |
+| [0018](0018-demand-marketplace.md) | Demand marketplace and lead foundation |

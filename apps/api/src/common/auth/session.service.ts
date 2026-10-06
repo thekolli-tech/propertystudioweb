@@ -202,7 +202,7 @@ export class SessionService {
       activeOrganizationId,
       activeOrganizationPublicId,
       organizationRole,
-      permissions: buildActorPermissions({ platformRoles, organizationRole }),
+      permissions: buildActorPermissions({ platformRoles, organizationRole, personas }),
     };
   }
 
