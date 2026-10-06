@@ -236,7 +236,9 @@ const PERSONA_PHASE10_PERMISSIONS = [
   'communications:message',
 ] as const satisfies readonly Permission[];
 
-const INTELLIGENCE_READ_PERMISSIONS = ['intelligence:read'] as const satisfies readonly Permission[];
+const INTELLIGENCE_READ_PERMISSIONS = [
+  'intelligence:read',
+] as const satisfies readonly Permission[];
 
 const INTELLIGENCE_COMPARE_MATCH_PERMISSIONS = [
   'intelligence:read',
@@ -244,10 +246,7 @@ const INTELLIGENCE_COMPARE_MATCH_PERMISSIONS = [
   'intelligence:match',
 ] as const satisfies readonly Permission[];
 
-const AI_CORE_PERMISSIONS = [
-  'ai:assistant',
-  'ai:search',
-] as const satisfies readonly Permission[];
+const AI_CORE_PERMISSIONS = ['ai:assistant', 'ai:search'] as const satisfies readonly Permission[];
 
 const AI_MATCH_VALUATION_PERMISSIONS = [
   'ai:assistant',

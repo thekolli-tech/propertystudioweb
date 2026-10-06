@@ -33,7 +33,9 @@ export class DeterministicAiProvider implements AiProvider {
     };
   }
 
-  private proposeTools(message: string): Array<{ tool: AiToolName; args: Record<string, unknown> }> {
+  private proposeTools(
+    message: string,
+  ): Array<{ tool: AiToolName; args: Record<string, unknown> }> {
     const lower = message.toLowerCase();
     const tools: Array<{ tool: AiToolName; args: Record<string, unknown> }> = [];
 
@@ -136,10 +138,7 @@ export class DeterministicAiProvider implements AiProvider {
 
       if (result.ok && result.coverageState === 'READY') {
         coverageState = 'READY';
-      } else if (
-        coverageState !== 'READY' &&
-        result.coverageState === 'UNAVAILABLE'
-      ) {
+      } else if (coverageState !== 'READY' && result.coverageState === 'UNAVAILABLE') {
         coverageState = 'UNAVAILABLE';
       }
 
@@ -210,18 +209,11 @@ export class DeterministicAiProvider implements AiProvider {
     }
 
     if (parts.length === 0) {
-      parts.push(
-        'I could not assemble an answer from authorized tools with the available data.',
-      );
+      parts.push('I could not assemble an answer from authorized tools with the available data.');
       coverageState = 'INSUFFICIENT_DATA';
     }
 
-    const answer = [
-      parts.join(' '),
-      '',
-      AI_DISCLAIMER,
-      userMessage.trim().length > 0 ? '' : '',
-    ]
+    const answer = [parts.join(' '), '', AI_DISCLAIMER, userMessage.trim().length > 0 ? '' : '']
       .filter((line) => line !== undefined)
       .join('\n')
       .trim();
@@ -244,6 +236,11 @@ export class DeterministicAiProvider implements AiProvider {
   private extractCity(text: string): string | null {
     const match = /(?:in|at|near)\s+([a-z][a-z\s]{1,40}?)(?:\s|$|,|\.)/i.exec(text);
     if (!match?.[1]) return null;
-    return match[1].trim().replace(/\b(for|with|under|below|above)\b.*$/i, '').trim() || null;
+    return (
+      match[1]
+        .trim()
+        .replace(/\b(for|with|under|below|above)\b.*$/i, '')
+        .trim() || null
+    );
   }
 }

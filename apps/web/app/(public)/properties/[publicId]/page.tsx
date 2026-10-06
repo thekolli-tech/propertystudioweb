@@ -57,9 +57,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
         .catch(() => ({ properties: [], nextCursor: null }))
     : { properties: [], nextCursor: null };
 
-  let intelligence:
-    | Awaited<ReturnType<typeof client.getPropertyIntelligence>>
-    | null = null;
+  let intelligence: Awaited<ReturnType<typeof client.getPropertyIntelligence>> | null = null;
   try {
     intelligence = await client.getPropertyIntelligence(publicId);
   } catch {

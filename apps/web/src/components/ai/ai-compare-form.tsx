@@ -68,9 +68,7 @@ export function AiCompareForm() {
             value={publicIdsText}
             onChange={(event) => setPublicIdsText(event.target.value)}
             placeholder={
-              subjectType === 'PROPERTY'
-                ? 'PS-PROP-1, PS-PROP-2'
-                : 'PS-PROJ-1, PS-PROJ-2'
+              subjectType === 'PROPERTY' ? 'PS-PROP-1, PS-PROP-2' : 'PS-PROJ-1, PS-PROJ-2'
             }
             required
             disabled={pending}

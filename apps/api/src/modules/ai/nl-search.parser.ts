@@ -79,9 +79,8 @@ export function parseNaturalLanguagePropertyQuery(query: string): AiPropertySear
 
   let city: string | null = null;
   let locality: string | null = null;
-  const inMatch = /\bin\s+([a-z][a-z\s-]{1,40}?)(?:\s+(?:under|below|with|for|near|budget)|$|,|\.)/i.exec(
-    text,
-  );
+  const inMatch =
+    /\bin\s+([a-z][a-z\s-]{1,40}?)(?:\s+(?:under|below|with|for|near|budget)|$|,|\.)/i.exec(text);
   if (inMatch?.[1]) {
     const place = inMatch[1].trim();
     const parts = place.split(/\s+/);

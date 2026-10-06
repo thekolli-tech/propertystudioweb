@@ -9,12 +9,7 @@ import {
 
 import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
-import {
-  applyCreatedCursor,
-  bigintToString,
-  encodeCursor,
-  toIso,
-} from './intelligence.util';
+import { applyCreatedCursor, bigintToString, encodeCursor, toIso } from './intelligence.util';
 
 @Injectable()
 export class MarketIntelligenceService {

@@ -9,11 +9,7 @@ import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { IntelligenceAccessService } from './intelligence-access.service';
-import {
-  applyCreatedCursor,
-  encodeCursor,
-  toIso,
-} from './intelligence.util';
+import { applyCreatedCursor, encodeCursor, toIso } from './intelligence.util';
 import { InfrastructureService } from './infrastructure.service';
 import { MarketIntelligenceService } from './market-intelligence.service';
 

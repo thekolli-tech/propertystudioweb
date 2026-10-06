@@ -60,7 +60,12 @@ export class IntelligenceMatchService {
     }
 
     const criteria = await this.resolveCriteria(actor, body, request);
-    if (!criteria.city && !criteria.propertyType && !criteria.bedrooms && !criteria.budgetMaxMinor) {
+    if (
+      !criteria.city &&
+      !criteria.propertyType &&
+      !criteria.bedrooms &&
+      !criteria.budgetMaxMinor
+    ) {
       return {
         matches: [],
         coverageState: 'INSUFFICIENT_DATA',

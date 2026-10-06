@@ -2977,8 +2977,14 @@ export const aiAssistantRequestSchema = z.object({
     .regex(/^PS-ORG-\d+$/)
     .optional()
     .nullable(),
-  contextPropertyPublicIds: z.array(z.string().regex(/^PS-PROP-\d+$/)).max(5).default([]),
-  contextProjectPublicIds: z.array(z.string().regex(/^PS-PROJ-\d+$/)).max(5).default([]),
+  contextPropertyPublicIds: z
+    .array(z.string().regex(/^PS-PROP-\d+$/))
+    .max(5)
+    .default([]),
+  contextProjectPublicIds: z
+    .array(z.string().regex(/^PS-PROJ-\d+$/))
+    .max(5)
+    .default([]),
 });
 export type AiAssistantRequest = z.infer<typeof aiAssistantRequestSchema>;
 

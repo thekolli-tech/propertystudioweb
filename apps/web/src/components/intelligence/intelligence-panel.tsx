@@ -29,7 +29,9 @@ export type IntelligencePanelProps = {
   disclaimer?: string;
 };
 
-function trustTone(status: TrustSubjectStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
+function trustTone(
+  status: TrustSubjectStatus,
+): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
   switch (status) {
     case 'VERIFIED':
       return 'success';
@@ -118,7 +120,9 @@ export function IntelligencePanel({
           {hasPricePerSqft ? (
             <div className="mt-2">
               <PriceDisplay amountMinor={pricePerSqftMinor!} currency={currency} size="md" />
-              <p className="mt-1 text-xs text-muted-foreground">From listing data when published.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                From listing data when published.
+              </p>
             </div>
           ) : (
             <p className="mt-2 text-sm text-muted-foreground">Price per sqft is not available.</p>

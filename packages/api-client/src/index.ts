@@ -1667,9 +1667,7 @@ export class ApiClient {
     );
   }
 
-  async listMarketSnapshots(
-    query: Partial<MarketQuery> = {},
-  ): Promise<MarketSnapshotListResponse> {
+  async listMarketSnapshots(query: Partial<MarketQuery> = {}): Promise<MarketSnapshotListResponse> {
     const parsed = marketQuerySchema.parse(query);
     const params = new URLSearchParams();
     if (parsed.cursor) params.set('cursor', parsed.cursor);
@@ -1811,9 +1809,7 @@ export class ApiClient {
     });
   }
 
-  async aiDocumentAnalysis(
-    input: AiDocumentAnalysisRequest,
-  ): Promise<AiDocumentAnalysisResponse> {
+  async aiDocumentAnalysis(input: AiDocumentAnalysisRequest): Promise<AiDocumentAnalysisResponse> {
     const body = aiDocumentAnalysisRequestSchema.parse(input);
     return this.request('/api/v1/ai/document-analysis', aiDocumentAnalysisResponseSchema, {
       method: 'POST',

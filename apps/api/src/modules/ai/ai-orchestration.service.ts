@@ -143,11 +143,7 @@ export class AiOrchestrationService {
     request?: AuthenticatedRequest,
   ): Promise<AiDocumentAnalysisResponse> {
     this.access.requirePermission(actor, 'ai:document:analyze');
-    const document = await this.tools.requireDocumentAccess(
-      actor,
-      body.documentPublicId,
-      request,
-    );
+    const document = await this.tools.requireDocumentAccess(actor, body.documentPublicId, request);
     const job = await this.createJob(actor, 'DOCUMENT_ANALYSIS', body, request);
     try {
       await this.markRunning(job.id);
@@ -533,11 +529,7 @@ export class AiOrchestrationService {
     });
   }
 
-  private async completeJob(
-    id: string,
-    coverageState: IntelligenceDataState,
-    output: unknown,
-  ) {
+  private async completeJob(id: string, coverageState: IntelligenceDataState, output: unknown) {
     await this.prisma.aiJob.update({
       where: { id },
       data: {
@@ -550,8 +542,7 @@ export class AiOrchestrationService {
   }
 
   private async failJob(id: string, error: unknown) {
-    const message =
-      error instanceof Error ? error.message.slice(0, 1000) : 'AI job failed';
+    const message = error instanceof Error ? error.message.slice(0, 1000) : 'AI job failed';
     await this.prisma.aiJob.update({
       where: { id },
       data: {

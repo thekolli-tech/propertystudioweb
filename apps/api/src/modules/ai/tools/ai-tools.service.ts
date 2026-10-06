@@ -110,8 +110,7 @@ export class AiToolsService {
     this.access.requirePermission(actor, 'ai:search');
     const queryText = typeof args.query === 'string' ? args.query : '';
     const parsed = parseNaturalLanguagePropertyQuery(queryText);
-    const limit =
-      typeof args.limit === 'number' && args.limit > 0 ? Math.min(50, args.limit) : 20;
+    const limit = typeof args.limit === 'number' && args.limit > 0 ? Math.min(50, args.limit) : 20;
 
     const where: Record<string, unknown> = {
       deletedAt: null,
@@ -316,10 +315,7 @@ export class AiToolsService {
     };
   }
 
-  private async getReviews(
-    actor: AuthActor,
-    args: Record<string, unknown>,
-  ): Promise<AiToolResult> {
+  private async getReviews(actor: AuthActor, args: Record<string, unknown>): Promise<AiToolResult> {
     this.access.requirePermission(actor, 'reviews:read');
     const subjectType = args.subjectType === 'PROJECT' ? 'PROJECT' : 'PROPERTY';
     const subjectPublicId =
@@ -425,8 +421,7 @@ export class AiToolsService {
 
     const monthlyRate = annualRatePercent / 12 / 100;
     const factor = Math.pow(1 + monthlyRate, tenureMonths);
-    const emi =
-      (Number(principalMinor) * monthlyRate * factor) / (factor - 1);
+    const emi = (Number(principalMinor) * monthlyRate * factor) / (factor - 1);
     const emiMinor = BigInt(Math.round(emi));
 
     return {
@@ -452,8 +447,7 @@ export class AiToolsService {
       args.purchaseMinor !== undefined ? BigInt(String(args.purchaseMinor)) : null;
     const annualRentMinor =
       args.annualRentMinor !== undefined ? BigInt(String(args.annualRentMinor)) : null;
-    const appreciationBps =
-      typeof args.appreciationBps === 'number' ? args.appreciationBps : null;
+    const appreciationBps = typeof args.appreciationBps === 'number' ? args.appreciationBps : null;
 
     if (purchaseMinor === null || purchaseMinor <= 0n || annualRentMinor === null) {
       return {
@@ -463,9 +457,7 @@ export class AiToolsService {
         data: {
           rentalYieldBps: null,
           totalReturnBps: null,
-          assumptions: [
-            'purchaseMinor and annualRentMinor required; appreciationBps optional',
-          ],
+          assumptions: ['purchaseMinor and annualRentMinor required; appreciationBps optional'],
         },
       };
     }

@@ -6,11 +6,7 @@ import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { TrustScoreService } from '../reviews/trust-score.service';
 import { IntelligenceAccessService } from './intelligence-access.service';
-import {
-  decimalToNumber,
-  INTELLIGENCE_DISCLAIMER,
-  pricePerSqftMinor,
-} from './intelligence.util';
+import { decimalToNumber, INTELLIGENCE_DISCLAIMER, pricePerSqftMinor } from './intelligence.util';
 import { InfrastructureService } from './infrastructure.service';
 import { MarketIntelligenceService } from './market-intelligence.service';
 
@@ -58,8 +54,7 @@ export class PropertyIntelligenceService {
     ]);
 
     const marketCoverage = market ? market.coverageState : 'INSUFFICIENT_DATA';
-    const infraCoverage =
-      infrastructure.length > 0 ? ('READY' as const) : ('UNAVAILABLE' as const);
+    const infraCoverage = infrastructure.length > 0 ? ('READY' as const) : ('UNAVAILABLE' as const);
     const coverageState =
       marketCoverage === 'READY' || infraCoverage === 'READY' || trust?.state === 'READY'
         ? ('READY' as const)

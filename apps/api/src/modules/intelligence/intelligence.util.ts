@@ -42,7 +42,7 @@ export function decodeCursor(cursor: string): { createdAt: Date; id: string } {
   }
 }
 
-export function applyCreatedCursor<T extends { createdAt: Date; id: string }>(
+export function applyCreatedCursor(
   cursor: string | undefined,
 ): { createdAt: { lt: Date } } | { OR: Array<Record<string, unknown>> } | Record<string, never> {
   if (!cursor) {

@@ -88,8 +88,7 @@ export class CompareService {
         key: 'pricePerSqftMinor',
         label: 'Price / sqft',
         resolve: (p) => {
-          const area =
-            decimalToNumber(p.carpetAreaSqft) ?? decimalToNumber(p.builtUpAreaSqft);
+          const area = decimalToNumber(p.carpetAreaSqft) ?? decimalToNumber(p.builtUpAreaSqft);
           const value = pricePerSqftMinor(p.priceMinor, area);
           return { value, available: value !== null };
         },
@@ -180,9 +179,7 @@ export class CompareService {
     }));
 
     const anyUnavailable = fields.some((field) => field.values.some((v) => !v.available));
-    const coverageState: IntelligenceDataState = anyUnavailable
-      ? 'INSUFFICIENT_DATA'
-      : 'READY';
+    const coverageState: IntelligenceDataState = anyUnavailable ? 'INSUFFICIENT_DATA' : 'READY';
 
     return {
       subjectType: 'PROPERTY',

@@ -49,8 +49,7 @@ export class ProjectIntelligenceService {
     ]);
 
     const marketCoverage = market ? market.coverageState : 'INSUFFICIENT_DATA';
-    const infraCoverage =
-      infrastructure.length > 0 ? ('READY' as const) : ('UNAVAILABLE' as const);
+    const infraCoverage = infrastructure.length > 0 ? ('READY' as const) : ('UNAVAILABLE' as const);
     const coverageState =
       marketCoverage === 'READY' || infraCoverage === 'READY' || trust?.state === 'READY'
         ? ('READY' as const)

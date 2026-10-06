@@ -47,8 +47,7 @@ export class InfrastructureService {
         : null;
 
     const assets = page.map((row) => this.toSummary(row));
-    const coverageState: IntelligenceDataState =
-      assets.length > 0 ? 'READY' : 'INSUFFICIENT_DATA';
+    const coverageState: IntelligenceDataState = assets.length > 0 ? 'READY' : 'INSUFFICIENT_DATA';
 
     return { assets, coverageState, nextCursor: next };
   }
