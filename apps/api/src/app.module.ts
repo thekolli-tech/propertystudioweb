@@ -11,6 +11,7 @@ import { OriginCheckMiddleware } from './common/security/origin-check.middleware
 import { SecurityKernelModule } from './common/security/security-kernel.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
@@ -57,6 +58,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     OrganizationsModule,
     CatalogModule,
     MarketplaceModule,
+    CrmModule,
   ],
   providers: [OriginCheckMiddleware],
 })

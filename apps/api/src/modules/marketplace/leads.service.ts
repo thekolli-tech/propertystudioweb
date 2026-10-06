@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   type CreateMarketplaceLeadRequest,
   type LeadListQuery,
+  type LeadStatus,
   type MatchResult,
   type UpdateLeadStatusRequest,
 } from '@property-studio/contracts';
@@ -14,12 +15,11 @@ import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
+import { LeadTransitionService } from '../crm/lead-transition.service';
 import { LeadAccessService } from './lead-access.service';
 import { LeadEligibilityService } from './lead-eligibility.service';
 import { decodeCursor, encodeCursor, toPublicRequirementSummary } from './marketplace.util';
 import { RequirementMatchingService } from './requirement-matching.service';
-
-const TERMINAL_LEAD_STATUSES = new Set(['CLOSED', 'LOST', 'BOOKED']);
 
 @Injectable()
 export class LeadsService {
@@ -30,6 +30,7 @@ export class LeadsService {
     private readonly eligibility: LeadEligibilityService,
     private readonly matching: RequirementMatchingService,
     private readonly leadAccess: LeadAccessService,
+    private readonly transitions: LeadTransitionService,
   ) {}
 
   /**
@@ -378,9 +379,7 @@ export class LeadsService {
       throw new AppError('CONFLICT', 'Lead was modified by another request.');
     }
 
-    if (TERMINAL_LEAD_STATUSES.has(lead.status) && lead.status !== body.status) {
-      throw new AppError('CONFLICT', 'Terminal leads cannot change status.');
-    }
+    this.transitions.assertTransition(lead.status as LeadStatus, body.status);
 
     const updated = await this.prisma.lead.update({
       where: { id: lead.id },
