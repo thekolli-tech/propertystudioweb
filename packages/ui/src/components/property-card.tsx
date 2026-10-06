@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MapPin } from 'lucide-react';
+import { Heart, MapPin } from 'lucide-react';
 
 import { cn } from '../lib/utils';
 import { ImagePlaceholder } from './image-placeholder';
@@ -50,12 +50,12 @@ export function PropertyCard({
     <LinkComponent
       href={href}
       className={cn(
-        'ps-card-elevated group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'ps-card-elevated group flex flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-card transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
     >
       <div className="relative overflow-hidden">
-        {imageSlot ?? <ImagePlaceholder />}
+        {imageSlot ?? <ImagePlaceholder ratio="card" />}
         {availabilityStatus ? (
           <div className="absolute left-3 top-3">
             <StatusBadge tone={availabilityTone(availabilityStatus)}>
@@ -63,13 +63,19 @@ export function PropertyCard({
             </StatusBadge>
           </div>
         ) : null}
+        <span
+          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/95 text-muted-foreground shadow-sm"
+          aria-hidden
+        >
+          <Heart className="h-3.5 w-3.5" />
+        </span>
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="space-y-1">
-          <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
             {publicId}
           </p>
-          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-foreground">
+          <h3 className="line-clamp-2 font-display text-[0.95rem] font-semibold leading-snug text-foreground">
             {title}
           </h3>
           {location ? (
@@ -79,7 +85,7 @@ export function PropertyCard({
             </p>
           ) : null}
         </div>
-        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-auto flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           {configLabel ? (
             <span className="rounded-md bg-secondary px-2 py-1 font-medium text-secondary-foreground">
               {configLabel}

@@ -60,12 +60,12 @@ export default async function PublicProjectPage({ params }: PageProps) {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
           <div className="grid gap-3 md:grid-cols-[1.4fr_1fr]">
-            <div className="overflow-hidden rounded-2xl border border-border">
-              <ImagePlaceholder className="min-h-[280px]" label="Project media" />
+            <div className="overflow-hidden rounded-[var(--radius)] border border-border">
+              <ImagePlaceholder className="min-h-[280px]" ratio="video" label="Project media" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               {[0, 1, 2, 3].map((index) => (
-                <div key={index} className="overflow-hidden rounded-xl border border-border">
+                <div key={index} className="overflow-hidden rounded-[var(--radius)] border border-border">
                   <ImagePlaceholder ratio="square" label="Gallery" />
                 </div>
               ))}
@@ -180,7 +180,7 @@ export default async function PublicProjectPage({ params }: PageProps) {
           </Tabs>
         </div>
 
-        <aside className="h-fit space-y-4 rounded-2xl border border-border bg-card p-5 ps-card-elevated lg:sticky lg:top-24">
+        <aside className="h-fit space-y-4 rounded-[var(--radius)] border border-border bg-card p-5 ps-card-elevated lg:sticky lg:top-20">
           <div>
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground uppercase">
               Starting price

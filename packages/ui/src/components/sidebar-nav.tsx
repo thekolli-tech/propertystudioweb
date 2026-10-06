@@ -47,11 +47,11 @@ export function SidebarNav({
         dark
           ? 'border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))]'
           : 'border-border bg-card text-foreground',
-        collapsed ? 'w-[72px]' : 'w-64',
+        collapsed ? 'w-[72px]' : 'w-60',
         className,
       )}
     >
-      <div className="flex h-16 items-center justify-between gap-2 border-b border-inherit px-3">
+      <div className="flex h-14 items-center justify-between gap-2 border-b border-inherit px-3">
         <div className={cn('min-w-0', collapsed && 'sr-only')}>{brand}</div>
         <Button
           type="button"

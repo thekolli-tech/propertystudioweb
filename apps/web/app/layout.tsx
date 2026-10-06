@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Fraunces } from 'next/font/google';
+import { DM_Sans, Plus_Jakarta_Sans } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { BroadcastModeProvider } from '@property-studio/ui';
 
 import './globals.css';
 
-const display = Fraunces({
+const display = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
 });
 
 const body = DM_Sans({
   subsets: ['latin'],
   variable: '--font-body',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {

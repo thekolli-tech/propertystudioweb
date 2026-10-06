@@ -53,16 +53,16 @@ export default async function HomePage() {
       <PublicHeader authenticated={Boolean(user)} />
       <main className="flex-1">
         <section className="ps-hero-surface relative overflow-hidden">
-          <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-16 sm:px-6 lg:py-24">
-            <div className="max-w-3xl text-white">
-              <p className="text-sm font-medium tracking-[0.22em] text-[hsl(var(--premium))] uppercase">
+          <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-14 sm:gap-10 sm:px-6 lg:py-20">
+            <div className="max-w-2xl text-white">
+              <p className="text-[11px] font-semibold tracking-[0.24em] text-[hsl(var(--premium))] uppercase">
                 Property Studio
               </p>
-              <h1 className="mt-4 font-display text-4xl leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.5rem]">
                 Find your perfect <span className="text-[hsl(var(--premium))]">property</span> in
                 India
               </h1>
-              <p className="mt-5 max-w-xl text-base text-white/80 sm:text-lg">
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base">
                 Intelligent discovery for projects and homes — powered by live catalog data, never
                 fabricated inventory.
               </p>
@@ -71,20 +71,23 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+        <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:gap-6">
           {TRUST.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-xl border border-border bg-card p-5 ps-card-elevated"
-            >
-              <item.icon className="h-5 w-5 text-[hsl(var(--premium))]" aria-hidden />
-              <h2 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+            <div key={item.title} className="flex gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius)] bg-secondary text-[hsl(var(--premium))]">
+                <item.icon className="h-4 w-4" aria-hidden />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">{item.title}</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
             </div>
           ))}
         </section>
 
-        <div className="mx-auto w-full max-w-7xl space-y-14 px-4 pb-16 sm:px-6">
+        <div className="mx-auto w-full max-w-7xl space-y-14 px-4 pb-16 sm:px-6 lg:space-y-16">
           <DashboardSection
             title="Featured projects"
             description="Published developer projects from the live catalog."
@@ -100,17 +103,17 @@ export default async function HomePage() {
                 description="Published projects will appear here when developers release them."
               />
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {projects.projects.map((project) => (
                   <ProjectCard
                     key={project.publicId}
-                    variant="row"
                     linkComponent={Link}
                     href={`/projects/${project.publicId}`}
                     name={project.name}
                     publicId={project.publicId}
                     developerName={project.developerDisplayName}
                     location={[project.locality, project.city].filter(Boolean).join(', ')}
+                    projectType={project.projectType}
                     startingPriceMinor={project.startingPriceMinor}
                     currency={project.currency}
                   />
@@ -155,7 +158,7 @@ export default async function HomePage() {
             )}
           </DashboardSection>
 
-          <section className="grid gap-4 rounded-2xl border border-border bg-card p-6 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid gap-3 rounded-[var(--radius)] border border-border bg-card p-5 sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
             {[
               {
                 title: 'Communities',
@@ -181,7 +184,7 @@ export default async function HomePage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-xl border border-border/80 bg-background p-4 transition-colors hover:border-foreground/20"
+                className="rounded-[var(--radius)] px-3 py-3 transition-colors hover:bg-secondary/70"
               >
                 <h3 className="font-semibold text-foreground">{item.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{item.copy}</p>

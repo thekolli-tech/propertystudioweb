@@ -46,7 +46,12 @@ export function PropertyFilterBar() {
   const [configuration, setConfiguration] = useState(searchParams.get('configuration') ?? 'any');
   const [bedrooms, setBedrooms] = useState(searchParams.get('bedrooms') ?? '');
   const [availability, setAvailability] = useState(searchParams.get('availabilityStatus') ?? 'any');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPriceMinor') ?? '');
+  const [maxPrice, setMaxPrice] = useState(() => {
+    const raw = searchParams.get('maxPriceMinor');
+    if (!raw) return '';
+    const minor = Number(raw);
+    return Number.isFinite(minor) ? String(Math.round(minor / 100)) : '';
+  });
 
   function applyFilters(event: React.FormEvent) {
     event.preventDefault();
@@ -57,7 +62,12 @@ export function PropertyFilterBar() {
     if (configuration !== 'any') params.set('configuration', configuration);
     if (bedrooms.trim()) params.set('bedrooms', bedrooms.trim());
     if (availability !== 'any') params.set('availabilityStatus', availability);
-    if (maxPrice.trim()) params.set('maxPriceMinor', maxPrice.trim());
+    if (maxPrice.trim()) {
+      const major = Number(maxPrice.trim());
+      if (Number.isFinite(major) && major > 0) {
+        params.set('maxPriceMinor', String(Math.round(major * 100)));
+      }
+    }
     startTransition(() => {
       router.push(`/properties${params.size ? `?${params.toString()}` : ''}`);
     });
@@ -120,12 +130,12 @@ export function PropertyFilterBar() {
             placeholder="4"
           />
         </FilterField>
-        <FilterField label="Max price (paise)">
+        <FilterField label="Max budget (INR)">
           <Input
             inputMode="numeric"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder="1000000000"
+            placeholder="e.g. 10000000"
           />
         </FilterField>
         <FilterField label="Availability">

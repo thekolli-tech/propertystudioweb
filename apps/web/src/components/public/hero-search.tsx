@@ -45,7 +45,7 @@ export function HeroSearch() {
     event.preventDefault();
     const params = new URLSearchParams();
     if (location.trim()) {
-      params.set(mode === 'properties' ? 'city' : 'city', location.trim());
+      params.set('city', location.trim());
     }
     if (mode === 'properties') {
       if (propertyType !== 'any') params.set('propertyType', propertyType);
@@ -59,25 +59,26 @@ export function HeroSearch() {
   return (
     <form
       onSubmit={onSubmit}
-      className="ps-card-elevated mx-auto w-full max-w-4xl rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-elevated)] sm:p-4"
+      className="ps-card-elevated w-full max-w-4xl rounded-[var(--radius)] border border-border bg-card p-3 shadow-[var(--shadow-elevated)] sm:p-4"
     >
       <Tabs value={mode} onValueChange={(value) => setMode(value as typeof mode)}>
-        <TabsList className="mb-3 grid w-full max-w-xs grid-cols-2">
+        <TabsList className="mb-3 h-9 w-full max-w-[220px] grid grid-cols-2">
           <TabsTrigger value="properties">Properties</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
       </Tabs>
-      <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto]">
+      <div className="grid gap-2.5 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center">
         <Input
           value={location}
           onChange={(event) => setLocation(event.target.value)}
           placeholder="City, locality, or project"
           aria-label="Search location"
+          className="h-11"
         />
         {mode === 'properties' ? (
           <>
             <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger aria-label="Property type">
+              <SelectTrigger aria-label="Property type" className="h-11">
                 <SelectValue placeholder="Property type" />
               </SelectTrigger>
               <SelectContent>
@@ -90,7 +91,7 @@ export function HeroSearch() {
               </SelectContent>
             </Select>
             <Select value={budget} onValueChange={setBudget}>
-              <SelectTrigger aria-label="Budget">
+              <SelectTrigger aria-label="Budget" className="h-11">
                 <SelectValue placeholder="Budget" />
               </SelectTrigger>
               <SelectContent>
@@ -105,35 +106,39 @@ export function HeroSearch() {
           </>
         ) : (
           <>
-            <Input disabled placeholder="Filters apply on results" aria-label="Project filters" />
-            <Input disabled placeholder="Use project listing filters" aria-label="More filters" />
+            <Input
+              disabled
+              placeholder="Filters apply on results"
+              aria-label="Project filters"
+              className="h-11"
+            />
+            <Input
+              disabled
+              placeholder="Use project listing filters"
+              aria-label="More filters"
+              className="h-11"
+            />
           </>
         )}
         <Button
           type="submit"
           size="lg"
-          className="inline-flex w-full shrink-0 items-center justify-center gap-2 md:w-auto"
+          className="h-11 min-w-[7.5rem] w-full px-5 md:w-auto"
         >
           <Search className="h-4 w-4 shrink-0" aria-hidden />
           <span>Search</span>
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        Results come from live catalog APIs. Empty catalogs show empty states — never fabricated
-        listings.
+        Live catalog only.{' '}
+        <Link href="/properties" className="font-medium text-foreground underline-offset-2 hover:underline">
+          Browse properties
+        </Link>
+        {' · '}
+        <Link href="/projects" className="font-medium text-foreground underline-offset-2 hover:underline">
+          Browse projects
+        </Link>
       </p>
-      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-        <Link
-          href="/properties"
-          className="text-muted-foreground underline-offset-2 hover:underline"
-        >
-          Browse all properties
-        </Link>
-        <span className="text-border">·</span>
-        <Link href="/projects" className="text-muted-foreground underline-offset-2 hover:underline">
-          Browse all projects
-        </Link>
-      </div>
     </form>
   );
 }

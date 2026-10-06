@@ -1,72 +1,95 @@
 :root {
-  /* Property Studio V3 — light premium real-estate tokens */
-  --background: 40 24% 97%;
-  --foreground: 222 47% 11%;
+  /* Property Studio V3 — light premium real-estate tokens (mockup-aligned) */
+  --background: 40 20% 97%;
+  --foreground: 222 40% 12%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 222 40% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 222 47% 11%;
+  --popover-foreground: 222 40% 12%;
+  --primary: 222 40% 12%;
   --primary-foreground: 40 33% 98%;
-  --secondary: 40 20% 93%;
-  --secondary-foreground: 222 30% 18%;
-  --muted: 40 16% 94%;
-  --muted-foreground: 215 14% 40%;
-  --accent: 38 42% 88%;
-  --accent-foreground: 222 47% 14%;
-  --premium: 38 48% 52%;
-  --premium-foreground: 222 47% 11%;
+  --secondary: 40 16% 94%;
+  --secondary-foreground: 222 28% 20%;
+  --muted: 40 14% 95%;
+  --muted-foreground: 215 12% 42%;
+  --accent: 38 36% 90%;
+  --accent-foreground: 222 40% 14%;
+  --premium: 38 42% 48%;
+  --premium-foreground: 222 40% 12%;
   --destructive: 0 72% 42%;
   --destructive-foreground: 0 0% 100%;
-  --success: 152 48% 32%;
+  --success: 152 42% 32%;
   --success-foreground: 0 0% 100%;
-  --warning: 36 90% 42%;
-  --warning-foreground: 222 47% 11%;
-  --info: 210 70% 42%;
+  --warning: 36 88% 42%;
+  --warning-foreground: 222 40% 12%;
+  --info: 210 68% 42%;
   --info-foreground: 0 0% 100%;
-  --border: 40 14% 88%;
-  --input: 40 14% 88%;
-  --ring: 222 47% 11%;
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 40 20% 96%;
-  --sidebar-muted: 215 20% 65%;
-  --sidebar-accent: 222 35% 16%;
-  --sidebar-border: 222 30% 18%;
-  --radius: 0.75rem;
-  --shadow-card: 0 1px 2px hsl(222 30% 12% / 0.04), 0 8px 24px hsl(222 30% 12% / 0.06);
-  --shadow-elevated: 0 2px 8px hsl(222 30% 12% / 0.06), 0 16px 40px hsl(222 30% 12% / 0.08);
-  --font-display: 'Fraunces', Georgia, serif;
+  --border: 40 12% 88%;
+  --input: 40 12% 86%;
+  --ring: 222 40% 12%;
+  --sidebar: 222 40% 12%;
+  --sidebar-foreground: 40 18% 96%;
+  --sidebar-muted: 215 16% 64%;
+  --sidebar-accent: 222 32% 17%;
+  --sidebar-border: 222 28% 18%;
+  /* Mockup corners ~8px */
+  --radius: 0.5rem;
+  --shadow-card: 0 1px 2px hsl(222 30% 12% / 0.04), 0 6px 18px hsl(222 30% 12% / 0.05);
+  --shadow-elevated: 0 2px 6px hsl(222 30% 12% / 0.06), 0 14px 32px hsl(222 30% 12% / 0.08);
+  --font-display: 'Plus Jakarta Sans', 'DM Sans', 'Segoe UI', sans-serif;
   --font-body: 'DM Sans', 'Segoe UI', sans-serif;
   --broadcast-scale: 1;
-  --broadcast-weight: 500;
+  --broadcast-weight: 600;
   --broadcast-contrast: 1;
   --surface-elevated: 0 0% 100%;
+  /* Full-bleed editorial hero — architectural atmosphere, not purple SaaS */
   --hero-wash:
     linear-gradient(
-      180deg,
-      hsl(222 35% 14% / 0.55) 0%,
-      hsl(222 35% 10% / 0.35) 45%,
-      hsl(40 24% 97% / 0.92) 100%
+      105deg,
+      hsl(222 35% 12% / 0.78) 0%,
+      hsl(222 28% 16% / 0.55) 42%,
+      hsl(38 30% 40% / 0.28) 100%
     ),
-    radial-gradient(ellipse 70% 55% at 80% 20%, hsl(38 50% 70% / 0.25), transparent 60%),
-    hsl(222 20% 22%);
+    linear-gradient(180deg, hsl(222 20% 18%) 0%, hsl(30 18% 28%) 55%, hsl(40 20% 88%) 100%);
 }
 
 [data-broadcast-mode='true'] {
-  --broadcast-scale: 1.12;
+  --broadcast-scale: 1.08;
   --broadcast-weight: 650;
-  --broadcast-contrast: 1.08;
-  --foreground: 222 47% 8%;
-  --border: 40 12% 78%;
-  --ring: 222 47% 8%;
+  --broadcast-contrast: 1.06;
+  --foreground: 222 40% 10%;
+  --border: 40 12% 80%;
+  --ring: 222 40% 10%;
 }
 
 .ps-card-elevated {
   box-shadow: var(--shadow-card);
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .ps-card-elevated:hover {
   box-shadow: var(--shadow-elevated);
+}
+
+.ps-hero-surface {
+  position: relative;
+  isolation: isolate;
+  background: var(--hero-wash);
+}
+
+.ps-hero-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, black 0%, transparent 85%);
 }
 
 @media (prefers-reduced-motion: reduce) {
