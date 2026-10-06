@@ -69,7 +69,12 @@ export class CrmService {
   ) {}
 
   async overview(actor: AuthActor, query: CrmOverviewQuery, request?: AuthenticatedRequest) {
-    const organization = await this.requireOrg(actor, query.organizationPublicId, 'crm:read', request);
+    const organization = await this.requireOrg(
+      actor,
+      query.organizationPublicId,
+      'crm:read',
+      request,
+    );
     const todayEnd = endOfTodayUtc();
 
     const [
@@ -139,11 +144,7 @@ export class CrmService {
     };
   }
 
-  async listContacts(
-    actor: AuthActor,
-    query: CrmContactListQuery,
-    request?: AuthenticatedRequest,
-  ) {
+  async listContacts(actor: AuthActor, query: CrmContactListQuery, request?: AuthenticatedRequest) {
     const organization = await this.requireOrg(
       actor,
       query.organizationPublicId,
@@ -225,10 +226,7 @@ export class CrmService {
 
     let ownerUserId: string | null = null;
     if (body.ownerUserPublicId) {
-      const owner = await this.access.requireOrgMemberUser(
-        organization.id,
-        body.ownerUserPublicId,
-      );
+      const owner = await this.access.requireOrgMemberUser(organization.id, body.ownerUserPublicId);
       ownerUserId = owner.id;
     }
 
@@ -260,7 +258,10 @@ export class CrmService {
       resourceType: 'crm_contact',
       resourceId: publicId,
       requestId: request?.requestId,
-      after: { displayName: contact.displayName, sourceLeadPublicId: body.sourceLeadPublicId ?? null },
+      after: {
+        displayName: contact.displayName,
+        sourceLeadPublicId: body.sourceLeadPublicId ?? null,
+      },
     });
 
     return this.toContactSummary(contact);
@@ -457,7 +458,12 @@ export class CrmService {
     query: CrmFollowUpListQuery,
     request?: AuthenticatedRequest,
   ) {
-    const organization = await this.requireOrg(actor, query.organizationPublicId, 'crm:read', request);
+    const organization = await this.requireOrg(
+      actor,
+      query.organizationPublicId,
+      'crm:read',
+      request,
+    );
 
     const where: Record<string, unknown> = { organizationId: organization.id };
     if (query.status) where.status = query.status;
@@ -574,12 +580,7 @@ export class CrmService {
     if (!followUp) {
       return await this.denyResource(actor, publicId, request);
     }
-    await this.requireOrg(
-      actor,
-      followUp.organization.publicId,
-      'crm:followups:update',
-      request,
-    );
+    await this.requireOrg(actor, followUp.organization.publicId, 'crm:followups:update', request);
 
     if (body.expectedVersion !== undefined && body.expectedVersion !== followUp.version) {
       throw new AppError('CONFLICT', 'Follow-up was modified by another request.');
@@ -591,10 +592,7 @@ export class CrmService {
         assignedUserId = null;
       } else {
         assignedUserId = (
-          await this.access.requireOrgMemberUser(
-            followUp.organizationId,
-            body.assignedUserPublicId,
-          )
+          await this.access.requireOrgMemberUser(followUp.organizationId, body.assignedUserPublicId)
         ).id;
       }
     }
@@ -616,7 +614,12 @@ export class CrmService {
         priority: body.priority ?? undefined,
         status: body.status ?? undefined,
         assignedUserId,
-        reminderAt: body.reminderAt === undefined ? undefined : body.reminderAt ? new Date(body.reminderAt) : null,
+        reminderAt:
+          body.reminderAt === undefined
+            ? undefined
+            : body.reminderAt
+              ? new Date(body.reminderAt)
+              : null,
         completedAt,
         version: { increment: 1 },
         updatedBy: actor.userId,
@@ -643,7 +646,12 @@ export class CrmService {
     query: CrmSiteVisitListQuery,
     request?: AuthenticatedRequest,
   ) {
-    const organization = await this.requireOrg(actor, query.organizationPublicId, 'crm:read', request);
+    const organization = await this.requireOrg(
+      actor,
+      query.organizationPublicId,
+      'crm:read',
+      request,
+    );
 
     const where: Record<string, unknown> = { organizationId: organization.id };
     if (query.status) where.status = query.status;
@@ -753,12 +761,7 @@ export class CrmService {
     if (!siteVisit) {
       return await this.denyResource(actor, publicId, request);
     }
-    await this.requireOrg(
-      actor,
-      siteVisit.organization.publicId,
-      'crm:sitevisits:update',
-      request,
-    );
+    await this.requireOrg(actor, siteVisit.organization.publicId, 'crm:sitevisits:update', request);
 
     if (body.expectedVersion !== undefined && body.expectedVersion !== siteVisit.version) {
       throw new AppError('CONFLICT', 'Site visit was modified by another request.');
@@ -833,7 +836,12 @@ export class CrmService {
   }
 
   async listDeals(actor: AuthActor, query: CrmDealListQuery, request?: AuthenticatedRequest) {
-    const organization = await this.requireOrg(actor, query.organizationPublicId, 'crm:read', request);
+    const organization = await this.requireOrg(
+      actor,
+      query.organizationPublicId,
+      'crm:read',
+      request,
+    );
 
     const where: Record<string, unknown> = { organizationId: organization.id };
     if (query.status) where.status = query.status;
@@ -866,11 +874,7 @@ export class CrmService {
     };
   }
 
-  async createDeal(
-    actor: AuthActor,
-    body: CreateCrmDealRequest,
-    request?: AuthenticatedRequest,
-  ) {
+  async createDeal(actor: AuthActor, body: CreateCrmDealRequest, request?: AuthenticatedRequest) {
     const organization = await this.requireOrg(
       actor,
       body.organizationPublicId,
@@ -1037,7 +1041,12 @@ export class CrmService {
   }
 
   async listLeads(actor: AuthActor, query: CrmLeadListQuery, request?: AuthenticatedRequest) {
-    const organization = await this.requireOrg(actor, query.organizationPublicId, 'crm:read', request);
+    const organization = await this.requireOrg(
+      actor,
+      query.organizationPublicId,
+      'crm:read',
+      request,
+    );
 
     const where: Record<string, unknown> = {
       recipientOrganizationId: organization.id,
@@ -1189,7 +1198,7 @@ export class CrmService {
       data: {
         recipientUserId: assigneeId,
         status: nextStatus,
-        assignedAt: assigneeId ? lead.assignedAt ?? new Date() : lead.assignedAt,
+        assignedAt: assigneeId ? (lead.assignedAt ?? new Date()) : lead.assignedAt,
         version: { increment: 1 },
         updatedBy: actor.userId,
       },
@@ -1217,9 +1226,7 @@ export class CrmService {
       subject: assigneePublicId
         ? `Lead assigned to ${assigneePublicId}`
         : 'Lead assignment cleared',
-      description: previousAssigneePublicId
-        ? `Reassigned from ${previousAssigneePublicId}`
-        : null,
+      description: previousAssigneePublicId ? `Reassigned from ${previousAssigneePublicId}` : null,
       occurredAt: new Date(),
       metadata: {
         fromUserPublicId: previousAssigneePublicId,
@@ -1269,8 +1276,7 @@ export class CrmService {
       where: { id: lead.id },
       data: {
         status: body.status,
-        contactedAt:
-          body.status === 'CONTACTED' && !lead.contactedAt ? new Date() : undefined,
+        contactedAt: body.status === 'CONTACTED' && !lead.contactedAt ? new Date() : undefined,
         version: { increment: 1 },
         updatedBy: actor.userId,
       },
@@ -1495,11 +1501,7 @@ export class CrmService {
       phone: row.phone,
       email: row.email,
       preferredContactMethod: row.preferredContactMethod as
-        | 'PHONE'
-        | 'EMAIL'
-        | 'WHATSAPP'
-        | 'IN_PERSON'
-        | 'OTHER',
+        'PHONE' | 'EMAIL' | 'WHATSAPP' | 'IN_PERSON' | 'OTHER',
       notes: row.notes,
       ownerUserPublicId: row.ownerUser?.publicId ?? null,
       status: row.status as 'ACTIVE' | 'ARCHIVED',
@@ -1606,13 +1608,9 @@ export class CrmService {
       projectPublicId: row.project?.publicId ?? null,
       scheduledAt: row.scheduledAt.toISOString(),
       status: row.status as 'SCHEDULED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW',
-      outcome: (row.outcome as
-        | 'INTERESTED'
-        | 'FOLLOW_UP'
-        | 'NEGOTIATION'
-        | 'NOT_INTERESTED'
-        | 'UNKNOWN'
-        | null) ?? null,
+      outcome:
+        (row.outcome as
+          'INTERESTED' | 'FOLLOW_UP' | 'NEGOTIATION' | 'NOT_INTERESTED' | 'UNKNOWN' | null) ?? null,
       notes: row.notes,
       version: row.version,
       createdAt: row.createdAt.toISOString(),

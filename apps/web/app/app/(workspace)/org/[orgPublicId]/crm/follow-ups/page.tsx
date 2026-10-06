@@ -33,12 +33,7 @@ export default async function CrmFollowUpsPage({
 }) {
   const { orgPublicId } = await params;
   const query = await searchParams;
-  const bucket = first(query.bucket) as
-    | 'OVERDUE'
-    | 'TODAY'
-    | 'UPCOMING'
-    | 'COMPLETED'
-    | undefined;
+  const bucket = first(query.bucket) as 'OVERDUE' | 'TODAY' | 'UPCOMING' | 'COMPLETED' | undefined;
 
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);

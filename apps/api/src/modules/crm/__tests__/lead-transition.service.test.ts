@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AppError } from '../../../common/errors/app-error';
-import {
-  LEAD_STATUS_TRANSITIONS,
-  LeadTransitionService,
-} from '../lead-transition.service';
+import { LEAD_STATUS_TRANSITIONS, LeadTransitionService } from '../lead-transition.service';
 
 describe('LeadTransitionService', () => {
   const service = new LeadTransitionService();

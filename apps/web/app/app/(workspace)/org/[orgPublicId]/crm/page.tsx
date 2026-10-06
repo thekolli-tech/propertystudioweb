@@ -1,19 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import {
-  DashboardSection,
-  EmptyState,
-  PageHeader,
-  StatCard,
-} from '@property-studio/ui';
-import {
-  CalendarClock,
-  Handshake,
-  Inbox,
-  MapPin,
-  Users,
-} from 'lucide-react';
+import { DashboardSection, EmptyState, PageHeader, StatCard } from '@property-studio/ui';
+import { CalendarClock, Handshake, Inbox, MapPin, Users } from 'lucide-react';
 
 import { CrmSubnav } from '@/components/crm/crm-subnav';
 import { createServerApiClient } from '@/lib/api';
@@ -111,10 +100,7 @@ export default async function OrganizationCrmPage({
             />
           </div>
 
-          <DashboardSection
-            title="Quick links"
-            description="Jump into the CRM workspace sections."
-          >
+          <DashboardSection title="Quick links" description="Jump into the CRM workspace sections.">
             <div className="flex flex-wrap gap-3 text-sm">
               <Link
                 className="text-primary underline-offset-4 hover:underline"

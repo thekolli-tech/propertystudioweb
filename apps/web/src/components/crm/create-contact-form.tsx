@@ -47,10 +47,7 @@ export function CreateContactForm({
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="space-y-3 rounded-lg border border-border bg-card p-4"
-    >
+    <form onSubmit={submit} className="space-y-3 rounded-lg border border-border bg-card p-4">
       <p className="text-sm font-medium text-foreground">New contact</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">

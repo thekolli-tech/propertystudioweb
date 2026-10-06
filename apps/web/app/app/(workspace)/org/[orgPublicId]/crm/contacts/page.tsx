@@ -70,7 +70,8 @@ export default async function CrmContactsPage({
                   {contact.publicId} · {contact.contactType}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {[contact.phone, contact.email].filter(Boolean).join(' · ') || 'No phone or email'}
+                  {[contact.phone, contact.email].filter(Boolean).join(' · ') ||
+                    'No phone or email'}
                 </p>
               </div>
               <StatusBadge tone={contact.status === 'ACTIVE' ? 'success' : 'neutral'}>

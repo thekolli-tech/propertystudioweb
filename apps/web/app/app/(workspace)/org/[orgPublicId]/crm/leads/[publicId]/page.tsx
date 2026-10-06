@@ -97,7 +97,11 @@ export default async function CrmLeadDetailPage({
           <div>
             <dt className="text-muted-foreground">Budget</dt>
             <dd className="font-medium flex flex-wrap items-center gap-1">
-              <PriceDisplay amountMinor={lead.requirement.budgetMinMinor} size="sm" emptyLabel="—" />
+              <PriceDisplay
+                amountMinor={lead.requirement.budgetMinMinor}
+                size="sm"
+                emptyLabel="—"
+              />
               <span className="text-muted-foreground">–</span>
               <PriceDisplay
                 amountMinor={lead.requirement.budgetMaxMinor}
@@ -163,17 +167,11 @@ export default async function CrmLeadDetailPage({
 
       <DashboardSection title="Follow-ups">
         {lead.followUps.length === 0 ? (
-          <EmptyState
-            title="No follow-ups"
-            description="Schedule the next action for this lead."
-          />
+          <EmptyState title="No follow-ups" description="Schedule the next action for this lead." />
         ) : (
           <ul className="space-y-2">
             {lead.followUps.map((item) => (
-              <li
-                key={item.publicId}
-                className="rounded-md border border-border px-3 py-2 text-sm"
-              >
+              <li key={item.publicId} className="rounded-md border border-border px-3 py-2 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{item.title}</span>
                   <StatusBadge tone="info">{item.status}</StatusBadge>
@@ -203,14 +201,9 @@ export default async function CrmLeadDetailPage({
         ) : (
           <ul className="space-y-2">
             {lead.siteVisits.map((item) => (
-              <li
-                key={item.publicId}
-                className="rounded-md border border-border px-3 py-2 text-sm"
-              >
+              <li key={item.publicId} className="rounded-md border border-border px-3 py-2 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {new Date(item.scheduledAt).toLocaleString()}
-                  </span>
+                  <span className="font-medium">{new Date(item.scheduledAt).toLocaleString()}</span>
                   <StatusBadge tone="info">{item.status}</StatusBadge>
                 </div>
                 {item.notes ? <p className="text-muted-foreground">{item.notes}</p> : null}

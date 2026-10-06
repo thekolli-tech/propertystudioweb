@@ -35,9 +35,7 @@ export function CreateDealForm({
         leadPublicId: leadId.trim(),
         contactPublicId: contactPublicId || null,
         expectedValueMinor:
-          rupees !== null && Number.isFinite(rupees)
-            ? BigInt(Math.round(rupees * 100))
-            : null,
+          rupees !== null && Number.isFinite(rupees) ? BigInt(Math.round(rupees * 100)) : null,
         currency: 'INR',
         expectedCloseDate: closeDate.trim() || null,
         notes: notes.trim() || null,

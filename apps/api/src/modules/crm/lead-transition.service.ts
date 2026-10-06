@@ -38,10 +38,7 @@ export class LeadTransitionService {
     if (options?.allowAdminOverride) {
       return;
     }
-    throw new AppError(
-      'CONFLICT',
-      `Invalid lead status transition from ${from} to ${to}.`,
-    );
+    throw new AppError('CONFLICT', `Invalid lead status transition from ${from} to ${to}.`);
   }
 
   nextStatuses(from: LeadStatus): readonly LeadStatus[] {

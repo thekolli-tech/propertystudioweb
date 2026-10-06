@@ -34,11 +34,7 @@ export default async function CrmSiteVisitsPage({
   const { orgPublicId } = await params;
   const query = await searchParams;
   const bucket = first(query.bucket) as
-    | 'UPCOMING'
-    | 'COMPLETED'
-    | 'CANCELLED'
-    | 'NO_SHOW'
-    | undefined;
+    'UPCOMING' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | undefined;
 
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);
@@ -59,10 +55,7 @@ export default async function CrmSiteVisitsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Site visits"
-        description="Scheduled property visits tied to CRM leads."
-      />
+      <PageHeader title="Site visits" description="Scheduled property visits tied to CRM leads." />
       <CrmSubnav orgPublicId={orgPublicId} />
 
       <div className="flex flex-wrap gap-2">

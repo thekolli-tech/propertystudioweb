@@ -255,7 +255,9 @@ describe('Phase 8 CRM lead operations security', () => {
     const publicReqs = await request(app.getHttpServer())
       .get('/api/v1/public/requirements')
       .expect(200);
-    expect(JSON.stringify(publicReqs.body)).not.toMatch(/9111111111|secret-buyer@example\.com|Secret Buyer/);
+    expect(JSON.stringify(publicReqs.body)).not.toMatch(
+      /9111111111|secret-buyer@example\.com|Secret Buyer/,
+    );
   });
 
   it('8-10. follow-up, site visit, and deal organization isolation', async () => {
