@@ -17,6 +17,7 @@ import { CommunicationsModule } from './modules/communications/communications.mo
 import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { MediaModule } from './modules/media/media.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -49,6 +50,9 @@ import { VerificationModule } from './modules/verification/verification.module';
               'accessToken',
               'RAZORPAY_KEY_SECRET',
               'RAZORPAY_WEBHOOK_SECRET',
+              'secret',
+              'apiKey',
+              'INTEGRATION_SECRETS_KEY',
             ],
             remove: true,
           },
@@ -77,6 +81,7 @@ import { VerificationModule } from './modules/verification/verification.module';
     CommunicationsModule,
     IntelligenceModule,
     AiModule,
+    IntegrationsModule,
   ],
   providers: [OriginCheckMiddleware],
 })

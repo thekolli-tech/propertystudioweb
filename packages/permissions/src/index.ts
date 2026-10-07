@@ -159,6 +159,14 @@ export const PERMISSIONS = [
   'admin:broadcast:manage',
   'external-media:read',
   'external-media:manage',
+  'integrations:read',
+  'integrations:manage',
+  'api-keys:manage',
+  'webhooks:manage',
+  'automations:read',
+  'automations:manage',
+  'admin:integrations:read',
+  'admin:integrations:manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -384,6 +392,31 @@ const ADMIN_MEDIA_CMS_PERMISSIONS = [
   'media:analytics:read',
 ] as const satisfies readonly Permission[];
 
+const INTEGRATIONS_ORG_MANAGE_PERMISSIONS = [
+  'integrations:read',
+  'integrations:manage',
+  'api-keys:manage',
+  'webhooks:manage',
+  'automations:read',
+  'automations:manage',
+] as const satisfies readonly Permission[];
+
+const INTEGRATIONS_ORG_STAFF_PERMISSIONS = [
+  'integrations:read',
+  'automations:read',
+] as const satisfies readonly Permission[];
+
+const ADMIN_INTEGRATIONS_PERMISSIONS = [
+  'admin:integrations:read',
+  'admin:integrations:manage',
+  'integrations:read',
+  'integrations:manage',
+  'api-keys:manage',
+  'webhooks:manage',
+  'automations:read',
+  'automations:manage',
+] as const satisfies readonly Permission[];
+
 export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission[]> = {
   SUPER_ADMIN: [...PERMISSIONS],
   ADMIN: [
@@ -436,6 +469,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     ...MEDIA_CMS_MODERATOR_PERMISSIONS,
     ...ADMIN_MEDIA_CMS_PERMISSIONS,
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
+    ...ADMIN_INTEGRATIONS_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -499,6 +533,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'ai:document:analyze',
     'ai:floorplan:analyze',
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
+    ...INTEGRATIONS_ORG_MANAGE_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -522,6 +557,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...INTELLIGENCE_READ_PERMISSIONS,
     ...AI_CORE_PERMISSIONS,
     ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
+    ...INTEGRATIONS_ORG_STAFF_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -542,6 +578,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'ai:document:analyze',
     'ai:floorplan:analyze',
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
+    ...INTEGRATIONS_ORG_MANAGE_PERMISSIONS,
   ],
   AGENT_STAFF: [
     'organization:read',
@@ -556,6 +593,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...INTELLIGENCE_READ_PERMISSIONS,
     ...AI_CORE_PERMISSIONS,
     ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
+    ...INTEGRATIONS_ORG_STAFF_PERMISSIONS,
   ],
 };
 

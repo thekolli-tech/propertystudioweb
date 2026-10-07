@@ -25,6 +25,7 @@ import {
   ExternalLink,
   Library,
   PenLine,
+  Plug,
 } from 'lucide-react';
 import { SidebarNav } from '@property-studio/ui';
 
@@ -118,6 +119,11 @@ const SECTIONS = [
       { href: '/admin/payments', label: 'Payments', icon: <CreditCard className="h-4 w-4" /> },
       { href: '/admin/invoices', label: 'Invoices', icon: <FileText className="h-4 w-4" /> },
       { href: '/admin/wallets', label: 'Wallets', icon: <CreditCard className="h-4 w-4" /> },
+      {
+        href: '/admin/integrations',
+        label: 'Integrations',
+        icon: <Plug className="h-4 w-4" />,
+      },
       { href: '/admin/settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
     ],
   },

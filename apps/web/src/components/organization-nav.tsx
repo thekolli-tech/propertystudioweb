@@ -20,6 +20,7 @@ import {
   UsersRound,
   ClipboardList,
   Inbox,
+  Plug,
 } from 'lucide-react';
 import { cn } from '@property-studio/ui';
 
@@ -61,6 +62,7 @@ const DEVELOPER_ITEMS: NavItem[] = [
   { segment: 'media', label: 'Media', icon: <Images className="h-4 w-4" /> },
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
+  { segment: 'integrations', label: 'Integrations', icon: <Plug className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
 ];
 
@@ -76,6 +78,7 @@ const AGENCY_ITEMS: NavItem[] = [
   { segment: 'media', label: 'Media', icon: <Images className="h-4 w-4" /> },
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
   { segment: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
+  { segment: 'integrations', label: 'Integrations', icon: <Plug className="h-4 w-4" /> },
   { segment: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
 ];
 

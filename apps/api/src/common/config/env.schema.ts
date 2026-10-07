@@ -30,6 +30,11 @@ export const envSchema = z.object({
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   AUTH_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(20),
+  PARTNER_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  PARTNER_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(60),
+  WEBHOOK_REPLAY_TOLERANCE_SECONDS: z.coerce.number().int().positive().default(300),
+  WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  INTEGRATION_SECRETS_KEY: z.string().min(32).optional(),
   SESSION_TTL_SECONDS: z.coerce
     .number()
     .int()
