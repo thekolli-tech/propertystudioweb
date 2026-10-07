@@ -50,7 +50,10 @@ export class NextBestActionService {
 
     if (actorHasPermission(actor, 'requirement:read:own')) {
       const activeReqs = await this.prisma.requirement.count({
-        where: { ownerUserId: actor.userId, status: 'ACTIVE' },
+        where: {
+          ownerUserId: actor.userId,
+          status: { in: ['ACTIVE', 'DRAFT', 'PAUSED'] },
+        },
       });
       const savedCount = actorHasPermission(actor, 'saved-property:read')
         ? await this.prisma.savedProperty.count({
@@ -61,7 +64,7 @@ export class NextBestActionService {
         actions.push({
           id: 'seeker:no-saved',
           title: 'Save properties that match your requirement',
-          rationale: 'You have an active requirement but no saved properties yet.',
+          rationale: 'You have an open requirement but no saved properties yet.',
           priority: 'MEDIUM',
           category: 'REQUIREMENT',
           href: '/properties',
