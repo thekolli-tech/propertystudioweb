@@ -245,6 +245,13 @@ import {
   postAiConversationMessageRequestSchema,
   postAiConversationMessageResponseSchema,
   okAiConversationDeleteResponseSchema,
+  developerDashboardResponseSchema,
+  agentDashboardResponseSchema,
+  seekerDashboardResponseSchema,
+  propertyAdminDashboardResponseSchema,
+  adminDashboardResponseSchema,
+  ensureCrmContactFromLeadRequestSchema,
+  ensureCrmContactFromLeadResponseSchema,
   type CreateApiClientRequest,
   type CreateApiClientResponse,
   type CreateAutomationRuleRequest,
@@ -436,6 +443,13 @@ import {
   type PostAiConversationMessageRequest,
   type PostAiConversationMessageResponse,
   type OkAiConversationDeleteResponse,
+  type DeveloperDashboardResponse,
+  type AgentDashboardResponse,
+  type SeekerDashboardResponse,
+  type PropertyAdminDashboardResponse,
+  type AdminDashboardResponse,
+  type EnsureCrmContactFromLeadRequest,
+  type EnsureCrmContactFromLeadResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
   type AiDocumentAnalysisResponse,
@@ -2551,6 +2565,51 @@ export class ApiClient {
 
   async getPartnerApiDocs(): Promise<PartnerApiDocsResponse> {
     return this.request('/api/v1/partner/docs', partnerApiDocsResponseSchema);
+  }
+
+  // --- Phase 14A: Dashboards & workflows ---
+
+  async getDeveloperDashboard(organizationPublicId?: string): Promise<DeveloperDashboardResponse> {
+    const params = new URLSearchParams();
+    if (organizationPublicId) params.set('organizationPublicId', organizationPublicId);
+    const q = params.toString();
+    return this.request(
+      `/api/v1/dashboard/developer${q ? `?${q}` : ''}`,
+      developerDashboardResponseSchema,
+    );
+  }
+
+  async getAgentDashboard(organizationPublicId?: string): Promise<AgentDashboardResponse> {
+    const params = new URLSearchParams();
+    if (organizationPublicId) params.set('organizationPublicId', organizationPublicId);
+    const q = params.toString();
+    return this.request(`/api/v1/dashboard/agent${q ? `?${q}` : ''}`, agentDashboardResponseSchema);
+  }
+
+  async getSeekerDashboard(): Promise<SeekerDashboardResponse> {
+    return this.request('/api/v1/dashboard/seeker', seekerDashboardResponseSchema);
+  }
+
+  async getPropertyAdminDashboard(): Promise<PropertyAdminDashboardResponse> {
+    return this.request('/api/v1/dashboard/property-admin', propertyAdminDashboardResponseSchema);
+  }
+
+  async getAdminDashboard(): Promise<AdminDashboardResponse> {
+    return this.request('/api/v1/dashboard/admin', adminDashboardResponseSchema);
+  }
+
+  async ensureCrmContactFromLead(
+    input: EnsureCrmContactFromLeadRequest,
+  ): Promise<EnsureCrmContactFromLeadResponse> {
+    const body = ensureCrmContactFromLeadRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/workflows/crm-contact-from-lead',
+      ensureCrmContactFromLeadResponseSchema,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
   }
 
   async getMyCreatorProfile(): Promise<CreatorProfileSummary> {
