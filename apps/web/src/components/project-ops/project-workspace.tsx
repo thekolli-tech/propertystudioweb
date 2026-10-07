@@ -138,9 +138,11 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
   async function onCreateUpdate(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    const percentComplete =
-      percent.trim() === '' ? null : Number.parseInt(percent, 10);
-    if (percentComplete !== null && (Number.isNaN(percentComplete) || percentComplete < 0 || percentComplete > 100)) {
+    const percentComplete = percent.trim() === '' ? null : Number.parseInt(percent, 10);
+    if (
+      percentComplete !== null &&
+      (Number.isNaN(percentComplete) || percentComplete < 0 || percentComplete > 100)
+    ) {
       setError('Percent complete must be between 0 and 100.');
       return;
     }
@@ -161,7 +163,9 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
       setUpdateDate(todayIsoDate());
       refresh();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Unable to create construction update.');
+      setError(
+        err instanceof ApiClientError ? err.message : 'Unable to create construction update.',
+      );
     }
   }
 
@@ -211,10 +215,7 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <Tabs
-        value={section}
-        onValueChange={(value) => setSection(value as Section)}
-      >
+      <Tabs value={section} onValueChange={(value) => setSection(value as Section)}>
         <TabsList className="flex h-auto flex-wrap gap-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
@@ -249,9 +250,7 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
               <dt className="text-muted-foreground">Construction</dt>
               <dd className="font-medium">
                 {project.constructionPhase.replaceAll('_', ' ')}
-                {project.constructionPercent !== null
-                  ? ` · ${project.constructionPercent}%`
-                  : ''}
+                {project.constructionPercent !== null ? ` · ${project.constructionPercent}%` : ''}
               </dd>
             </div>
             <div>
@@ -411,7 +410,9 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
                       {update.percentComplete !== null ? ` · ${update.percentComplete}%` : ''}
                     </p>
                     {update.description ? (
-                      <p className="max-w-2xl text-sm text-muted-foreground">{update.description}</p>
+                      <p className="max-w-2xl text-sm text-muted-foreground">
+                        {update.description}
+                      </p>
                     ) : null}
                   </div>
                   {update.publicationStatus === 'DRAFT' ? (
@@ -550,7 +551,9 @@ export function ProjectWorkspace({ orgPublicId, workspace, inventory }: ProjectW
             <div>
               <dt className="text-muted-foreground">Construction percent</dt>
               <dd className="font-medium">
-                {project.constructionPercent !== null ? `${project.constructionPercent}%` : 'Not set'}
+                {project.constructionPercent !== null
+                  ? `${project.constructionPercent}%`
+                  : 'Not set'}
               </dd>
             </div>
             <div>

@@ -310,7 +310,11 @@ export class ProjectsService {
           lifecycleStatus: updated.lifecycleStatus,
         },
       });
-    } else if (action === 'project.updated' || action === 'project.unpublished' || action === 'project.archived') {
+    } else if (
+      action === 'project.updated' ||
+      action === 'project.unpublished' ||
+      action === 'project.archived'
+    ) {
       await this.domainEvents.emit({
         eventType: 'project.updated',
         resourceType: 'project',

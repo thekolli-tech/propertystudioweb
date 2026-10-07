@@ -101,10 +101,7 @@ async function createPublishedProject(
   return project.body.publicId as string;
 }
 
-async function ensureProjectClaimEntitlement(
-  prisma: PrismaService,
-  orgPublicId: string,
-) {
+async function ensureProjectClaimEntitlement(prisma: PrismaService, orgPublicId: string) {
   let plan = await prisma.subscriptionPlan.findFirst({ where: { code: 'PHASE15A_CLAIM' } });
   if (!plan) {
     plan = await prisma.subscriptionPlan.create({
@@ -409,16 +406,23 @@ describe('Phase 15A developer project operations security', () => {
       .get(`/api/v1/org/${orgA}/projects/${projectPublicId}/inventory`)
       .set('Cookie', a.cookie)
       .expect(200);
-    expect(inventory.body.properties.some((p: { publicId: string }) => p.publicId === property.body.publicId)).toBe(
-      true,
-    );
+    expect(
+      inventory.body.properties.some(
+        (p: { publicId: string }) => p.publicId === property.body.publicId,
+      ),
+    ).toBe(true);
   });
 
   it('11. raw storage keys never appear in project-ops DTOs', async () => {
     const owner = await register(app, `keys-${Date.now()}@example.com`, []);
     const org = await onboardDeveloper(app, owner.cookie, `Keys Org ${Date.now()}`);
     await switchOrg(app, owner.cookie, org);
-    const projectPublicId = await createPublishedProject(app, owner.cookie, org, `Keys ${Date.now()}`);
+    const projectPublicId = await createPublishedProject(
+      app,
+      owner.cookie,
+      org,
+      `Keys ${Date.now()}`,
+    );
     const workspace = await request(app.getHttpServer())
       .get(`/api/v1/org/${org}/projects/${projectPublicId}/workspace`)
       .set('Cookie', owner.cookie)
@@ -466,7 +470,12 @@ describe('Phase 15A developer project operations security', () => {
       })
       .expect(404);
 
-    const admin = await grantPlatformRole(app, prisma, `admin-claim-${Date.now()}@example.com`, 'ADMIN');
+    const admin = await grantPlatformRole(
+      app,
+      prisma,
+      `admin-claim-${Date.now()}@example.com`,
+      'ADMIN',
+    );
 
     // Approval without entitlement fails.
     await request(app.getHttpServer())
@@ -537,7 +546,9 @@ describe('Phase 15A developer project operations security', () => {
       .expect(201);
 
     const events = await prisma.auditEvent.findMany({
-      where: { action: { in: ['construction.update.created', 'project.published', 'project.created'] } },
+      where: {
+        action: { in: ['construction.update.created', 'project.published', 'project.created'] },
+      },
     });
     expect(events.length).toBeGreaterThan(0);
   });

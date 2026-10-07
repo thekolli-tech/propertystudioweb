@@ -4922,11 +4922,7 @@ export type AdminAiGovernanceResponse = z.infer<typeof adminAiGovernanceResponse
 
 // --- Phase 15A: Developer & Project Operations ---
 
-export const constructionUpdatePublicationStatusSchema = z.enum([
-  'DRAFT',
-  'PUBLISHED',
-  'ARCHIVED',
-]);
+export const constructionUpdatePublicationStatusSchema = z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
 export type ConstructionUpdatePublicationStatus = z.infer<
   typeof constructionUpdatePublicationStatusSchema
 >;
@@ -4947,11 +4943,12 @@ export const createConstructionUpdateRequestSchema = z.object({
   milestone: constructionPhaseSchema.default('OTHER'),
   percentComplete: z.number().int().min(0).max(100).optional().nullable(),
   updateDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  mediaPublicIds: z.array(z.string().regex(/^PS-MED-\d+$/)).max(40).default([]),
+  mediaPublicIds: z
+    .array(z.string().regex(/^PS-MED-\d+$/))
+    .max(40)
+    .default([]),
 });
-export type CreateConstructionUpdateRequest = z.infer<
-  typeof createConstructionUpdateRequestSchema
->;
+export type CreateConstructionUpdateRequest = z.infer<typeof createConstructionUpdateRequestSchema>;
 
 export const updateConstructionUpdateRequestSchema = z.object({
   title: z.string().trim().min(2).max(200).optional(),
@@ -4962,12 +4959,13 @@ export const updateConstructionUpdateRequestSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
-  mediaPublicIds: z.array(z.string().regex(/^PS-MED-\d+$/)).max(40).optional(),
+  mediaPublicIds: z
+    .array(z.string().regex(/^PS-MED-\d+$/))
+    .max(40)
+    .optional(),
   expectedVersion: z.number().int().positive().optional(),
 });
-export type UpdateConstructionUpdateRequest = z.infer<
-  typeof updateConstructionUpdateRequestSchema
->;
+export type UpdateConstructionUpdateRequest = z.infer<typeof updateConstructionUpdateRequestSchema>;
 
 export const constructionUpdateSummarySchema = z.object({
   publicId: z.string(),
@@ -5048,9 +5046,7 @@ export const projectWorkspaceInventoryCountSchema = z.object({
   availabilityStatus: propertyAvailabilityStatusSchema,
   count: z.number().int().nonnegative(),
 });
-export type ProjectWorkspaceInventoryCount = z.infer<
-  typeof projectWorkspaceInventoryCountSchema
->;
+export type ProjectWorkspaceInventoryCount = z.infer<typeof projectWorkspaceInventoryCountSchema>;
 
 export const projectWorkspaceResponseSchema = z.object({
   project: projectSummarySchema.extend({

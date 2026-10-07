@@ -13,11 +13,7 @@ import { ProjectWorkspaceService } from './project-workspace.service';
 
 @Module({
   imports: [CatalogModule, BillingModule, IntegrationsModule, VerificationModule],
-  controllers: [
-    ConstructionUpdatesController,
-    ProjectClaimsController,
-    ProjectWorkspaceController,
-  ],
+  controllers: [ConstructionUpdatesController, ProjectClaimsController, ProjectWorkspaceController],
   providers: [ConstructionUpdatesService, ProjectClaimsService, ProjectWorkspaceService],
   exports: [ConstructionUpdatesService, ProjectClaimsService, ProjectWorkspaceService],
 })

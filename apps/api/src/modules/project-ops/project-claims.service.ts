@@ -68,7 +68,10 @@ export class ProjectClaimsService {
       },
     });
     if (existingOpen) {
-      throw new AppError('CONFLICT', 'An open claim already exists for this organization and project.');
+      throw new AppError(
+        'CONFLICT',
+        'An open claim already exists for this organization and project.',
+      );
     }
 
     let verificationCaseId: string | null = null;
@@ -137,7 +140,9 @@ export class ProjectClaimsService {
         entitlementMissing: submit ? entitlementMissing : undefined,
       },
       metadata: entitlementMissing
-        ? { note: 'Submitted without PROJECT_CLAIM entitlement; approval will require entitlement.' }
+        ? {
+            note: 'Submitted without PROJECT_CLAIM entitlement; approval will require entitlement.',
+          }
         : undefined,
     });
 
@@ -303,7 +308,9 @@ export class ProjectClaimsService {
         entitlementMissing: !hasEntitlement,
       },
       metadata: !hasEntitlement
-        ? { note: 'Submitted without PROJECT_CLAIM entitlement; approval will require entitlement.' }
+        ? {
+            note: 'Submitted without PROJECT_CLAIM entitlement; approval will require entitlement.',
+          }
         : undefined,
     });
 
@@ -344,7 +351,10 @@ export class ProjectClaimsService {
     }
 
     if (claim.status !== 'SUBMITTED' && claim.status !== 'UNDER_REVIEW') {
-      throw new AppError('VALIDATION_ERROR', 'Only submitted or under-review claims can be approved.');
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'Only submitted or under-review claims can be approved.',
+      );
     }
 
     if (claim.verificationCase) {
@@ -462,7 +472,11 @@ export class ProjectClaimsService {
       throw new AppError('NOT_FOUND', 'Resource not found.');
     }
 
-    if (claim.status !== 'SUBMITTED' && claim.status !== 'UNDER_REVIEW' && claim.status !== 'DRAFT') {
+    if (
+      claim.status !== 'SUBMITTED' &&
+      claim.status !== 'UNDER_REVIEW' &&
+      claim.status !== 'DRAFT'
+    ) {
       throw new AppError('VALIDATION_ERROR', 'Claim cannot be rejected in its current status.');
     }
 
