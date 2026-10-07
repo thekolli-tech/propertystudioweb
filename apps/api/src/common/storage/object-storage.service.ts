@@ -141,7 +141,10 @@ export class ObjectStorageService {
   ): Promise<SignedDownloadUrl> {
     const safeKey = this.assertSafeStorageKey(storageKey);
     if (safeKey.startsWith('embed://')) {
-      throw new AppError('VALIDATION_ERROR', 'Embed media does not use object storage access URLs.');
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'Embed media does not use object storage access URLs.',
+      );
     }
     const ttl = Math.min(Math.max(Math.trunc(expiresInSeconds), 30), 900);
     const command = new GetObjectCommand({

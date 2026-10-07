@@ -55,7 +55,10 @@ describe('ObjectStorageService signed downloads', () => {
       storage.assertOrganizationScopedKey(`organizations/${org}/properties/x/media/a.jpg`, org),
     ).toContain(org);
     expect(() =>
-      storage.assertOrganizationScopedKey('organizations/PS-ORG-OTHER/properties/x/media/a.jpg', org),
+      storage.assertOrganizationScopedKey(
+        'organizations/PS-ORG-OTHER/properties/x/media/a.jpg',
+        org,
+      ),
     ).toThrow(AppError);
     expect(() => storage.assertOrganizationScopedKey('cms/unscoped.jpg', org)).toThrow(AppError);
     expect(storage.assertOrganizationScopedKey('embed://youtube/abc', org)).toBe(
@@ -65,8 +68,8 @@ describe('ObjectStorageService signed downloads', () => {
 
   it('rejects embed keys for signed downloads', async () => {
     const storage = makeStorage();
-    await expect(storage.createSignedDownloadUrl('embed://youtube/abc', 120)).rejects.toBeInstanceOf(
-      AppError,
-    );
+    await expect(
+      storage.createSignedDownloadUrl('embed://youtube/abc', 120),
+    ).rejects.toBeInstanceOf(AppError);
   });
 });
