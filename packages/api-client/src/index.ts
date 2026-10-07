@@ -238,6 +238,13 @@ import {
   verifyWebhookSignatureRequestSchema,
   verifyWebhookSignatureResponseSchema,
   partnerApiDocsResponseSchema,
+  createAiConversationRequestSchema,
+  aiConversationSummarySchema,
+  aiConversationListResponseSchema,
+  aiConversationDetailSchema,
+  postAiConversationMessageRequestSchema,
+  postAiConversationMessageResponseSchema,
+  okAiConversationDeleteResponseSchema,
   type CreateApiClientRequest,
   type CreateApiClientResponse,
   type CreateAutomationRuleRequest,
@@ -422,6 +429,13 @@ import {
   type VerificationDocumentSummary,
   type ReviewSubjectType,
   type AiAssistantRequest,
+  type CreateAiConversationRequest,
+  type AiConversationSummary,
+  type AiConversationListResponse,
+  type AiConversationDetail,
+  type PostAiConversationMessageRequest,
+  type PostAiConversationMessageResponse,
+  type OkAiConversationDeleteResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
   type AiDocumentAnalysisResponse,
@@ -1898,6 +1912,59 @@ export class ApiClient {
   }
 
   // --- Phase 11: AI ---
+
+  async createAiConversation(
+    input: CreateAiConversationRequest = {},
+  ): Promise<AiConversationSummary> {
+    const body = createAiConversationRequestSchema.parse(input);
+    return this.request('/api/v1/ai/conversations', aiConversationSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAiConversations(
+    query: {
+      cursor?: string;
+      limit?: number;
+    } = {},
+  ): Promise<AiConversationListResponse> {
+    const params = new URLSearchParams();
+    if (query.cursor) params.set('cursor', query.cursor);
+    if (query.limit) params.set('limit', String(query.limit));
+    const q = params.toString();
+    return this.request(
+      `/api/v1/ai/conversations${q ? `?${q}` : ''}`,
+      aiConversationListResponseSchema,
+    );
+  }
+
+  async getAiConversation(publicId: string): Promise<AiConversationDetail> {
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}`,
+      aiConversationDetailSchema,
+    );
+  }
+
+  async postAiConversationMessage(
+    publicId: string,
+    input: PostAiConversationMessageRequest,
+  ): Promise<PostAiConversationMessageResponse> {
+    const body = postAiConversationMessageRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}/messages`,
+      postAiConversationMessageResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async deleteAiConversation(publicId: string): Promise<OkAiConversationDeleteResponse> {
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}`,
+      okAiConversationDeleteResponseSchema,
+      { method: 'DELETE' },
+    );
+  }
 
   async aiAssistant(input: AiAssistantRequest): Promise<AiAssistantResponse> {
     const body = aiAssistantRequestSchema.parse(input);

@@ -57,6 +57,9 @@ export const PUBLIC_ID_PREFIXES = {
   XMAP: 'XMAP',
   IUSG: 'IUSG',
   RULE: 'RULE',
+  ACONV: 'ACONV',
+  AMSG: 'AMSG',
+  ACHEV: 'ACHEV',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -175,7 +178,10 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'DLQ'
   | 'XMAP'
   | 'IUSG'
-  | 'RULE',
+  | 'RULE'
+  | 'ACONV'
+  | 'AMSG'
+  | 'ACHEV',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -236,4 +242,7 @@ export const PUBLIC_ID_SEQUENCES: Record<
   XMAP: 'public_id_xmap_seq',
   IUSG: 'public_id_iusg_seq',
   RULE: 'public_id_rule_seq',
+  ACONV: 'public_id_aconv_seq',
+  AMSG: 'public_id_amsg_seq',
+  ACHEV: 'public_id_achev_seq',
 };

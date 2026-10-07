@@ -4131,3 +4131,127 @@ export const verifyWebhookSignatureResponseSchema = z.object({
   reason: z.string().nullable(),
 });
 export type VerifyWebhookSignatureResponse = z.infer<typeof verifyWebhookSignatureResponseSchema>;
+
+// ─── Phase 13 patch: AI Chatbot / Copilot ───────────────────────────────────
+
+export const aiConversationStatusSchema = z.enum(['ACTIVE', 'ARCHIVED', 'DELETED']);
+export type AiConversationStatus = z.infer<typeof aiConversationStatusSchema>;
+
+export const aiChatMessageRoleSchema = z.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']);
+export type AiChatMessageRole = z.infer<typeof aiChatMessageRoleSchema>;
+
+export const aiChatCardKindSchema = z.enum([
+  'PROPERTY',
+  'PROJECT',
+  'COMPARISON',
+  'MARKET',
+  'INFRASTRUCTURE',
+  'REQUIREMENT_CONFIRMATION',
+  'CALCULATION',
+  'GENERIC',
+]);
+export type AiChatCardKind = z.infer<typeof aiChatCardKindSchema>;
+
+export const aiChatResultCardSchema = z.object({
+  kind: aiChatCardKindSchema,
+  publicId: z.string().nullable(),
+  title: z.string(),
+  subtitle: z.string().nullable().optional(),
+  configuration: z.string().nullable().optional(),
+  priceMinor: z.string().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  areaLabel: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  developer: z.string().nullable().optional(),
+  trustStatus: z.string().nullable().optional(),
+  availability: z.string().nullable().optional(),
+  primaryMediaUrl: z.string().nullable().optional(),
+  matchScore: z.number().nullable().optional(),
+  href: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AiChatResultCard = z.infer<typeof aiChatResultCardSchema>;
+
+export const aiChatToolInvocationSchema = z.object({
+  tool: z.string(),
+  ok: z.boolean(),
+  coverageState: intelligenceDataStateSchema,
+  summary: z.string().nullable().optional(),
+});
+export type AiChatToolInvocation = z.infer<typeof aiChatToolInvocationSchema>;
+
+export const createAiConversationRequestSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional().nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
+
+export const aiConversationSummarySchema = z.object({
+  publicId: z.string(),
+  title: z.string().nullable(),
+  status: aiConversationStatusSchema,
+  organizationPublicId: z.string().nullable(),
+  lastMessageAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AiConversationSummary = z.infer<typeof aiConversationSummarySchema>;
+
+export const aiConversationListResponseSchema = z.object({
+  items: z.array(aiConversationSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type AiConversationListResponse = z.infer<typeof aiConversationListResponseSchema>;
+
+export const aiConversationMessageSchema = z.object({
+  publicId: z.string(),
+  role: aiChatMessageRoleSchema,
+  content: z.string(),
+  coverageState: intelligenceDataStateSchema.nullable(),
+  cards: z.array(aiChatResultCardSchema).default([]),
+  references: z.array(aiReferenceSchema).default([]),
+  toolInvocations: z.array(aiChatToolInvocationSchema).default([]),
+  pendingRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+export type AiConversationMessage = z.infer<typeof aiConversationMessageSchema>;
+
+export const aiConversationDetailSchema = aiConversationSummarySchema.extend({
+  messages: z.array(aiConversationMessageSchema),
+  pendingRequirement: z.record(z.string(), z.unknown()).nullable(),
+  disclaimer: z.string(),
+});
+export type AiConversationDetail = z.infer<typeof aiConversationDetailSchema>;
+
+export const postAiConversationMessageRequestSchema = z.object({
+  message: z.string().trim().min(1).max(4000),
+  confirmRequirement: z.boolean().optional().default(false),
+  clickedPropertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type PostAiConversationMessageRequest = z.infer<
+  typeof postAiConversationMessageRequestSchema
+>;
+
+export const postAiConversationMessageResponseSchema = z.object({
+  conversation: aiConversationSummarySchema,
+  userMessage: aiConversationMessageSchema,
+  assistantMessage: aiConversationMessageSchema,
+  disclaimer: z.string(),
+});
+export type PostAiConversationMessageResponse = z.infer<
+  typeof postAiConversationMessageResponseSchema
+>;
+
+export const okAiConversationDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+  publicId: z.string(),
+});
+export type OkAiConversationDeleteResponse = z.infer<typeof okAiConversationDeleteResponseSchema>;

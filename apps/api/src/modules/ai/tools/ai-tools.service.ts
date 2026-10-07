@@ -149,6 +149,9 @@ export class AiToolsService {
           configuration: row.configuration,
           priceMinor: row.priceMinor.toString(),
           currency: row.currency,
+          trustStatus: row.trustStatus,
+          availabilityStatus: row.availabilityStatus,
+          carpetAreaSqft: row.carpetAreaSqft?.toString() ?? null,
         })),
       },
     };
@@ -183,6 +186,10 @@ export class AiToolsService {
           city: row.city,
           locality: row.locality,
           projectType: row.projectType,
+          trustStatus: row.trustStatus,
+          startingPriceMinor: row.startingPriceMinor?.toString() ?? null,
+          currency: row.currency,
+          totalAreaSqft: row.totalAreaSqft?.toString() ?? null,
         })),
       },
     };

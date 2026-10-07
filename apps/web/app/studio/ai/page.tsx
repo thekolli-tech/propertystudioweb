@@ -2,18 +2,21 @@ export const dynamic = 'force-dynamic';
 
 import { PageHeader } from '@property-studio/ui';
 
-import { AiAssistantPanel } from '@/components/studio/ai-assistant-panel';
+import { AiChatPanel } from '@/components/ai/ai-chat-panel';
+import { getSessionUser } from '@/lib/auth';
 
-export const metadata = { title: 'Studio · AI Assistant' };
+export const metadata = { title: 'Studio · AI Copilot' };
 
-export default function StudioAiPage() {
+export default async function StudioAiPage() {
+  const user = await getSessionUser();
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="AI Assistant"
-        description="Large-display assistant powered by the existing Phase 11 /api/v1/ai/assistant endpoint — not a second AI."
+        title="AI Copilot"
+        description="Broadcast-friendly chat over the same Phase 13 chatbot APIs and Phase 11 authorized tools."
       />
-      <AiAssistantPanel />
+      <AiChatPanel organizationPublicId={user?.activeOrganizationPublicId} variant="broadcast" />
     </div>
   );
 }

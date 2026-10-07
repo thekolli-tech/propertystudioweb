@@ -42,11 +42,34 @@ Postgres `background_jobs` + Redis list coordination provide queue/retry/dead-le
 
 Admin `/admin/integrations` and org `/app/org/[orgPublicId]/integrations` manage integrations without displaying secrets. Permissions: `integrations:*`, `api-keys:manage`, `webhooks:manage`, `automations:*`, `admin:integrations:*`.
 
+### AI Chatbot / Property Studio AI Copilot (consumer layer)
+
+The production-facing chatbot is a **consumer** of Phase 11 AI — not a second provider or orchestration stack:
+
+```
+User
+→ AI Chatbot (conversations + UI)
+→ Phase 11 AI Orchestrator / DeterministicAiProvider
+→ Authorized AI Tools (AiToolsService)
+→ Existing Property Studio Services
+```
+
+Persistent `ai_conversations` / `ai_conversation_messages` are owned by the authenticated user (tenant/org context optional). APIs:
+
+- `POST /api/v1/ai/conversations`
+- `GET /api/v1/ai/conversations`
+- `GET /api/v1/ai/conversations/:publicId`
+- `POST /api/v1/ai/conversations/:publicId/messages`
+- `DELETE /api/v1/ai/conversations/:publicId`
+
+UI routes `/ai/chat`, `/app/ai/chat`, and `/studio/ai` share one `AiChatPanel` client. Conversation context enriches follow-ups for the deterministic provider but never bypasses tool authorization. Requirement creation reuses Phase 7 via `create_requirement` only after explicit confirmation. Rate limits reuse Redis (`ai-anon` vs `ai-auth` scopes). Safe analytics events are stored without secrets or private contact data. Streaming is deferred until a streaming-capable provider exists.
+
 ## Consequences
 
 - Partner access is additive to session auth; OAuth can later mint the same scoped API clients.
 - Event persistence enables idempotent webhook delivery (`endpointId + domainEventId` unique).
 - Provider abstractions keep future vendor SDKs out of core domain services.
+- Chatbot persistence and UI sit above Phase 11 tools; adding an LLM provider later does not require a second tool/authorization layer.
 
 ## Deferred
 
@@ -54,3 +77,5 @@ Admin `/admin/integrations` and org `/app/org/[orgPublicId]/integrations` manage
 - Concrete portal/CRM/SMS/email/WhatsApp provider adapters
 - Visual automation builder
 - OpenAPI partner portal beyond the `/partner/docs` foundation endpoint
+- Token streaming for AI chat responses (architecture is streaming-ready; deterministic provider is non-streaming)
+- Anonymous guest conversation persistence (public catalog chat still requires an authenticated session with `ai:assistant`)

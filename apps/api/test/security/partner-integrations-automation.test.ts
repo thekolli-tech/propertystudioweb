@@ -88,6 +88,9 @@ async function grantPlatformRole(
 }
 
 const PHASE13_DELETE_ORDER = [
+  'ai_chat_analytics_events',
+  'ai_conversation_messages',
+  'ai_conversations',
   'integration_usage_events',
   'webhook_deliveries',
   'outbound_webhook_endpoints',

@@ -6,6 +6,7 @@ import { cn } from '@property-studio/ui';
 
 const ITEMS: Array<{ href: string; label: string; exact?: boolean }> = [
   { href: '/app/ai', label: 'Overview', exact: true },
+  { href: '/app/ai/chat', label: 'Copilot' },
   { href: '/app/ai/assistant', label: 'Assistant' },
   { href: '/app/ai/search', label: 'Search' },
   { href: '/app/ai/match', label: 'Match' },

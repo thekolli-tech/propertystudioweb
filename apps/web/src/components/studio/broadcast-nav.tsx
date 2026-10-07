@@ -27,7 +27,7 @@ const ITEMS: Array<{
   { href: '/studio/media', label: 'Media', icon: Images },
   { href: '/studio/communities', label: 'Communities', icon: UsersRound },
   { href: '/studio/compare', label: 'Compare', icon: GitCompareArrows },
-  { href: '/studio/ai', label: 'AI Assistant', icon: Sparkles },
+  { href: '/studio/ai', label: 'AI Copilot', icon: Sparkles },
 ];
 
 export function BroadcastNav() {

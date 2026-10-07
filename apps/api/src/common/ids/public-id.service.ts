@@ -241,6 +241,18 @@ export class PublicIdService {
     return this.next('RULE');
   }
 
+  async nextAiConversationPublicId(): Promise<string> {
+    return this.next('ACONV');
+  }
+
+  async nextAiConversationMessagePublicId(): Promise<string> {
+    return this.next('AMSG');
+  }
+
+  async nextAiChatAnalyticsPublicId(): Promise<string> {
+    return this.next('ACHEV');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(
