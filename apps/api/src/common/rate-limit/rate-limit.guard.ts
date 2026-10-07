@@ -18,17 +18,32 @@ export class RateLimitGuard implements CanActivate {
     const response = http.getResponse<Response>();
 
     const path = request.path || '';
-    const isStrictRoute = path.includes('/auth/') || path.includes('/ai/');
-    const windowMs = isStrictRoute
+    const isAuthRoute = path.includes('/auth/');
+    const isAiRoute = path.includes('/ai/');
+    const hasSessionCookie = Boolean(
+      (request as Request & { cookies?: Record<string, string> }).cookies?.ps_session,
+    );
+
+    // AI: anonymous (no session cookie) uses strict auth limits; authenticated uses API limits.
+    // Auth routes always use strict limits. Other routes use standard API limits.
+    const useStrictLimit = isAuthRoute || (isAiRoute && !hasSessionCookie);
+    const windowMs = useStrictLimit
       ? this.config.values.AUTH_RATE_LIMIT_WINDOW_MS
       : this.config.values.RATE_LIMIT_WINDOW_MS;
-    const maxRequests = isStrictRoute
+    const maxRequests = useStrictLimit
       ? this.config.values.AUTH_RATE_LIMIT_MAX_REQUESTS
       : this.config.values.RATE_LIMIT_MAX_REQUESTS;
 
     const clientIp = this.resolveClientIp(request);
     const bucket = Math.floor(Date.now() / windowMs);
-    const key = `rate-limit:${isStrictRoute ? 'auth' : 'api'}:${clientIp}:${bucket}`;
+    const scope = isAiRoute
+      ? hasSessionCookie
+        ? 'ai-auth'
+        : 'ai-anon'
+      : useStrictLimit
+        ? 'auth'
+        : 'api';
+    const key = `rate-limit:${scope}:${clientIp}:${bucket}`;
 
     const count = await this.redis.client.incr(key);
     if (count === 1) {

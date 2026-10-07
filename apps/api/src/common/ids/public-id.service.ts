@@ -201,6 +201,58 @@ export class PublicIdService {
     return this.next('BCFG');
   }
 
+  async nextPartnerIntegrationPublicId(): Promise<string> {
+    return this.next('PINT');
+  }
+
+  async nextApiClientPublicId(): Promise<string> {
+    return this.next('AKEY');
+  }
+
+  async nextWebhookEndpointPublicId(): Promise<string> {
+    return this.next('WHK');
+  }
+
+  async nextWebhookDeliveryPublicId(): Promise<string> {
+    return this.next('WHDEL');
+  }
+
+  async nextDomainEventPublicId(): Promise<string> {
+    return this.next('DEVNT');
+  }
+
+  async nextBackgroundJobPublicId(): Promise<string> {
+    return this.next('JOB');
+  }
+
+  async nextDeadLetterPublicId(): Promise<string> {
+    return this.next('DLQ');
+  }
+
+  async nextExternalResourceMappingPublicId(): Promise<string> {
+    return this.next('XMAP');
+  }
+
+  async nextIntegrationUsagePublicId(): Promise<string> {
+    return this.next('IUSG');
+  }
+
+  async nextAutomationRulePublicId(): Promise<string> {
+    return this.next('RULE');
+  }
+
+  async nextAiConversationPublicId(): Promise<string> {
+    return this.next('ACONV');
+  }
+
+  async nextAiConversationMessagePublicId(): Promise<string> {
+    return this.next('AMSG');
+  }
+
+  async nextAiChatAnalyticsPublicId(): Promise<string> {
+    return this.next('ACHEV');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

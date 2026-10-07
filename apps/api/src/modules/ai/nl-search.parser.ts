@@ -62,7 +62,7 @@ export function parseNaturalLanguagePropertyQuery(query: string): AiPropertySear
   let budgetMinMinor: string | null = null;
   let budgetMaxMinor: string | null = null;
   const underMatch =
-    /(?:under|below|upto|up to|max(?:imum)?|budget)\s*(?:of\s*)?(?:₹|rs\.?\s*)?(\d+(?:\.\d+)?)\s*(cr|crore|lakh|lac|l|k)?/i.exec(
+    /(?:under|below|upto|up to|max(?:imum)?|budget|around|approx(?:imately)?|~)\s*(?:of\s*)?(?:₹|rs\.?\s*)?(\d+(?:\.\d+)?)\s*(cr|crore|lakh|lac|l|k)?/i.exec(
       lower,
     );
   if (underMatch?.[1]) {

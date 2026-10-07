@@ -60,13 +60,17 @@ export class DeterministicAiProvider implements AiProvider {
       });
     }
 
-    if (/compar|vs\.?|versus|difference/.test(lower)) {
+    if (
+      /compar|vs\.?|versus|difference|which (one|of)|lowest|cheapest|among|price per/.test(lower)
+    ) {
       const propIds = message.match(/PS-PROP-\d+/g) ?? [];
       if (propIds.length >= 2) {
         tools.push({
           tool: 'compare_properties',
           args: { publicIds: propIds.slice(0, 5) },
         });
+      } else if (propIds.length === 1) {
+        tools.push({ tool: 'get_property_details', args: { publicId: propIds[0] } });
       }
     }
 
@@ -192,7 +196,35 @@ export class DeterministicAiProvider implements AiProvider {
           parts.push('No market snapshots are available for the requested location.');
         }
       } else if (result.tool === 'compare_properties') {
-        parts.push('Structured property comparison prepared from catalog fields.');
+        const data = result.data as {
+          fields?: Array<{
+            key: string;
+            values?: Array<{ publicId: string; available: boolean; value?: unknown }>;
+          }>;
+        };
+        const pricePerSqft = data.fields?.find((field) => field.key === 'pricePerSqftMinor');
+        if (pricePerSqft && /lowest|cheapest|price per/.test(userMessage.toLowerCase())) {
+          const available = (pricePerSqft.values ?? []).filter(
+            (row) => row.available && row.value != null,
+          );
+          if (available.length > 0) {
+            const lowest = available.reduce((best, row) =>
+              Number(row.value) < Number(best.value) ? row : best,
+            );
+            parts.push(
+              `Among the authorized comparison set, lowest price per sqft is ${lowest.publicId} (${String(lowest.value)} minor units / sqft).`,
+            );
+          } else {
+            parts.push(
+              'Price-per-sqft comparison is insufficient for the authorized properties in context.',
+            );
+            if (coverageState !== 'READY') {
+              coverageState = 'INSUFFICIENT_DATA';
+            }
+          }
+        } else {
+          parts.push('Structured property comparison prepared from catalog fields.');
+        }
       } else if (result.tool === 'get_property_details') {
         const data = result.data as { publicId?: string; title?: string };
         if (data.publicId) {

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { EmptyState, PageHeader } from '@property-studio/ui';
 
 export const metadata = { title: 'Settings' };

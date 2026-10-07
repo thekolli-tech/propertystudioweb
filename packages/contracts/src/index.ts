@@ -3686,3 +3686,572 @@ export const publicMediaSitemapResponseSchema = z.object({
   entries: z.array(sitemapEntrySchema),
 });
 export type PublicMediaSitemapResponse = z.infer<typeof publicMediaSitemapResponseSchema>;
+
+// ─── Phase 13: Partner API, Integrations & Automation ───────────────────────
+
+export const partnerIntegrationStatusSchema = z.enum(['ACTIVE', 'SUSPENDED', 'REVOKED']);
+export type PartnerIntegrationStatus = z.infer<typeof partnerIntegrationStatusSchema>;
+
+export const partnerIntegrationTypeSchema = z.enum([
+  'PROPERTY_PORTAL',
+  'BUILDER',
+  'DEVELOPER',
+  'AGENCY',
+  'CRM_VENDOR',
+  'MARKETING_PLATFORM',
+  'CHANNEL_PARTNER',
+  'ENTERPRISE',
+  'DATA_PROVIDER',
+  'OTHER',
+]);
+export type PartnerIntegrationType = z.infer<typeof partnerIntegrationTypeSchema>;
+
+export const apiClientStatusSchema = z.enum(['ACTIVE', 'REVOKED', 'EXPIRED']);
+export type ApiClientStatus = z.infer<typeof apiClientStatusSchema>;
+
+export const apiClientEnvironmentSchema = z.enum(['LIVE', 'TEST']);
+export type ApiClientEnvironment = z.infer<typeof apiClientEnvironmentSchema>;
+
+export const PARTNER_API_SCOPES = [
+  'properties:read',
+  'projects:read',
+  'inventory:read',
+  'leads:receive',
+  'leads:write',
+  'media:read',
+  'webhooks:manage',
+  'analytics:read',
+] as const;
+
+export const partnerApiScopeSchema = z.enum(PARTNER_API_SCOPES);
+export type PartnerApiScope = z.infer<typeof partnerApiScopeSchema>;
+
+export const outboundWebhookStatusSchema = z.enum(['ACTIVE', 'DISABLED', 'FAILING']);
+export type OutboundWebhookStatus = z.infer<typeof outboundWebhookStatusSchema>;
+
+export const webhookDeliveryStatusSchema = z.enum([
+  'PENDING',
+  'SUCCEEDED',
+  'FAILED',
+  'DEAD_LETTER',
+]);
+export type WebhookDeliveryStatus = z.infer<typeof webhookDeliveryStatusSchema>;
+
+export const domainEventTypeSchema = z.enum([
+  'property.created',
+  'property.updated',
+  'property.published',
+  'project.created',
+  'project.updated',
+  'project.published',
+  'inventory.updated',
+  'lead.created',
+  'lead.assigned',
+  'lead.status_changed',
+  'requirement.created',
+  'crm.deal.created',
+  'crm.deal.updated',
+  'crm.deal.closed',
+  'payment.succeeded',
+  'payment.failed',
+  'verification.updated',
+  'review.published',
+  'media.published',
+  'community.update_created',
+]);
+export type DomainEventType = z.infer<typeof domainEventTypeSchema>;
+
+export const integrationHealthStatusSchema = z.enum([
+  'CONNECTED',
+  'HEALTHY',
+  'DEGRADED',
+  'FAILING',
+  'SUSPENDED',
+  'UNAVAILABLE',
+]);
+export type IntegrationHealthStatus = z.infer<typeof integrationHealthStatusSchema>;
+
+export const externalResourceTypeSchema = z.enum(['PROPERTY', 'PROJECT', 'INVENTORY']);
+export type ExternalResourceType = z.infer<typeof externalResourceTypeSchema>;
+
+export const externalMappingStatusSchema = z.enum([
+  'NEW',
+  'UPDATED',
+  'REMOVED',
+  'UNAVAILABLE',
+  'CONFLICT',
+]);
+export type ExternalMappingStatus = z.infer<typeof externalMappingStatusSchema>;
+
+export const automationRuleStatusSchema = z.enum(['ENABLED', 'DISABLED']);
+export type AutomationRuleStatus = z.infer<typeof automationRuleStatusSchema>;
+
+export const notificationChannelProviderKindSchema = z.enum(['EMAIL', 'SMS', 'WHATSAPP']);
+export type NotificationChannelProviderKind = z.infer<typeof notificationChannelProviderKindSchema>;
+
+export const notificationChannelProviderStatusSchema = z.enum([
+  'CONFIGURED',
+  'UNAVAILABLE',
+  'DISABLED',
+]);
+export type NotificationChannelProviderStatus = z.infer<
+  typeof notificationChannelProviderStatusSchema
+>;
+
+export const deadLetterStatusSchema = z.enum(['OPEN', 'RETRIED', 'DISCARDED']);
+export type DeadLetterStatus = z.infer<typeof deadLetterStatusSchema>;
+
+export const createPartnerIntegrationRequestSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  integrationType: partnerIntegrationTypeSchema,
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+export type CreatePartnerIntegrationRequest = z.infer<typeof createPartnerIntegrationRequestSchema>;
+
+export const updatePartnerIntegrationRequestSchema = z.object({
+  name: z.string().trim().min(2).max(160).optional(),
+  status: partnerIntegrationStatusSchema.optional(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+export type UpdatePartnerIntegrationRequest = z.infer<typeof updatePartnerIntegrationRequestSchema>;
+
+export const partnerIntegrationSummarySchema = z.object({
+  publicId: z.string(),
+  organizationPublicId: z.string(),
+  name: z.string(),
+  integrationType: partnerIntegrationTypeSchema,
+  status: partnerIntegrationStatusSchema,
+  healthStatus: integrationHealthStatusSchema,
+  lastSuccessfulAt: z.string().datetime().nullable(),
+  lastFailedAt: z.string().datetime().nullable(),
+  errorCount: z.number().int(),
+  createdAt: z.string().datetime(),
+});
+export type PartnerIntegrationSummary = z.infer<typeof partnerIntegrationSummarySchema>;
+
+export const partnerIntegrationListResponseSchema = z.object({
+  items: z.array(partnerIntegrationSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type PartnerIntegrationListResponse = z.infer<typeof partnerIntegrationListResponseSchema>;
+
+export const createApiClientRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  environment: apiClientEnvironmentSchema.default('LIVE'),
+  scopes: z.array(partnerApiScopeSchema).min(1).max(20),
+  expiresAt: z.string().datetime().optional().nullable(),
+});
+export type CreateApiClientRequest = z.infer<typeof createApiClientRequestSchema>;
+
+export const apiClientSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  environment: apiClientEnvironmentSchema,
+  keyPrefix: z.string(),
+  scopes: z.array(partnerApiScopeSchema),
+  status: apiClientStatusSchema,
+  expiresAt: z.string().datetime().nullable(),
+  lastUsedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type ApiClientSummary = z.infer<typeof apiClientSummarySchema>;
+
+export const createApiClientResponseSchema = apiClientSummarySchema.extend({
+  secret: z.string().min(20),
+});
+export type CreateApiClientResponse = z.infer<typeof createApiClientResponseSchema>;
+
+export const apiClientListResponseSchema = z.object({
+  items: z.array(apiClientSummarySchema),
+});
+export type ApiClientListResponse = z.infer<typeof apiClientListResponseSchema>;
+
+export const createWebhookEndpointRequestSchema = z.object({
+  url: z.string().url().max(1000),
+  description: z.string().trim().max(240).optional().nullable(),
+  subscribedEvents: z.array(domainEventTypeSchema).min(1).max(40),
+});
+export type CreateWebhookEndpointRequest = z.infer<typeof createWebhookEndpointRequestSchema>;
+
+export const webhookEndpointSummarySchema = z.object({
+  publicId: z.string(),
+  url: z.string(),
+  description: z.string().nullable(),
+  secretPrefix: z.string(),
+  subscribedEvents: z.array(domainEventTypeSchema),
+  status: outboundWebhookStatusSchema,
+  maxAttempts: z.number().int(),
+  lastSuccessAt: z.string().datetime().nullable(),
+  lastFailureAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type WebhookEndpointSummary = z.infer<typeof webhookEndpointSummarySchema>;
+
+export const createWebhookEndpointResponseSchema = webhookEndpointSummarySchema.extend({
+  secret: z.string().min(20),
+});
+export type CreateWebhookEndpointResponse = z.infer<typeof createWebhookEndpointResponseSchema>;
+
+export const webhookEndpointListResponseSchema = z.object({
+  items: z.array(webhookEndpointSummarySchema),
+});
+export type WebhookEndpointListResponse = z.infer<typeof webhookEndpointListResponseSchema>;
+
+export const webhookDeliverySummarySchema = z.object({
+  publicId: z.string(),
+  endpointPublicId: z.string(),
+  eventPublicId: z.string(),
+  eventType: z.string(),
+  status: webhookDeliveryStatusSchema,
+  attemptCount: z.number().int(),
+  responseStatus: z.number().int().nullable(),
+  lastError: z.string().nullable(),
+  nextRetryAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type WebhookDeliverySummary = z.infer<typeof webhookDeliverySummarySchema>;
+
+export const webhookDeliveryListResponseSchema = z.object({
+  items: z.array(webhookDeliverySummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type WebhookDeliveryListResponse = z.infer<typeof webhookDeliveryListResponseSchema>;
+
+export const domainEventPayloadSchema = z.object({
+  eventId: z.string(),
+  eventType: domainEventTypeSchema,
+  timestamp: z.string().datetime(),
+  apiVersion: z.string(),
+  resourceType: z.string(),
+  resourcePublicId: z.string().nullable(),
+  payload: z.record(z.string(), z.unknown()),
+});
+export type DomainEventPayload = z.infer<typeof domainEventPayloadSchema>;
+
+export const deadLetterEventSummarySchema = z.object({
+  publicId: z.string(),
+  sourceType: z.string(),
+  sourceId: z.string(),
+  destination: z.string(),
+  failureReason: z.string(),
+  attemptCount: z.number().int(),
+  lastResponse: z.string().nullable(),
+  status: deadLetterStatusSchema,
+  createdAt: z.string().datetime(),
+  resolvedAt: z.string().datetime().nullable(),
+});
+export type DeadLetterEventSummary = z.infer<typeof deadLetterEventSummarySchema>;
+
+export const deadLetterEventListResponseSchema = z.object({
+  items: z.array(deadLetterEventSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type DeadLetterEventListResponse = z.infer<typeof deadLetterEventListResponseSchema>;
+
+export const integrationUsageEventSummarySchema = z.object({
+  publicId: z.string(),
+  apiClientPublicId: z.string().nullable(),
+  endpointCategory: z.string(),
+  httpMethod: z.string(),
+  path: z.string(),
+  statusCode: z.number().int(),
+  responseTimeMs: z.number().int(),
+  rateLimited: z.boolean(),
+  resourceType: z.string().nullable(),
+  resourcePublicId: z.string().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type IntegrationUsageEventSummary = z.infer<typeof integrationUsageEventSummarySchema>;
+
+export const integrationUsageListResponseSchema = z.object({
+  items: z.array(integrationUsageEventSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type IntegrationUsageListResponse = z.infer<typeof integrationUsageListResponseSchema>;
+
+export const createAutomationRuleRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  triggerEvent: z.string().trim().min(2).max(80),
+  actionType: z.enum(['CREATE_FOLLOW_UP', 'SEND_NOTIFICATION', 'NOOP']),
+  actionConfig: z.record(z.string(), z.unknown()).default({}),
+});
+export type CreateAutomationRuleRequest = z.infer<typeof createAutomationRuleRequestSchema>;
+
+export const automationRuleSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  triggerEvent: z.string(),
+  actionType: z.string(),
+  actionConfig: z.record(z.string(), z.unknown()),
+  status: automationRuleStatusSchema,
+  createdAt: z.string().datetime(),
+});
+export type AutomationRuleSummary = z.infer<typeof automationRuleSummarySchema>;
+
+export const automationRuleListResponseSchema = z.object({
+  items: z.array(automationRuleSummarySchema),
+});
+export type AutomationRuleListResponse = z.infer<typeof automationRuleListResponseSchema>;
+
+export const externalResourceMappingSummarySchema = z.object({
+  publicId: z.string(),
+  provider: z.string(),
+  resourceType: externalResourceTypeSchema,
+  externalId: z.string(),
+  canonicalPublicId: z.string().nullable(),
+  status: externalMappingStatusSchema,
+  conflictReason: z.string().nullable(),
+  lastSyncedAt: z.string().datetime().nullable(),
+});
+export type ExternalResourceMappingSummary = z.infer<typeof externalResourceMappingSummarySchema>;
+
+export const upsertExternalResourceMappingRequestSchema = z.object({
+  provider: z.string().trim().min(2).max(80),
+  resourceType: externalResourceTypeSchema,
+  externalId: z.string().trim().min(1).max(160),
+  canonicalPublicId: z.string().trim().max(32).optional().nullable(),
+  status: externalMappingStatusSchema.optional(),
+  conflictReason: z.string().trim().max(500).optional().nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type UpsertExternalResourceMappingRequest = z.infer<
+  typeof upsertExternalResourceMappingRequestSchema
+>;
+
+export const notificationProviderSummarySchema = z.object({
+  kind: notificationChannelProviderKindSchema,
+  status: notificationChannelProviderStatusSchema,
+  message: z.string(),
+});
+export type NotificationProviderSummary = z.infer<typeof notificationProviderSummarySchema>;
+
+export const notificationProviderListResponseSchema = z.object({
+  providers: z.array(notificationProviderSummarySchema),
+});
+export type NotificationProviderListResponse = z.infer<
+  typeof notificationProviderListResponseSchema
+>;
+
+export const partnerPropertySummarySchema = z.object({
+  publicId: z.string(),
+  title: z.string(),
+  publicationStatus: z.string(),
+  city: z.string().nullable(),
+  organizationPublicId: z.string(),
+});
+export type PartnerPropertySummary = z.infer<typeof partnerPropertySummarySchema>;
+
+export const partnerPropertyListResponseSchema = z.object({
+  items: z.array(partnerPropertySummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type PartnerPropertyListResponse = z.infer<typeof partnerPropertyListResponseSchema>;
+
+export const partnerProjectSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  lifecycleStatus: z.string(),
+  city: z.string().nullable(),
+  organizationPublicId: z.string(),
+});
+export type PartnerProjectSummary = z.infer<typeof partnerProjectSummarySchema>;
+
+export const partnerProjectListResponseSchema = z.object({
+  items: z.array(partnerProjectSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type PartnerProjectListResponse = z.infer<typeof partnerProjectListResponseSchema>;
+
+export const partnerLeadSummarySchema = z.object({
+  publicId: z.string(),
+  status: z.string(),
+  entitled: z.boolean(),
+  contactRevealed: z.boolean(),
+  contact: z
+    .object({
+      name: z.string().nullable(),
+      email: z.string().nullable(),
+      phone: z.string().nullable(),
+    })
+    .nullable(),
+});
+export type PartnerLeadSummary = z.infer<typeof partnerLeadSummarySchema>;
+
+export const partnerLeadListResponseSchema = z.object({
+  items: z.array(partnerLeadSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type PartnerLeadListResponse = z.infer<typeof partnerLeadListResponseSchema>;
+
+export const integrationsOverviewResponseSchema = z.object({
+  integrations: z.array(partnerIntegrationSummarySchema),
+  apiClients: z.array(apiClientSummarySchema),
+  webhooks: z.array(webhookEndpointSummarySchema),
+  recentDeliveries: z.array(webhookDeliverySummarySchema),
+  failedDeliveries: z.array(webhookDeliverySummarySchema),
+  notificationProviders: z.array(notificationProviderSummarySchema),
+});
+export type IntegrationsOverviewResponse = z.infer<typeof integrationsOverviewResponseSchema>;
+
+export const partnerApiDocsResponseSchema = z.object({
+  version: z.string(),
+  authentication: z.string(),
+  scopes: z.array(partnerApiScopeSchema),
+  rateLimits: z.object({
+    windowMs: z.number().int(),
+    maxRequests: z.number().int(),
+  }),
+  webhookSigning: z.object({
+    algorithm: z.literal('HMAC-SHA256'),
+    headers: z.array(z.string()),
+    replayToleranceSeconds: z.number().int(),
+  }),
+  idempotency: z.string(),
+  resources: z.array(z.string()),
+});
+export type PartnerApiDocsResponse = z.infer<typeof partnerApiDocsResponseSchema>;
+
+export const verifyWebhookSignatureRequestSchema = z.object({
+  secret: z.string().min(8),
+  timestamp: z.string().min(1),
+  eventId: z.string().min(1),
+  body: z.string().min(1),
+  signature: z.string().min(1),
+});
+export type VerifyWebhookSignatureRequest = z.infer<typeof verifyWebhookSignatureRequestSchema>;
+
+export const verifyWebhookSignatureResponseSchema = z.object({
+  valid: z.boolean(),
+  reason: z.string().nullable(),
+});
+export type VerifyWebhookSignatureResponse = z.infer<typeof verifyWebhookSignatureResponseSchema>;
+
+// ─── Phase 13 patch: AI Chatbot / Copilot ───────────────────────────────────
+
+export const aiConversationStatusSchema = z.enum(['ACTIVE', 'ARCHIVED', 'DELETED']);
+export type AiConversationStatus = z.infer<typeof aiConversationStatusSchema>;
+
+export const aiChatMessageRoleSchema = z.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']);
+export type AiChatMessageRole = z.infer<typeof aiChatMessageRoleSchema>;
+
+export const aiChatCardKindSchema = z.enum([
+  'PROPERTY',
+  'PROJECT',
+  'COMPARISON',
+  'MARKET',
+  'INFRASTRUCTURE',
+  'REQUIREMENT_CONFIRMATION',
+  'CALCULATION',
+  'GENERIC',
+]);
+export type AiChatCardKind = z.infer<typeof aiChatCardKindSchema>;
+
+export const aiChatResultCardSchema = z.object({
+  kind: aiChatCardKindSchema,
+  publicId: z.string().nullable(),
+  title: z.string(),
+  subtitle: z.string().nullable().optional(),
+  configuration: z.string().nullable().optional(),
+  priceMinor: z.string().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  areaLabel: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  developer: z.string().nullable().optional(),
+  trustStatus: z.string().nullable().optional(),
+  availability: z.string().nullable().optional(),
+  primaryMediaUrl: z.string().nullable().optional(),
+  matchScore: z.number().nullable().optional(),
+  href: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AiChatResultCard = z.infer<typeof aiChatResultCardSchema>;
+
+export const aiChatToolInvocationSchema = z.object({
+  tool: z.string(),
+  ok: z.boolean(),
+  coverageState: intelligenceDataStateSchema,
+  summary: z.string().nullable().optional(),
+});
+export type AiChatToolInvocation = z.infer<typeof aiChatToolInvocationSchema>;
+
+export const createAiConversationRequestSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional().nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
+
+export const aiConversationSummarySchema = z.object({
+  publicId: z.string(),
+  title: z.string().nullable(),
+  status: aiConversationStatusSchema,
+  organizationPublicId: z.string().nullable(),
+  lastMessageAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type AiConversationSummary = z.infer<typeof aiConversationSummarySchema>;
+
+export const aiConversationListResponseSchema = z.object({
+  items: z.array(aiConversationSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type AiConversationListResponse = z.infer<typeof aiConversationListResponseSchema>;
+
+export const aiConversationMessageSchema = z.object({
+  publicId: z.string(),
+  role: aiChatMessageRoleSchema,
+  content: z.string(),
+  coverageState: intelligenceDataStateSchema.nullable(),
+  cards: z.array(aiChatResultCardSchema).default([]),
+  references: z.array(aiReferenceSchema).default([]),
+  toolInvocations: z.array(aiChatToolInvocationSchema).default([]),
+  pendingRequirement: z.record(z.string(), z.unknown()).nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+export type AiConversationMessage = z.infer<typeof aiConversationMessageSchema>;
+
+export const aiConversationDetailSchema = aiConversationSummarySchema.extend({
+  messages: z.array(aiConversationMessageSchema),
+  pendingRequirement: z.record(z.string(), z.unknown()).nullable(),
+  disclaimer: z.string(),
+});
+export type AiConversationDetail = z.infer<typeof aiConversationDetailSchema>;
+
+export const postAiConversationMessageRequestSchema = z.object({
+  message: z.string().trim().min(1).max(4000),
+  confirmRequirement: z.boolean().optional().default(false),
+  clickedPropertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+});
+export type PostAiConversationMessageRequest = z.infer<
+  typeof postAiConversationMessageRequestSchema
+>;
+
+export const postAiConversationMessageResponseSchema = z.object({
+  conversation: aiConversationSummarySchema,
+  userMessage: aiConversationMessageSchema,
+  assistantMessage: aiConversationMessageSchema,
+  disclaimer: z.string(),
+});
+export type PostAiConversationMessageResponse = z.infer<
+  typeof postAiConversationMessageResponseSchema
+>;
+
+export const okAiConversationDeleteResponseSchema = z.object({
+  ok: z.literal(true),
+  publicId: z.string(),
+});
+export type OkAiConversationDeleteResponse = z.infer<typeof okAiConversationDeleteResponseSchema>;

@@ -215,6 +215,59 @@ import {
   updateEditorialContentRequestSchema,
   updateMediaCmsRequestSchema,
   updateMediaCollectionRequestSchema,
+  createApiClientRequestSchema,
+  createApiClientResponseSchema,
+  createAutomationRuleRequestSchema,
+  createPartnerIntegrationRequestSchema,
+  createWebhookEndpointRequestSchema,
+  createWebhookEndpointResponseSchema,
+  deadLetterEventListResponseSchema,
+  integrationsOverviewResponseSchema,
+  partnerIntegrationListResponseSchema,
+  partnerIntegrationSummarySchema,
+  apiClientListResponseSchema,
+  apiClientSummarySchema,
+  webhookEndpointListResponseSchema,
+  webhookDeliveryListResponseSchema,
+  automationRuleListResponseSchema,
+  automationRuleSummarySchema,
+  notificationProviderListResponseSchema,
+  updatePartnerIntegrationRequestSchema,
+  upsertExternalResourceMappingRequestSchema,
+  externalResourceMappingSummarySchema,
+  verifyWebhookSignatureRequestSchema,
+  verifyWebhookSignatureResponseSchema,
+  partnerApiDocsResponseSchema,
+  createAiConversationRequestSchema,
+  aiConversationSummarySchema,
+  aiConversationListResponseSchema,
+  aiConversationDetailSchema,
+  postAiConversationMessageRequestSchema,
+  postAiConversationMessageResponseSchema,
+  okAiConversationDeleteResponseSchema,
+  type CreateApiClientRequest,
+  type CreateApiClientResponse,
+  type CreateAutomationRuleRequest,
+  type CreatePartnerIntegrationRequest,
+  type CreateWebhookEndpointRequest,
+  type CreateWebhookEndpointResponse,
+  type DeadLetterEventListResponse,
+  type IntegrationsOverviewResponse,
+  type PartnerIntegrationListResponse,
+  type PartnerIntegrationSummary,
+  type ApiClientListResponse,
+  type ApiClientSummary,
+  type WebhookEndpointListResponse,
+  type WebhookDeliveryListResponse,
+  type AutomationRuleListResponse,
+  type AutomationRuleSummary,
+  type NotificationProviderListResponse,
+  type UpdatePartnerIntegrationRequest,
+  type UpsertExternalResourceMappingRequest,
+  type ExternalResourceMappingSummary,
+  type VerifyWebhookSignatureRequest,
+  type VerifyWebhookSignatureResponse,
+  type PartnerApiDocsResponse,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -376,6 +429,13 @@ import {
   type VerificationDocumentSummary,
   type ReviewSubjectType,
   type AiAssistantRequest,
+  type CreateAiConversationRequest,
+  type AiConversationSummary,
+  type AiConversationListResponse,
+  type AiConversationDetail,
+  type PostAiConversationMessageRequest,
+  type PostAiConversationMessageResponse,
+  type OkAiConversationDeleteResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
   type AiDocumentAnalysisResponse,
@@ -1853,6 +1913,59 @@ export class ApiClient {
 
   // --- Phase 11: AI ---
 
+  async createAiConversation(
+    input: CreateAiConversationRequest = {},
+  ): Promise<AiConversationSummary> {
+    const body = createAiConversationRequestSchema.parse(input);
+    return this.request('/api/v1/ai/conversations', aiConversationSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAiConversations(
+    query: {
+      cursor?: string;
+      limit?: number;
+    } = {},
+  ): Promise<AiConversationListResponse> {
+    const params = new URLSearchParams();
+    if (query.cursor) params.set('cursor', query.cursor);
+    if (query.limit) params.set('limit', String(query.limit));
+    const q = params.toString();
+    return this.request(
+      `/api/v1/ai/conversations${q ? `?${q}` : ''}`,
+      aiConversationListResponseSchema,
+    );
+  }
+
+  async getAiConversation(publicId: string): Promise<AiConversationDetail> {
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}`,
+      aiConversationDetailSchema,
+    );
+  }
+
+  async postAiConversationMessage(
+    publicId: string,
+    input: PostAiConversationMessageRequest,
+  ): Promise<PostAiConversationMessageResponse> {
+    const body = postAiConversationMessageRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}/messages`,
+      postAiConversationMessageResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async deleteAiConversation(publicId: string): Promise<OkAiConversationDeleteResponse> {
+    return this.request(
+      `/api/v1/ai/conversations/${encodeURIComponent(publicId)}`,
+      okAiConversationDeleteResponseSchema,
+      { method: 'DELETE' },
+    );
+  }
+
   async aiAssistant(input: AiAssistantRequest): Promise<AiAssistantResponse> {
     const body = aiAssistantRequestSchema.parse(input);
     return this.request('/api/v1/ai/assistant', aiAssistantResponseSchema, {
@@ -2253,6 +2366,191 @@ export class ApiClient {
       method: 'PATCH',
       body: JSON.stringify(body),
     });
+  }
+
+  async getOrgIntegrationsOverview(orgPublicId: string): Promise<IntegrationsOverviewResponse> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/integrations/overview`,
+      integrationsOverviewResponseSchema,
+    );
+  }
+
+  async listOrgIntegrations(orgPublicId: string): Promise<PartnerIntegrationListResponse> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/integrations`,
+      partnerIntegrationListResponseSchema,
+    );
+  }
+
+  async createOrgIntegration(
+    orgPublicId: string,
+    input: Omit<CreatePartnerIntegrationRequest, 'organizationPublicId'> & {
+      organizationPublicId?: string;
+    },
+  ): Promise<PartnerIntegrationSummary> {
+    const body = createPartnerIntegrationRequestSchema.parse({
+      ...input,
+      organizationPublicId: orgPublicId,
+    });
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/integrations`,
+      partnerIntegrationSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async listAdminIntegrations(): Promise<PartnerIntegrationListResponse> {
+    return this.request('/api/v1/admin/integrations', partnerIntegrationListResponseSchema);
+  }
+
+  async getAdminIntegrationsOverview(): Promise<IntegrationsOverviewResponse> {
+    return this.request('/api/v1/admin/integrations/overview', integrationsOverviewResponseSchema);
+  }
+
+  async createAdminIntegration(
+    input: CreatePartnerIntegrationRequest,
+  ): Promise<PartnerIntegrationSummary> {
+    const body = createPartnerIntegrationRequestSchema.parse(input);
+    return this.request('/api/v1/admin/integrations', partnerIntegrationSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updatePartnerIntegration(
+    publicId: string,
+    input: UpdatePartnerIntegrationRequest,
+  ): Promise<PartnerIntegrationSummary> {
+    const body = updatePartnerIntegrationRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(publicId)}`,
+      partnerIntegrationSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async listApiClients(integrationPublicId: string): Promise<ApiClientListResponse> {
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/api-clients`,
+      apiClientListResponseSchema,
+    );
+  }
+
+  async createApiClient(
+    integrationPublicId: string,
+    input: CreateApiClientRequest,
+  ): Promise<CreateApiClientResponse> {
+    const body = createApiClientRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/api-clients`,
+      createApiClientResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async revokeApiClient(
+    integrationPublicId: string,
+    clientPublicId: string,
+  ): Promise<ApiClientSummary> {
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/api-clients/${encodeURIComponent(clientPublicId)}/revoke`,
+      apiClientSummarySchema,
+      { method: 'POST', body: JSON.stringify({}) },
+    );
+  }
+
+  async listWebhookEndpoints(integrationPublicId: string): Promise<WebhookEndpointListResponse> {
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/webhooks`,
+      webhookEndpointListResponseSchema,
+    );
+  }
+
+  async createWebhookEndpoint(
+    integrationPublicId: string,
+    input: CreateWebhookEndpointRequest,
+  ): Promise<CreateWebhookEndpointResponse> {
+    const body = createWebhookEndpointRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/webhooks`,
+      createWebhookEndpointResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async listWebhookDeliveries(
+    integrationPublicId: string,
+    failedOnly = false,
+  ): Promise<WebhookDeliveryListResponse> {
+    const params = new URLSearchParams();
+    if (failedOnly) params.set('failedOnly', 'true');
+    const q = params.toString();
+    return this.request(
+      `/api/v1/integrations/${encodeURIComponent(integrationPublicId)}/deliveries${q ? `?${q}` : ''}`,
+      webhookDeliveryListResponseSchema,
+    );
+  }
+
+  async listAutomationRules(orgPublicId: string): Promise<AutomationRuleListResponse> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/automations`,
+      automationRuleListResponseSchema,
+    );
+  }
+
+  async createAutomationRule(
+    orgPublicId: string,
+    input: CreateAutomationRuleRequest,
+  ): Promise<AutomationRuleSummary> {
+    const body = createAutomationRuleRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/automations`,
+      automationRuleSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async listDeadLetterEvents(cursor?: string): Promise<DeadLetterEventListResponse> {
+    const params = new URLSearchParams();
+    if (cursor) params.set('cursor', cursor);
+    const q = params.toString();
+    return this.request(
+      `/api/v1/admin/integrations/dead-letters${q ? `?${q}` : ''}`,
+      deadLetterEventListResponseSchema,
+    );
+  }
+
+  async listIntegrationNotificationProviders(): Promise<NotificationProviderListResponse> {
+    return this.request(
+      '/api/v1/admin/integrations/notification-providers',
+      notificationProviderListResponseSchema,
+    );
+  }
+
+  async upsertExternalResourceMapping(
+    input: UpsertExternalResourceMappingRequest,
+  ): Promise<ExternalResourceMappingSummary> {
+    const body = upsertExternalResourceMappingRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/integrations/external-mappings',
+      externalResourceMappingSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async verifyWebhookSignature(
+    input: VerifyWebhookSignatureRequest,
+  ): Promise<VerifyWebhookSignatureResponse> {
+    const body = verifyWebhookSignatureRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/integrations/webhooks/verify-signature',
+      verifyWebhookSignatureResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async getPartnerApiDocs(): Promise<PartnerApiDocsResponse> {
+    return this.request('/api/v1/partner/docs', partnerApiDocsResponseSchema);
   }
 
   async getMyCreatorProfile(): Promise<CreatorProfileSummary> {

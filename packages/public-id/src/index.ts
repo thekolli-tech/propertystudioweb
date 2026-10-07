@@ -47,6 +47,19 @@ export const PUBLIC_ID_PREFIXES = {
   MAEV: 'MAEV',
   EMAP: 'EMAP',
   BCFG: 'BCFG',
+  PINT: 'PINT',
+  AKEY: 'AKEY',
+  WHK: 'WHK',
+  WHDEL: 'WHDEL',
+  DEVNT: 'DEVNT',
+  JOB: 'JOB',
+  DLQ: 'DLQ',
+  XMAP: 'XMAP',
+  IUSG: 'IUSG',
+  RULE: 'RULE',
+  ACONV: 'ACONV',
+  AMSG: 'AMSG',
+  ACHEV: 'ACHEV',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -155,7 +168,20 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'MCIT'
   | 'MAEV'
   | 'EMAP'
-  | 'BCFG',
+  | 'BCFG'
+  | 'PINT'
+  | 'AKEY'
+  | 'WHK'
+  | 'WHDEL'
+  | 'DEVNT'
+  | 'JOB'
+  | 'DLQ'
+  | 'XMAP'
+  | 'IUSG'
+  | 'RULE'
+  | 'ACONV'
+  | 'AMSG'
+  | 'ACHEV',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -206,4 +232,17 @@ export const PUBLIC_ID_SEQUENCES: Record<
   MAEV: 'public_id_maev_seq',
   EMAP: 'public_id_emap_seq',
   BCFG: 'public_id_bcfg_seq',
+  PINT: 'public_id_pint_seq',
+  AKEY: 'public_id_akey_seq',
+  WHK: 'public_id_whk_seq',
+  WHDEL: 'public_id_whdel_seq',
+  DEVNT: 'public_id_devnt_seq',
+  JOB: 'public_id_job_seq',
+  DLQ: 'public_id_dlq_seq',
+  XMAP: 'public_id_xmap_seq',
+  IUSG: 'public_id_iusg_seq',
+  RULE: 'public_id_rule_seq',
+  ACONV: 'public_id_aconv_seq',
+  AMSG: 'public_id_amsg_seq',
+  ACHEV: 'public_id_achev_seq',
 };

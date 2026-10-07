@@ -17,6 +17,12 @@ export const metadata = { title: 'AI tools' };
 
 const TOOLS = [
   {
+    href: '/app/ai/chat',
+    title: 'AI Copilot',
+    description:
+      'Persistent conversations with tool cards, confirmation gates, and Phase 11 tools.',
+  },
+  {
     href: '/app/ai/assistant',
     title: 'Property Assistant',
     description: 'Ask questions grounded in verified catalog and intelligence data.',

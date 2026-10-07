@@ -677,6 +677,7 @@ model User {
   leadAccessGrants LeadAccessGrant[]
   contentReports ContentReport[] @relation("ContentReporter")
   aiJobs AiJob[]
+  aiConversations AiConversation[]
   documentAnalyses DocumentAnalysis[]
   floorPlanAnalyses FloorPlanAnalysis[]
   valuationEstimates ValuationEstimate[]
@@ -779,12 +780,17 @@ model Organization {
   infrastructureAssets InfrastructureAsset[]
   intelligenceObservations IntelligenceObservation[]
   aiJobs              AiJob[]
+  aiConversations     AiConversation[]
   valuationEstimates  ValuationEstimate[]
   creatorProfiles     CreatorProfile[]
   editorialContents   EditorialContent[]
   mediaCollections    MediaCollection[]
   mediaAnalyticsEvents MediaAnalyticsEvent[]
   externalMediaMappings ExternalMediaMapping[]
+  partnerIntegrations PartnerIntegration[]
+  domainEvents        DomainEventRecord[]
+  automationRules     AutomationRule[]
+  externalResourceMappings ExternalResourceMapping[]
 
   @@map("organizations")
 }
@@ -2137,6 +2143,88 @@ model AiJob {
   @@map("ai_jobs")
 }
 
+enum AiConversationStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum AiChatMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum AiChatAnalyticsEventType {
+  CONVERSATION_STARTED
+  MESSAGE_SENT
+  TOOL_INVOKED
+  PROPERTY_CLICKED
+  REQUIREMENT_CREATED
+  REQUIREMENT_CONFIRMATION_PROMPTED
+}
+
+model AiConversation {
+  id                   String                @id @db.Uuid
+  publicId             String                @unique @map("public_id") @db.VarChar(32)
+  ownerUserId          String                @map("owner_user_id") @db.Uuid
+  organizationId       String?               @map("organization_id") @db.Uuid
+  title                String?               @db.VarChar(200)
+  status               AiConversationStatus  @default(ACTIVE)
+  contextJson          Json?                 @map("context_json")
+  pendingRequirementJson Json?               @map("pending_requirement_json")
+  lastMessageAt        DateTime?             @map("last_message_at") @db.Timestamptz(3)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ownerUser    User                 @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  organization Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  messages     AiConversationMessage[]
+  analyticsEvents AiChatAnalyticsEvent[]
+
+  @@index([ownerUserId, status])
+  @@index([organizationId])
+  @@index([lastMessageAt])
+  @@map("ai_conversations")
+}
+
+model AiConversationMessage {
+  id               String            @id @db.Uuid
+  publicId         String            @unique @map("public_id") @db.VarChar(32)
+  conversationId   String            @map("conversation_id") @db.Uuid
+  role             AiChatMessageRole
+  content          String            @db.VarChar(8000)
+  coverageState    IntelligenceDataState? @map("coverage_state")
+  toolCallsJson    Json?             @map("tool_calls_json")
+  toolResultsJson  Json?             @map("tool_results_json")
+  cardsJson        Json?             @map("cards_json")
+  referencesJson   Json?             @map("references_json")
+  aiJobId          String?           @map("ai_job_id") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("ai_conversation_messages")
+}
+
+model AiChatAnalyticsEvent {
+  id               String                   @id @db.Uuid
+  publicId         String                   @unique @map("public_id") @db.VarChar(32)
+  conversationId   String?                  @map("conversation_id") @db.Uuid
+  actorUserId      String?                  @map("actor_user_id") @db.Uuid
+  eventType        AiChatAnalyticsEventType @map("event_type")
+  metadataJson     Json?                    @map("metadata_json")
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  conversation AiConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("ai_chat_analytics_events")
+}
+
 model DocumentAnalysis {
   id              String       @id @db.Uuid
   publicId        String       @unique @map("public_id") @db.VarChar(32)
@@ -2438,4 +2526,345 @@ model BroadcastStudioConfig {
 
   @@index([organizationId])
   @@map("broadcast_studio_configs")
+}
+
+// ─── Phase 13: Partner API, Integrations & Automation ───────────────────────
+
+enum PartnerIntegrationStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum PartnerIntegrationType {
+  PROPERTY_PORTAL
+  BUILDER
+  DEVELOPER
+  AGENCY
+  CRM_VENDOR
+  MARKETING_PLATFORM
+  CHANNEL_PARTNER
+  ENTERPRISE
+  DATA_PROVIDER
+  OTHER
+}
+
+enum ApiClientStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum ApiClientEnvironment {
+  LIVE
+  TEST
+}
+
+enum OutboundWebhookStatus {
+  ACTIVE
+  DISABLED
+  FAILING
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  DEAD_LETTER
+}
+
+enum DomainEventStatus {
+  PENDING
+  DISPATCHED
+  FAILED
+}
+
+enum BackgroundJobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  DEAD_LETTER
+}
+
+enum DeadLetterStatus {
+  OPEN
+  RETRIED
+  DISCARDED
+}
+
+enum ExternalResourceType {
+  PROPERTY
+  PROJECT
+  INVENTORY
+}
+
+enum ExternalMappingStatus {
+  NEW
+  UPDATED
+  REMOVED
+  UNAVAILABLE
+  CONFLICT
+}
+
+enum IntegrationHealthStatus {
+  CONNECTED
+  HEALTHY
+  DEGRADED
+  FAILING
+  SUSPENDED
+  UNAAVAILABLE
+}
+
+enum AutomationRuleStatus {
+  ENABLED
+  DISABLED
+}
+
+enum NotificationProviderKind {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationProviderStatus {
+  CONFIGURED
+  UNAVAILABLE
+  DISABLED
+}
+
+model PartnerIntegration {
+  id               String                    @id @db.Uuid
+  publicId         String                    @unique @map("public_id") @db.VarChar(32)
+  organizationId   String                    @map("organization_id") @db.Uuid
+  name             String                    @db.VarChar(160)
+  integrationType  PartnerIntegrationType    @map("integration_type")
+  status           PartnerIntegrationStatus  @default(ACTIVE)
+  healthStatus     IntegrationHealthStatus   @default(CONNECTED) @map("health_status")
+  ownerUserId      String?                   @map("owner_user_id") @db.Uuid
+  metadataJson     Json?                     @map("metadata_json")
+  lastSuccessfulAt DateTime?                 @map("last_successful_at") @db.Timestamptz(3)
+  lastFailedAt     DateTime?                 @map("last_failed_at") @db.Timestamptz(3)
+  errorCount       Int                       @default(0) @map("error_count")
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy        String?                   @map("created_by") @db.Uuid
+
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiClients      ApiClient[]
+  webhookEndpoints OutboundWebhookEndpoint[]
+  usageEvents     IntegrationUsageEvent[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([healthStatus])
+  @@map("partner_integrations")
+}
+
+model ApiClient {
+  id                   String               @id @db.Uuid
+  publicId             String               @unique @map("public_id") @db.VarChar(32)
+  partnerIntegrationId String               @map("partner_integration_id") @db.Uuid
+  name                 String               @db.VarChar(120)
+  environment          ApiClientEnvironment @default(LIVE)
+  keyPrefix            String               @map("key_prefix") @db.VarChar(24)
+  keyHash              String               @map("key_hash") @db.VarChar(255)
+  scopes               String[]             @default([])
+  status               ApiClientStatus      @default(ACTIVE)
+  expiresAt            DateTime?            @map("expires_at") @db.Timestamptz(3)
+  lastUsedAt           DateTime?            @map("last_used_at") @db.Timestamptz(3)
+  revokedAt            DateTime?            @map("revoked_at") @db.Timestamptz(3)
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy            String?              @map("created_by") @db.Uuid
+
+  partnerIntegration PartnerIntegration     @relation(fields: [partnerIntegrationId], references: [id], onDelete: Cascade)
+  usageEvents        IntegrationUsageEvent[]
+
+  @@unique([keyPrefix])
+  @@index([partnerIntegrationId])
+  @@index([status])
+  @@map("api_clients")
+}
+
+model OutboundWebhookEndpoint {
+  id                   String                @id @db.Uuid
+  publicId             String                @unique @map("public_id") @db.VarChar(32)
+  partnerIntegrationId String                @map("partner_integration_id") @db.Uuid
+  url                  String                @db.VarChar(1000)
+  description          String?               @db.VarChar(240)
+  secretCiphertext     String                @map("secret_ciphertext") @db.Text
+  secretPrefix         String                @map("secret_prefix") @db.VarChar(16)
+  subscribedEvents     String[]              @default([]) @map("subscribed_events")
+  status               OutboundWebhookStatus @default(ACTIVE)
+  maxAttempts          Int                   @default(8) @map("max_attempts")
+  lastSuccessAt        DateTime?             @map("last_success_at") @db.Timestamptz(3)
+  lastFailureAt        DateTime?             @map("last_failure_at") @db.Timestamptz(3)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy            String?               @map("created_by") @db.Uuid
+
+  partnerIntegration PartnerIntegration @relation(fields: [partnerIntegrationId], references: [id], onDelete: Cascade)
+  deliveries         WebhookDelivery[]
+
+  @@index([partnerIntegrationId])
+  @@index([status])
+  @@map("outbound_webhook_endpoints")
+}
+
+model DomainEventRecord {
+  id                 String            @id @db.Uuid
+  publicId           String            @unique @map("public_id") @db.VarChar(32)
+  eventType          String            @map("event_type") @db.VarChar(80)
+  resourceType       String            @map("resource_type") @db.VarChar(80)
+  resourcePublicId   String?           @map("resource_public_id") @db.VarChar(32)
+  organizationId     String?           @map("organization_id") @db.Uuid
+  apiVersion         String            @default("v1") @map("api_version") @db.VarChar(8)
+  payloadJson        Json              @map("payload_json")
+  status             DomainEventStatus @default(PENDING)
+  occurredAt         DateTime          @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  dispatchedAt       DateTime?         @map("dispatched_at") @db.Timestamptz(3)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  deliveries   WebhookDelivery[]
+
+  @@index([eventType])
+  @@index([organizationId])
+  @@index([status])
+  @@index([occurredAt])
+  @@map("domain_events")
+}
+
+model WebhookDelivery {
+  id              String                @id @db.Uuid
+  publicId        String                @unique @map("public_id") @db.VarChar(32)
+  endpointId      String                @map("endpoint_id") @db.Uuid
+  domainEventId   String                @map("domain_event_id") @db.Uuid
+  status          WebhookDeliveryStatus @default(PENDING)
+  attemptCount    Int                   @default(0) @map("attempt_count")
+  responseStatus  Int?                  @map("response_status")
+  responseBody    String?               @map("response_body") @db.VarChar(2000)
+  lastError       String?               @map("last_error") @db.VarChar(500)
+  nextRetryAt     DateTime?             @map("next_retry_at") @db.Timestamptz(3)
+  completedAt     DateTime?             @map("completed_at") @db.Timestamptz(3)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  endpoint    OutboundWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  domainEvent DomainEventRecord       @relation(fields: [domainEventId], references: [id], onDelete: Cascade)
+
+  @@unique([endpointId, domainEventId])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@map("webhook_deliveries")
+}
+
+model BackgroundJob {
+  id            String              @id @db.Uuid
+  publicId      String              @unique @map("public_id") @db.VarChar(32)
+  jobType       String              @map("job_type") @db.VarChar(80)
+  status        BackgroundJobStatus @default(PENDING)
+  payloadJson   Json                @map("payload_json")
+  attempts      Int                 @default(0)
+  maxAttempts   Int                 @default(8) @map("max_attempts")
+  failureReason String?             @map("failure_reason") @db.VarChar(500)
+  scheduledAt   DateTime            @default(now()) @map("scheduled_at") @db.Timestamptz(3)
+  startedAt     DateTime?           @map("started_at") @db.Timestamptz(3)
+  completedAt   DateTime?           @map("completed_at") @db.Timestamptz(3)
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, scheduledAt])
+  @@index([jobType])
+  @@map("background_jobs")
+}
+
+model DeadLetterEvent {
+  id             String           @id @db.Uuid
+  publicId       String           @unique @map("public_id") @db.VarChar(32)
+  sourceType     String           @map("source_type") @db.VarChar(40)
+  sourceId       String           @map("source_id") @db.VarChar(64)
+  destination    String           @db.VarChar(1000)
+  failureReason  String           @map("failure_reason") @db.VarChar(500)
+  attemptCount   Int              @map("attempt_count")
+  lastResponse   String?          @map("last_response") @db.VarChar(2000)
+  status         DeadLetterStatus @default(OPEN)
+  payloadJson    Json?            @map("payload_json")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  resolvedAt     DateTime?        @map("resolved_at") @db.Timestamptz(3)
+
+  @@index([status])
+  @@index([sourceType, sourceId])
+  @@map("dead_letter_events")
+}
+
+model ExternalResourceMapping {
+  id                 String                 @id @db.Uuid
+  publicId           String                 @unique @map("public_id") @db.VarChar(32)
+  organizationId     String?                @map("organization_id") @db.Uuid
+  provider           String                 @db.VarChar(80)
+  resourceType       ExternalResourceType   @map("resource_type")
+  externalId         String                 @map("external_id") @db.VarChar(160)
+  canonicalPublicId  String?                @map("canonical_public_id") @db.VarChar(32)
+  status             ExternalMappingStatus  @default(NEW)
+  conflictReason     String?                @map("conflict_reason") @db.VarChar(500)
+  lastSyncedAt       DateTime?              @map("last_synced_at") @db.Timestamptz(3)
+  payloadHash        String?                @map("payload_hash") @db.VarChar(64)
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy          String?                @map("created_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, resourceType, externalId])
+  @@index([organizationId])
+  @@index([canonicalPublicId])
+  @@index([status])
+  @@map("external_resource_mappings")
+}
+
+model IntegrationUsageEvent {
+  id                   String   @id @db.Uuid
+  publicId             String   @unique @map("public_id") @db.VarChar(32)
+  partnerIntegrationId String?  @map("partner_integration_id") @db.Uuid
+  apiClientId          String?  @map("api_client_id") @db.Uuid
+  endpointCategory     String   @map("endpoint_category") @db.VarChar(80)
+  httpMethod           String   @map("http_method") @db.VarChar(12)
+  path                 String   @db.VarChar(320)
+  statusCode           Int      @map("status_code")
+  responseTimeMs       Int      @map("response_time_ms")
+  rateLimited          Boolean  @default(false) @map("rate_limited")
+  resourceType         String?  @map("resource_type") @db.VarChar(80)
+  resourcePublicId     String?  @map("resource_public_id") @db.VarChar(32)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  partnerIntegration PartnerIntegration? @relation(fields: [partnerIntegrationId], references: [id], onDelete: SetNull)
+  apiClient          ApiClient?          @relation(fields: [apiClientId], references: [id], onDelete: SetNull)
+
+  @@index([partnerIntegrationId, createdAt])
+  @@index([apiClientId, createdAt])
+  @@index([createdAt])
+  @@map("integration_usage_events")
+}
+
+model AutomationRule {
+  id             String               @id @db.Uuid
+  publicId       String               @unique @map("public_id") @db.VarChar(32)
+  organizationId String               @map("organization_id") @db.Uuid
+  name           String               @db.VarChar(120)
+  triggerEvent   String               @map("trigger_event") @db.VarChar(80)
+  actionType     String               @map("action_type") @db.VarChar(80)
+  actionConfig   Json                 @map("action_config")
+  status         AutomationRuleStatus @default(ENABLED)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy      String?              @map("created_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([triggerEvent, status])
+  @@map("automation_rules")
 }
