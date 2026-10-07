@@ -3,13 +3,15 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AskAiLink } from '@/components/ai/ask-ai-link';
+import { AvailabilityBadge } from '@/components/catalog/availability-badge';
 import {
   IntelligencePanel,
   projectIntelligenceToPanelProps,
 } from '@/components/intelligence/intelligence-panel';
+import { ProjectClaimForm } from '@/components/project-ops/project-claim-form';
 import { VerifiedBadge } from '@/components/verified-badge';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
-import { getRequestCookieHeader } from '@/lib/auth';
+import { getRequestCookieHeader, getSessionUser } from '@/lib/auth';
 import { isPublicIdForKind } from '@/lib/public-id';
 import {
   Badge,
@@ -39,6 +41,7 @@ export default async function PublicProjectPage({ params }: PageProps) {
 
   const cookie = await getRequestCookieHeader();
   const client = createServerApiClient(cookie);
+  const sessionUser = await getSessionUser();
 
   let project: Awaited<ReturnType<typeof client.getPublicProject>>;
   try {
@@ -50,9 +53,14 @@ export default async function PublicProjectPage({ params }: PageProps) {
     throw error;
   }
 
-  const properties = await client
-    .listPublicProperties({ projectPublicId: publicId, limit: 12 })
-    .catch(() => ({ properties: [], nextCursor: null }));
+  const [properties, constructionUpdates] = await Promise.all([
+    client
+      .listPublicProperties({ projectPublicId: publicId, limit: 12 })
+      .catch(() => ({ properties: [], nextCursor: null })),
+    client
+      .listPublicConstructionUpdates(publicId, { limit: 20 })
+      .catch(() => ({ updates: [], nextCursor: null })),
+  ]);
 
   let intelligence: Awaited<ReturnType<typeof client.getProjectIntelligence>> | null = null;
   try {
@@ -60,6 +68,16 @@ export default async function PublicProjectPage({ params }: PageProps) {
   } catch {
     intelligence = null;
   }
+
+  const availabilityCounts = properties.properties.reduce<Record<string, number>>((acc, row) => {
+    acc[row.availabilityStatus] = (acc[row.availabilityStatus] ?? 0) + 1;
+    return acc;
+  }, {});
+  const publishedUpdates = constructionUpdates.updates.filter(
+    (update) => update.publicationStatus === 'PUBLISHED',
+  );
+  const claimOrgId = sessionUser?.activeOrganizationPublicId ?? null;
+  const loginNext = encodeURIComponent(`/projects/${publicId}`);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
@@ -100,10 +118,22 @@ export default async function PublicProjectPage({ params }: PageProps) {
             <VerifiedBadge verified={project.verifiedBadge} />
           </div>
 
+          {Object.keys(availabilityCounts).length > 0 ? (
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(availabilityCounts).map(([status, count]) => (
+                <div key={status} className="flex items-center gap-2 text-sm">
+                  <AvailabilityBadge status={status} />
+                  <span className="text-muted-foreground">{count}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           <Tabs defaultValue="overview">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="properties">Properties</TabsTrigger>
+              <TabsTrigger value="construction">Construction</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="space-y-4 pt-4">
@@ -161,21 +191,48 @@ export default async function PublicProjectPage({ params }: PageProps) {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {properties.properties.map((property) => (
-                    <PropertyCard
-                      key={property.publicId}
-                      linkComponent={Link}
-                      href={`/properties/${property.publicId}`}
-                      title={property.title}
-                      publicId={property.publicId}
-                      location={[property.locality, property.city].filter(Boolean).join(', ')}
-                      configuration={property.configuration}
-                      bedrooms={property.bedrooms}
-                      priceMinor={property.priceMinor}
-                      currency={property.currency}
-                      availabilityStatus={property.availabilityStatus}
-                    />
+                    <div key={property.publicId} className="space-y-2">
+                      <PropertyCard
+                        linkComponent={Link}
+                        href={`/properties/${property.publicId}`}
+                        title={property.title}
+                        publicId={property.publicId}
+                        location={[property.locality, property.city].filter(Boolean).join(', ')}
+                        configuration={property.configuration}
+                        bedrooms={property.bedrooms}
+                        priceMinor={property.priceMinor}
+                        currency={property.currency}
+                      />
+                      <AvailabilityBadge status={property.availabilityStatus} />
+                    </div>
                   ))}
                 </div>
+              )}
+            </TabsContent>
+            <TabsContent value="construction" className="pt-4">
+              {publishedUpdates.length === 0 ? (
+                <EmptyState
+                  title="No construction updates"
+                  description="Published progress updates from the developer appear here."
+                />
+              ) : (
+                <ul className="divide-y divide-border rounded-[var(--radius)] border border-border">
+                  {publishedUpdates.map((update) => (
+                    <li key={update.publicId} className="space-y-1 px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{update.title}</p>
+                        <Badge variant="outline">{update.milestone.replaceAll('_', ' ')}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {update.updateDate}
+                        {update.percentComplete !== null ? ` · ${update.percentComplete}%` : ''}
+                      </p>
+                      {update.description ? (
+                        <p className="text-sm text-muted-foreground">{update.description}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               )}
             </TabsContent>
             <TabsContent value="documents" className="pt-4">
@@ -239,6 +296,24 @@ export default async function PublicProjectPage({ params }: PageProps) {
           <Button asChild variant="outline" className="w-full">
             <Link href={`/properties?projectPublicId=${project.publicId}`}>View properties</Link>
           </Button>
+
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-sm font-medium">Claim this project</p>
+            {sessionUser && claimOrgId ? (
+              <ProjectClaimForm
+                projectPublicId={project.publicId}
+                organizationPublicId={claimOrgId}
+              />
+            ) : sessionUser ? (
+              <p className="text-xs text-muted-foreground">
+                Switch to an organization workspace before submitting a claim.
+              </p>
+            ) : (
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/login?next=${loginNext}`}>Sign in to claim</Link>
+              </Button>
+            )}
+          </div>
         </aside>
       </div>
     </main>

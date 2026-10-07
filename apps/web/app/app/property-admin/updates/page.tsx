@@ -1,4 +1,5 @@
-import { EmptyState, PageHeader } from '@property-studio/ui';
+import Link from 'next/link';
+import { Button, EmptyState, PageHeader } from '@property-studio/ui';
 
 export const metadata = { title: 'Construction updates' };
 
@@ -7,12 +8,15 @@ export default function PropertyAdminUpdatesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Construction updates"
-        description="Track progress on assigned projects when update APIs ship."
+        description="Construction progress is managed from the developer project workspace. Property-admin assignments stay read-focused for inventory tasks."
       />
       <EmptyState
-        title="No construction updates yet"
-        description="Construction update APIs are not available in this phase. This page is a polished empty foundation."
+        title="Managed in developer project workspace"
+        description="Create and publish construction updates from your organization project detail (Overview → Construction). Property-admin roles do not receive construction-update:create by default."
       />
+      <Button asChild variant="outline">
+        <Link href="/app">Open workspace</Link>
+      </Button>
     </div>
   );
 }

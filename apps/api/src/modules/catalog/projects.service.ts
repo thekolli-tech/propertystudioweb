@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  type ConstructionPhase,
   type CreateDocumentAssetRequest,
   type CreateMediaAssetRequest,
   type CreateProjectRequest,
@@ -664,6 +665,8 @@ export class ProjectsService {
       microMarket: string | null;
       startingPriceMinor: bigint | null;
       currency: string;
+      constructionPhase?: string;
+      trustStatus?: string;
       publishedAt: Date | null;
       createdAt: Date;
       updatedAt: Date;
@@ -682,6 +685,10 @@ export class ProjectsService {
       microMarket: row.microMarket,
       startingPriceMinor: bigintToString(row.startingPriceMinor),
       currency: row.currency,
+      constructionPhase: row.constructionPhase
+        ? (row.constructionPhase as ConstructionPhase)
+        : undefined,
+      trustStatus: row.trustStatus,
       publishedAt: toIso(row.publishedAt),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

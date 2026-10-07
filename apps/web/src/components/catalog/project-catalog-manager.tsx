@@ -137,6 +137,14 @@ export function ProjectCatalogManager({ organizationPublicId, initialProjects }:
                   </Link>
                   <Badge variant="secondary">{project.publicId}</Badge>
                   <Badge variant="outline">{project.lifecycleStatus}</Badge>
+                  {project.constructionPhase ? (
+                    <Badge variant="outline">
+                      {project.constructionPhase.replaceAll('_', ' ')}
+                    </Badge>
+                  ) : null}
+                  {project.trustStatus ? (
+                    <Badge variant="outline">{project.trustStatus}</Badge>
+                  ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {[project.city, project.locality].filter(Boolean).join(' · ') ||

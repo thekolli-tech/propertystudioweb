@@ -345,6 +345,21 @@ export const projectTypeSchema = z.enum([
 
 export const projectLifecycleStatusSchema = z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
 
+export const constructionPhaseSchema = z.enum([
+  'NOT_STARTED',
+  'FOUNDATION',
+  'STRUCTURE',
+  'BRICKWORK',
+  'ELECTRICAL',
+  'PLUMBING',
+  'FINISHING',
+  'INFRASTRUCTURE',
+  'HANDOVER',
+  'COMPLETED',
+  'OTHER',
+]);
+export type ConstructionPhase = z.infer<typeof constructionPhaseSchema>;
+
 export const propertyTypeSchema = z.enum([
   'APARTMENT',
   'VILLA',
@@ -375,6 +390,7 @@ export const propertyAvailabilityStatusSchema = z.enum([
   'SOLD',
   'UNAVAILABLE',
 ]);
+export type PropertyAvailabilityStatus = z.infer<typeof propertyAvailabilityStatusSchema>;
 
 export const communityStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
 export const communityVisibilitySchema = z.enum(['PRIVATE', 'PUBLIC']);
@@ -572,6 +588,8 @@ export const projectSummarySchema = z.object({
   microMarket: z.string().nullable(),
   startingPriceMinor: z.string().nullable(),
   currency: z.string(),
+  constructionPhase: constructionPhaseSchema.optional(),
+  trustStatus: z.string().optional(),
   publishedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -4903,21 +4921,6 @@ export const adminAiGovernanceResponseSchema = z.object({
 export type AdminAiGovernanceResponse = z.infer<typeof adminAiGovernanceResponseSchema>;
 
 // --- Phase 15A: Developer & Project Operations ---
-
-export const constructionPhaseSchema = z.enum([
-  'NOT_STARTED',
-  'FOUNDATION',
-  'STRUCTURE',
-  'BRICKWORK',
-  'ELECTRICAL',
-  'PLUMBING',
-  'FINISHING',
-  'INFRASTRUCTURE',
-  'HANDOVER',
-  'COMPLETED',
-  'OTHER',
-]);
-export type ConstructionPhase = z.infer<typeof constructionPhaseSchema>;
 
 export const constructionUpdatePublicationStatusSchema = z.enum([
   'DRAFT',
