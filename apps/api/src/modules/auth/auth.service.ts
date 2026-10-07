@@ -183,6 +183,7 @@ export class AuthService {
     actor: AuthActor,
     input: ChangePasswordRequest,
     request: AuthenticatedRequest,
+    res?: Response,
   ): Promise<{ ok: true }> {
     const credential = await this.prisma.userCredential.findUnique({
       where: { userId: actor.userId },
@@ -211,6 +212,10 @@ export class AuthService {
       data: { passwordHash },
     });
     await this.sessions.revokeAllUserSessions(actor.userId);
+    // Clear the browser cookie so the revoked session cannot continue client-side.
+    if (res) {
+      this.sessions.clearSessionCookie(res);
+    }
 
     await this.audit.write({
       actorUserId: actor.userId,

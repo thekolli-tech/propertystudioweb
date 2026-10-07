@@ -14,6 +14,7 @@ import { newUuid } from '../../common/crypto/ids';
 import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { CatalogAccessService } from './catalog-access.service';
 import {
@@ -33,6 +34,7 @@ export class ProjectsService {
     private readonly publicIds: PublicIdService,
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
+    private readonly storage: ObjectStorageService,
   ) {}
 
   async create(actor: AuthActor, body: CreateProjectRequest, request?: AuthenticatedRequest) {
@@ -463,6 +465,11 @@ export class ProjectsService {
       request,
     );
 
+    const storageKey = this.storage.assertOrganizationScopedKey(
+      body.storageKey,
+      project.organization.publicId,
+    );
+
     const asset = await this.prisma.mediaAsset.create({
       data: {
         id: newUuid(),
@@ -470,7 +477,7 @@ export class ProjectsService {
         organizationId: project.organizationId,
         entityType: 'PROJECT',
         entityId: project.id,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         mediaType: body.mediaType,
         fileSizeBytes: body.fileSizeBytes,
@@ -526,6 +533,11 @@ export class ProjectsService {
       request,
     );
 
+    const storageKey = this.storage.assertOrganizationScopedKey(
+      body.storageKey,
+      project.organization.publicId,
+    );
+
     const asset = await this.prisma.documentAsset.create({
       data: {
         id: newUuid(),
@@ -533,7 +545,7 @@ export class ProjectsService {
         organizationId: project.organizationId,
         entityType: 'PROJECT',
         entityId: project.id,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         documentType: body.documentType,
         title: body.title,

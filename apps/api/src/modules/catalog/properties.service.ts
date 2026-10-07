@@ -14,6 +14,7 @@ import { newUuid } from '../../common/crypto/ids';
 import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { CatalogAccessService } from './catalog-access.service';
@@ -27,6 +28,7 @@ export class PropertiesService {
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
     private readonly domainEvents: DomainEventBus,
+    private readonly storage: ObjectStorageService,
   ) {}
 
   async create(actor: AuthActor, body: CreatePropertyRequest, request?: AuthenticatedRequest) {
@@ -527,6 +529,11 @@ export class PropertiesService {
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
 
+    const storageKey = this.storage.assertOrganizationScopedKey(
+      body.storageKey,
+      property.organization.publicId,
+    );
+
     const asset = await this.prisma.mediaAsset.create({
       data: {
         id: newUuid(),
@@ -534,7 +541,7 @@ export class PropertiesService {
         organizationId: property.organizationId,
         entityType: 'PROPERTY',
         entityId: property.id,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         mediaType: body.mediaType,
         fileSizeBytes: body.fileSizeBytes,
@@ -585,6 +592,11 @@ export class PropertiesService {
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
 
+    const storageKey = this.storage.assertOrganizationScopedKey(
+      body.storageKey,
+      property.organization.publicId,
+    );
+
     const asset = await this.prisma.documentAsset.create({
       data: {
         id: newUuid(),
@@ -592,7 +604,7 @@ export class PropertiesService {
         organizationId: property.organizationId,
         entityType: 'PROPERTY',
         entityId: property.id,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         documentType: body.documentType,
         title: body.title,

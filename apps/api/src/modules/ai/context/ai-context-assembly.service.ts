@@ -61,25 +61,36 @@ export class AiContextAssemblyService {
       labels.push(`Organization: ${activeOrganizationPublicId}`);
     }
 
-    if (actorHasPermission(actor, 'saved-property:read')) {
-      summary.savedPropertyCount = await this.prisma.savedProperty.count({
-        where: { userId: actor.userId, deletedAt: null },
-      });
+    const personalCounts = await Promise.all([
+      actorHasPermission(actor, 'saved-property:read')
+        ? this.prisma.savedProperty.count({
+            where: { userId: actor.userId, deletedAt: null },
+          })
+        : Promise.resolve(null),
+      actorHasPermission(actor, 'saved-search:read')
+        ? this.prisma.savedSearch.count({
+            where: { userId: actor.userId, deletedAt: null },
+          })
+        : Promise.resolve(null),
+      actorHasPermission(actor, 'requirement:read:own')
+        ? this.prisma.requirement.count({
+            where: {
+              ownerUserId: actor.userId,
+              status: { in: ['ACTIVE', 'DRAFT', 'PAUSED'] },
+            },
+          })
+        : Promise.resolve(null),
+    ]);
+    summary.savedPropertyCount = personalCounts[0];
+    summary.savedSearchCount = personalCounts[1];
+    summary.activeRequirementCount = personalCounts[2];
+    if (summary.savedPropertyCount !== null) {
       labels.push(`Saved properties: ${summary.savedPropertyCount}`);
     }
-    if (actorHasPermission(actor, 'saved-search:read')) {
-      summary.savedSearchCount = await this.prisma.savedSearch.count({
-        where: { userId: actor.userId, deletedAt: null },
-      });
+    if (summary.savedSearchCount !== null) {
       labels.push(`Saved searches: ${summary.savedSearchCount}`);
     }
-    if (actorHasPermission(actor, 'requirement:read:own')) {
-      summary.activeRequirementCount = await this.prisma.requirement.count({
-        where: {
-          ownerUserId: actor.userId,
-          status: { in: ['ACTIVE', 'DRAFT', 'PAUSED'] },
-        },
-      });
+    if (summary.activeRequirementCount !== null) {
       labels.push(`Requirements: ${summary.activeRequirementCount}`);
     }
 

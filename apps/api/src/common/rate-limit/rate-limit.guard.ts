@@ -20,9 +20,9 @@ export class RateLimitGuard implements CanActivate {
     const path = request.path || '';
     const isAuthRoute = path.includes('/auth/');
     const isAiRoute = path.includes('/ai/');
-    const hasSessionCookie = Boolean(
-      (request as Request & { cookies?: Record<string, string> }).cookies?.ps_session,
-    );
+    const cookies = (request as Request & { cookies?: Record<string, string> }).cookies ?? {};
+    // Production uses __Host-ps_session; development/test use ps_session.
+    const hasSessionCookie = Boolean(cookies.ps_session || cookies['__Host-ps_session']);
 
     // AI: anonymous (no session cookie) uses strict auth limits; authenticated uses API limits.
     // Auth routes always use strict limits. Other routes use standard API limits.
@@ -61,11 +61,14 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private resolveClientIp(request: Request): string {
-    const forwarded = request.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.length > 0) {
-      const first = forwarded.split(',')[0]?.trim();
-      if (first) {
-        return first;
+    // Only trust X-Forwarded-For when explicitly configured (reverse proxy / ingress).
+    if (this.config.values.TRUST_PROXY) {
+      const forwarded = request.headers['x-forwarded-for'];
+      if (typeof forwarded === 'string' && forwarded.length > 0) {
+        const first = forwarded.split(',')[0]?.trim();
+        if (first) {
+          return first;
+        }
       }
     }
     return request.ip || request.socket.remoteAddress || 'unknown';

@@ -3,6 +3,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 
 import { AppConfigService } from '../config/app-config.service';
+import { AppError } from '../errors/app-error';
 
 export type SignedDownloadUrl = {
   url: string;
@@ -90,17 +91,65 @@ export class ObjectStorageService {
   }
 
   /**
+   * Rejects path traversal and absolute keys. Embed pseudo-keys (`embed://`) are allowed.
+   */
+  assertSafeStorageKey(storageKey: string): string {
+    if (typeof storageKey !== 'string' || storageKey.length === 0 || storageKey.length > 512) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid storage key.');
+    }
+    if (storageKey.startsWith('embed://')) {
+      return storageKey;
+    }
+    if (
+      storageKey.includes('..') ||
+      storageKey.includes('\0') ||
+      storageKey.startsWith('/') ||
+      storageKey.includes('\\') ||
+      storageKey.includes('//')
+    ) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid storage key.');
+    }
+    return storageKey;
+  }
+
+  /**
+   * Ensures a key is under the organization's private namespace (confused-deputy defense).
+   * Callers must pass the authoritative organization public ID from the DB, not the client.
+   */
+  assertOrganizationScopedKey(storageKey: string, organizationPublicId: string): string {
+    const safe = this.assertSafeStorageKey(storageKey);
+    if (safe.startsWith('embed://')) {
+      return safe;
+    }
+    if (!organizationPublicId || typeof organizationPublicId !== 'string') {
+      throw new AppError('VALIDATION_ERROR', 'Invalid storage key.');
+    }
+    const expectedPrefix = `organizations/${organizationPublicId}/`;
+    if (!safe.startsWith(expectedPrefix)) {
+      throw new AppError('VALIDATION_ERROR', 'Storage key is outside the organization namespace.');
+    }
+    return safe;
+  }
+
+  /**
    * Issues a short-lived GET URL for a private object. Does not validate authz —
-   * callers must authorize before invoking this method.
+   * callers must authorize before invoking this method. Still rejects unsafe keys.
    */
   async createSignedDownloadUrl(
     storageKey: string,
     expiresInSeconds = 120,
   ): Promise<SignedDownloadUrl> {
+    const safeKey = this.assertSafeStorageKey(storageKey);
+    if (safeKey.startsWith('embed://')) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'Embed media does not use object storage access URLs.',
+      );
+    }
     const ttl = Math.min(Math.max(Math.trunc(expiresInSeconds), 30), 900);
     const command = new GetObjectCommand({
       Bucket: this.bucket(),
-      Key: storageKey,
+      Key: safeKey,
     });
     const url = await getSignedUrl(this.client, command, { expiresIn: ttl });
     return {

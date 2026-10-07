@@ -1300,6 +1300,7 @@ model Lead {
   @@index([createdAt])
   @@index([matchedPropertyId])
   @@index([matchedProjectId])
+  @@index([recipientOrganizationId, status, createdAt])
   @@map("leads")
 }
 
@@ -1401,6 +1402,7 @@ model CrmFollowUp {
   @@index([status])
   @@index([priority])
   @@index([dueAt])
+  @@index([organizationId, status, dueAt])
   @@map("crm_follow_ups")
 }
 
@@ -1438,6 +1440,7 @@ model CrmSiteVisit {
   @@index([projectId])
   @@index([status])
   @@index([scheduledAt])
+  @@index([organizationId, status, scheduledAt])
   @@map("crm_site_visits")
 }
 
@@ -1475,6 +1478,7 @@ model CrmDeal {
   @@index([status])
   @@index([expectedCloseDate])
   @@index([createdAt])
+  @@index([organizationId, status])
   @@map("crm_deals")
 }
 

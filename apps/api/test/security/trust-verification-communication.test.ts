@@ -505,7 +505,7 @@ describe('Phase 10 trust verification communication security', () => {
         .set('Cookie', agent.cookie)
         .send({
           documentType: 'RERA_CERTIFICATE',
-          storageKey: `verification/${agency.orgPublicId}/rera.pdf`,
+          storageKey: `organizations/${agency.orgPublicId}/verification/${created.body.publicId}/documents/rera.pdf`,
           mimeType: 'application/pdf',
           title: 'RERA Certificate',
           fileSizeBytes: '2048',

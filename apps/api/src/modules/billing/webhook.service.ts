@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { AuditService } from '../../common/audit/audit.service';
+import { AppConfigService } from '../../common/config/app-config.service';
 import { newUuid } from '../../common/crypto/ids';
 import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
@@ -14,6 +15,7 @@ export class WebhookService {
     private readonly audit: AuditService,
     private readonly providers: PaymentProviderRegistry,
     private readonly wallets: WalletService,
+    private readonly config: AppConfigService,
   ) {}
 
   async handleRazorpay(rawBody: string, signature: string | undefined) {
@@ -85,6 +87,15 @@ export class WebhookService {
   }
 
   async handleSandbox(rawBody: string) {
+    // Production must not accept unsigned sandbox webhooks (confused-deputy / wallet credit).
+    if (
+      this.config.isProduction ||
+      (this.config.values.PAYMENTS_PROVIDER !== 'SANDBOX' &&
+        !this.config.values.ALLOW_SANDBOX_PAYMENTS)
+    ) {
+      throw new AppError('NOT_FOUND', 'Resource not found.');
+    }
+
     const provider = this.providers.get('SANDBOX');
     const verified = await provider.verifyWebhook({ rawBody, signature: 'sandbox' });
 
