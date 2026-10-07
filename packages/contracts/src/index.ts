@@ -195,7 +195,23 @@ export const switchOrganizationResponseSchema = z.object({
 export type SwitchOrganizationResponse = z.infer<typeof switchOrganizationResponseSchema>;
 
 export const profileStatusSchema = z.enum(['ACTIVE', 'DISABLED']);
-export const agencyVerificationStatusSchema = z.enum(['UNVERIFIED', 'PENDING', 'VERIFIED']);
+export const agencyVerificationStatusSchema = z.enum([
+  'UNVERIFIED',
+  'PENDING',
+  'VERIFIED',
+  'REJECTED',
+  'SUSPENDED',
+]);
+
+export const processingFeeStatusSchema = z.enum([
+  'NOT_APPLICABLE',
+  'REQUIRED',
+  'PENDING',
+  'PAID',
+  'FAILED',
+  'WAIVED',
+]);
+export type ProcessingFeeStatus = z.infer<typeof processingFeeStatusSchema>;
 
 const operatingZonesSchema = z.array(z.string().trim().min(1).max(80)).max(20).default([]);
 
@@ -229,6 +245,11 @@ export type UpdateDeveloperProfileRequest = z.infer<typeof updateDeveloperProfil
 
 export const agencyProfileFieldsSchema = developerProfileFieldsSchema.extend({
   specialization: z.string().trim().max(160).optional().nullable(),
+  propertyTypes: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+  configurations: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+  priceRangeMinMinor: z.coerce.bigint().nonnegative().optional().nullable(),
+  priceRangeMaxMinor: z.coerce.bigint().nonnegative().optional().nullable(),
+  reraNumber: z.string().trim().max(64).optional().nullable(),
 });
 
 export const updateAgencyProfileRequestSchema = agencyProfileFieldsSchema.partial().extend({
@@ -291,7 +312,17 @@ export type DeveloperProfile = z.infer<typeof developerProfileSchema>;
 
 export const agencyProfileSchema = developerProfileSchema.extend({
   specialization: z.string().nullable(),
+  propertyTypes: z.array(z.string()),
+  configurations: z.array(z.string()),
+  priceRangeMinMinor: z.string().nullable(),
+  priceRangeMaxMinor: z.string().nullable(),
+  reraNumber: z.string().nullable(),
   verificationStatus: agencyVerificationStatusSchema,
+  verifiedAt: z.string().datetime().nullable(),
+  verificationExpiresAt: z.string().datetime().nullable(),
+  suspendedAt: z.string().datetime().nullable(),
+  suspensionReason: z.string().nullable(),
+  verifiedBadge: z.boolean(),
 });
 
 export type AgencyProfile = z.infer<typeof agencyProfileSchema>;
@@ -313,6 +344,11 @@ export type PublicDeveloperProfile = z.infer<typeof publicDeveloperProfileSchema
 
 export const publicAgencyProfileSchema = publicDeveloperProfileSchema.extend({
   specialization: z.string().nullable(),
+  propertyTypes: z.array(z.string()),
+  configurations: z.array(z.string()),
+  priceRangeMinMinor: z.string().nullable(),
+  priceRangeMaxMinor: z.string().nullable(),
+  verificationExpiresAt: z.string().datetime().nullable(),
 });
 
 export type PublicAgencyProfile = z.infer<typeof publicAgencyProfileSchema>;
@@ -1830,6 +1866,7 @@ export const entitlementKeySchema = z.enum([
   'PREMIUM_PROJECT_COMMUNITY',
   'ANALYTICS',
   'EXPORTS',
+  'AGENT_PROFESSIONAL',
 ]);
 export const walletLedgerEntryTypeSchema = z.enum([
   'CREDIT',
@@ -1844,6 +1881,7 @@ export const financialTransactionTypeSchema = z.enum([
   'LEAD_PURCHASE',
   'REFUND',
   'ADJUSTMENT',
+  'AGENT_VERIFICATION_FEE',
 ]);
 export const financialTransactionStatusSchema = z.enum([
   'PENDING',
@@ -2261,6 +2299,9 @@ export const notificationTypeSchema = z.enum([
   'VERIFICATION_REJECTED',
   'VERIFICATION_CHANGES_REQUESTED',
   'VERIFICATION_EXPIRING',
+  'VERIFICATION_SUSPENDED',
+  'VERIFICATION_REINSTATED',
+  'VERIFICATION_PAYMENT_RECEIVED',
   'NEW_LEAD',
   'LEAD_ASSIGNED',
   'LEAD_PURCHASED',
@@ -2381,6 +2422,9 @@ export const verificationCaseSummarySchema = z.object({
   status: verificationCaseStatusSchema,
   reraNumber: z.string().nullable(),
   declarationAccepted: z.boolean(),
+  processingFeeStatus: processingFeeStatusSchema,
+  processingFeeTransactionPublicId: z.string().nullable(),
+  reviewEligible: z.boolean(),
   submittedAt: z.string().datetime().nullable(),
   reviewedAt: z.string().datetime().nullable(),
   expiresAt: z.string().datetime().nullable(),
@@ -3785,6 +3829,12 @@ export const domainEventTypeSchema = z.enum([
   'payment.succeeded',
   'payment.failed',
   'verification.updated',
+  'agent.verification.submitted',
+  'agent.verification.approved',
+  'agent.verification.rejected',
+  'agent.verification.suspended',
+  'agent.verification.reinstated',
+  'agent.verification.expiring',
   'review.published',
   'media.published',
   'community.update_created',
@@ -5085,3 +5135,56 @@ export const projectInventoryListResponseSchema = z.object({
   nextCursor: z.string().nullable(),
 });
 export type ProjectInventoryListResponse = z.infer<typeof projectInventoryListResponseSchema>;
+
+// --- Phase 15B: Agent verification & professional operations ---
+
+export const payAgentVerificationFeeRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  verificationCasePublicId: z.string().regex(/^PS-VCASE-\d+$/),
+  idempotencyKey: z.string().trim().min(8).max(128),
+});
+export type PayAgentVerificationFeeRequest = z.infer<typeof payAgentVerificationFeeRequestSchema>;
+
+export const payAgentVerificationFeeResponseSchema = z.object({
+  transaction: financialTransactionSummarySchema,
+  verificationCase: verificationCaseSummarySchema,
+});
+export type PayAgentVerificationFeeResponse = z.infer<typeof payAgentVerificationFeeResponseSchema>;
+
+export const agentProfessionalStatusSchema = z.object({
+  organizationPublicId: z.string(),
+  agencyPublicId: z.string(),
+  verificationStatus: agencyVerificationStatusSchema,
+  verifiedBadge: z.boolean(),
+  professionalAccess: z.boolean(),
+  listingAccess: z.boolean(),
+  marketplaceAccess: z.boolean(),
+  processingFeeStatus: processingFeeStatusSchema.nullable(),
+  activeVerificationCasePublicId: z.string().nullable(),
+  reraNumber: z.string().nullable(),
+  verifiedAt: z.string().datetime().nullable(),
+  verificationExpiresAt: z.string().datetime().nullable(),
+  renewalStatus: z.enum(['NOT_APPLICABLE', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'SUSPENDED']),
+  specialization: z.string().nullable(),
+  operatingZones: z.array(z.string()),
+  propertyTypes: z.array(z.string()),
+  configurations: z.array(z.string()),
+  priceRangeMinMinor: z.string().nullable(),
+  priceRangeMaxMinor: z.string().nullable(),
+  entitlements: z.array(entitlementKeySchema),
+});
+export type AgentProfessionalStatus = z.infer<typeof agentProfessionalStatusSchema>;
+
+export const agentWorkspaceResponseSchema = z.object({
+  status: agentProfessionalStatusSchema,
+  listingCount: z.number().int().nonnegative(),
+  leadCount: z.number().int().nonnegative(),
+  openDealCount: z.number().int().nonnegative(),
+  openSiteVisitCount: z.number().int().nonnegative(),
+  walletBalanceMinor: z.string().nullable(),
+  walletCurrency: z.string().nullable(),
+});
+export type AgentWorkspaceResponse = z.infer<typeof agentWorkspaceResponseSchema>;
+
+export const suspendAgentVerificationRequestSchema = reviewVerificationCaseRequestSchema;
+export type SuspendAgentVerificationRequest = z.infer<typeof suspendAgentVerificationRequestSchema>;

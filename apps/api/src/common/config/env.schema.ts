@@ -55,6 +55,8 @@ export const envSchema = z
     /** Explicit opt-in for SANDBOX payments when NODE_ENV=production (staging only). */
     ALLOW_SANDBOX_PAYMENTS: booleanFromString.default(false),
     DEFAULT_LEAD_PURCHASE_PRICE_MINOR: z.coerce.number().int().nonnegative().default(50_000),
+    /** Upfront agent verification processing fee (INR paise). Payment ≠ verification. */
+    DEFAULT_AGENT_VERIFICATION_FEE_MINOR: z.coerce.number().int().nonnegative().default(99_900),
     /** Max JSON body size in bytes for the API (webhooks included). */
     BODY_SIZE_LIMIT_BYTES: z.coerce.number().int().positive().default(1_048_576),
   })

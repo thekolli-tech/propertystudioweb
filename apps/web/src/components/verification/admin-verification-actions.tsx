@@ -6,14 +6,28 @@ import { Button, Input, Label } from '@property-studio/ui';
 
 import { createBrowserApiClient } from '@/lib/api';
 
-type Action = 'approve' | 'reject' | 'request-changes' | 'revoke';
+type Action = 'approve' | 'reject' | 'request-changes' | 'revoke' | 'suspend' | 'reinstate';
 
-export function AdminVerificationActions({ casePublicId }: { casePublicId: string }) {
+export type AdminVerificationActionsProps = {
+  casePublicId: string;
+  subjectType?: 'AGENT' | 'DEVELOPER' | 'PROPERTY' | 'PROJECT';
+  status?: string;
+};
+
+export function AdminVerificationActions({
+  casePublicId,
+  subjectType,
+  status,
+}: AdminVerificationActionsProps) {
   const router = useRouter();
   const [notes, setNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [pending, setPending] = useState<Action | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isAgent = subjectType === 'AGENT';
+  const showSuspend = isAgent && (!status || status === 'APPROVED');
+  const showReinstate = isAgent && (!status || status === 'REVOKED' || status === 'APPROVED');
 
   async function run(action: Action) {
     setError(null);
@@ -28,7 +42,9 @@ export function AdminVerificationActions({ casePublicId }: { casePublicId: strin
       else if (action === 'reject') await client.rejectVerificationCase(casePublicId, body);
       else if (action === 'request-changes')
         await client.requestVerificationChanges(casePublicId, body);
-      else await client.revokeVerificationCase(casePublicId, body);
+      else if (action === 'revoke') await client.revokeVerificationCase(casePublicId, body);
+      else if (action === 'suspend') await client.adminSuspendVerification(casePublicId, body);
+      else await client.adminReinstateVerification(casePublicId, body);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed.');
@@ -53,7 +69,7 @@ export function AdminVerificationActions({ casePublicId }: { casePublicId: strin
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="rejection-reason">Rejection / revoke reason</Label>
+        <Label htmlFor="rejection-reason">Rejection / revoke / suspend reason</Label>
         <Input
           id="rejection-reason"
           value={rejectionReason}
@@ -93,6 +109,28 @@ export function AdminVerificationActions({ casePublicId }: { casePublicId: strin
         >
           {pending === 'revoke' ? '…' : 'Revoke'}
         </Button>
+        {showSuspend ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            disabled={pending !== null}
+            onClick={() => run('suspend')}
+          >
+            {pending === 'suspend' ? '…' : 'Suspend'}
+          </Button>
+        ) : null}
+        {showReinstate ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={pending !== null}
+            onClick={() => run('reinstate')}
+          >
+            {pending === 'reinstate' ? '…' : 'Reinstate'}
+          </Button>
+        ) : null}
       </div>
     </form>
   );

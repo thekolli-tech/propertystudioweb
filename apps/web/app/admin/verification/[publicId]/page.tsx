@@ -56,6 +56,20 @@ export default async function AdminVerificationDetailPage({
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <StatusBadge tone="info">{detail.status}</StatusBadge>
+        <StatusBadge
+          tone={
+            detail.processingFeeStatus === 'PAID' || detail.processingFeeStatus === 'WAIVED'
+              ? 'success'
+              : detail.processingFeeStatus === 'REQUIRED' || detail.processingFeeStatus === 'FAILED'
+                ? 'warning'
+                : 'neutral'
+          }
+        >
+          Fee · {detail.processingFeeStatus}
+        </StatusBadge>
+        <StatusBadge tone={detail.reviewEligible ? 'success' : 'warning'}>
+          Review {detail.reviewEligible ? 'eligible' : 'blocked'}
+        </StatusBadge>
         <span className="text-muted-foreground">
           Org {detail.organizationPublicId ?? '—'} · subject {detail.subjectType}
         </span>
@@ -76,6 +90,20 @@ export default async function AdminVerificationDetailPage({
           <div>
             <dt className="text-muted-foreground">Declaration accepted</dt>
             <dd className="font-medium">{detail.declarationAccepted ? 'Yes' : 'No'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Processing fee</dt>
+            <dd className="font-medium">{detail.processingFeeStatus}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Review eligible</dt>
+            <dd className="font-medium">{detail.reviewEligible ? 'Yes' : 'No'}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Fee transaction</dt>
+            <dd className="font-medium font-mono text-xs">
+              {detail.processingFeeTransactionPublicId ?? '—'}
+            </dd>
           </div>
           <div>
             <dt className="text-muted-foreground">Submitted</dt>
@@ -136,9 +164,13 @@ export default async function AdminVerificationDetailPage({
 
       <DashboardSection
         title="Moderation actions"
-        description="Approve, reject, request changes, or revoke this case."
+        description="Approve, reject, request changes, revoke, suspend, or reinstate this case."
       >
-        <AdminVerificationActions casePublicId={detail.publicId} />
+        <AdminVerificationActions
+          casePublicId={detail.publicId}
+          subjectType={detail.subjectType}
+          status={detail.status}
+        />
       </DashboardSection>
     </div>
   );

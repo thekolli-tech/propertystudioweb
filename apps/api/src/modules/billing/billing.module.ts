@@ -39,6 +39,9 @@ import { WebhookService } from './webhook.service';
     SubscriptionService,
     LeadPurchaseService,
     PaymentService,
+    BillingAccessService,
+    PaymentProviderRegistry,
+    WebhookService,
   ],
 })
 export class BillingModule {}

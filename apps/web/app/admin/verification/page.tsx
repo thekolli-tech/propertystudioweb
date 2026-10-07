@@ -110,6 +110,8 @@ export default async function AdminVerificationPage({
                 <th className="px-4 py-3 font-medium">Organization</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Fee</th>
+                <th className="px-4 py-3 font-medium">Review</th>
                 <th className="px-4 py-3 font-medium">Submitted</th>
               </tr>
             </thead>
@@ -130,6 +132,25 @@ export default async function AdminVerificationPage({
                   <td className="px-4 py-3">{item.verificationType}</td>
                   <td className="px-4 py-3">
                     <StatusBadge tone="info">{item.status}</StatusBadge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge
+                      tone={
+                        item.processingFeeStatus === 'PAID' || item.processingFeeStatus === 'WAIVED'
+                          ? 'success'
+                          : item.processingFeeStatus === 'REQUIRED' ||
+                              item.processingFeeStatus === 'FAILED'
+                            ? 'warning'
+                            : 'neutral'
+                      }
+                    >
+                      {item.processingFeeStatus}
+                    </StatusBadge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge tone={item.reviewEligible ? 'success' : 'warning'}>
+                      {item.reviewEligible ? 'Eligible' : 'Blocked'}
+                    </StatusBadge>
                   </td>
                   <td className="px-4 py-3">
                     {item.submittedAt ? new Date(item.submittedAt).toLocaleString('en-IN') : '—'}

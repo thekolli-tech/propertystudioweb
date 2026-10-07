@@ -175,6 +175,24 @@ export class WebhookService {
             idempotencyKey: `webhook-capture:${transaction.id}`,
           });
         }
+        if (transaction.type === 'AGENT_VERIFICATION_FEE') {
+          // Payment success never auto-verifies — only unlocks admin review eligibility.
+          const metadata = transaction.metadata as { verificationCaseId?: string } | null;
+          await tx.verificationCase.updateMany({
+            where: {
+              OR: [
+                { processingFeeTransactionId: transaction.id },
+                ...(metadata?.verificationCaseId ? [{ id: metadata.verificationCaseId }] : []),
+              ],
+              processingFeeStatus: { in: ['REQUIRED', 'PENDING', 'FAILED'] },
+            },
+            data: {
+              processingFeeStatus: 'PAID',
+              processingFeeTransactionId: transaction.id,
+              version: { increment: 1 },
+            },
+          });
+        }
       });
       await this.audit.write({
         organizationId: transaction.organizationId,
@@ -182,6 +200,15 @@ export class WebhookService {
         resourceType: 'financial_transaction',
         resourceId: transaction.publicId,
       });
+      if (transaction.type === 'AGENT_VERIFICATION_FEE') {
+        await this.audit.write({
+          organizationId: transaction.organizationId,
+          action: 'agent.verification.fee.paid',
+          resourceType: 'financial_transaction',
+          resourceId: transaction.publicId,
+          metadata: { via: 'webhook' },
+        });
+      }
     }
   }
 }

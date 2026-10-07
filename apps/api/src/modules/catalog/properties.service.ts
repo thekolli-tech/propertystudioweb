@@ -16,6 +16,7 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { CatalogAccessService } from './catalog-access.service';
 import { decimalToNumber, decodeCursor, encodeCursor, toIso } from './catalog.util';
@@ -27,12 +28,13 @@ export class PropertiesService {
     private readonly publicIds: PublicIdService,
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
+    private readonly agentAccess: AgentProfessionalAccessService,
     private readonly domainEvents: DomainEventBus,
     private readonly storage: ObjectStorageService,
   ) {}
 
   async create(actor: AuthActor, body: CreatePropertyRequest, request?: AuthenticatedRequest) {
-    const organization = await this.access.requireDeveloperOrganization(
+    const organization = await this.agentAccess.requireListingOrganization(
       actor,
       body.organizationPublicId,
       'property:create',
@@ -122,7 +124,7 @@ export class PropertiesService {
     }
 
     if (query.organizationPublicId) {
-      await this.access.requireDeveloperOrganization(
+      await this.access.requirePropertyOrganization(
         actor,
         query.organizationPublicId,
         'property:read',

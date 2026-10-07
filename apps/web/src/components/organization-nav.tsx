@@ -68,12 +68,15 @@ const DEVELOPER_ITEMS: NavItem[] = [
 
 const AGENCY_ITEMS: NavItem[] = [
   { segment: '', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
+  { segment: 'verification', label: 'Verification', icon: <ShieldCheck className="h-4 w-4" /> },
   { segment: 'properties', label: 'Properties', icon: <Home className="h-4 w-4" /> },
   { segment: 'requirements', label: 'Requirements', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
   { segment: 'crm', label: 'CRM', icon: <ClipboardList className="h-4 w-4" /> },
   { segment: 'team', label: 'Team', icon: <Users className="h-4 w-4" /> },
-  ...SHARED_TRUST_ITEMS,
+  { segment: 'reviews', label: 'Reviews', icon: <Star className="h-4 w-4" /> },
+  { segment: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4" /> },
+  { segment: 'messages', label: 'Messages', icon: <MessageSquare className="h-4 w-4" /> },
   SHARED_INTELLIGENCE_ITEM,
   { segment: 'media', label: 'Media', icon: <Images className="h-4 w-4" /> },
   { segment: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },

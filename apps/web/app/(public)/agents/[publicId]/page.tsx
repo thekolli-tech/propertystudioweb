@@ -37,13 +37,13 @@ export default async function PublicAgentPage({ params }: PageProps) {
           />
         }
         title={profile.displayName}
-        description="Public agency profile. Private contact fields are never exposed."
+        description="Public agency profile. Private contact fields and admin notes are never exposed."
       />
       <section className="space-y-6">
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">{profile.publicId}</Badge>
           <Badge variant="outline">{profile.organizationPublicId}</Badge>
-          <VerifiedBadge verified={profile.verifiedBadge} />
+          <VerifiedBadge verified={profile.verifiedBadge} label="Verified Expert" />
           {!profile.verifiedBadge ? (
             <Badge variant="outline">Professional verification required</Badge>
           ) : null}
@@ -73,6 +73,34 @@ export default async function PublicAgentPage({ params }: PageProps) {
               {profile.operatingZones.length ? profile.operatingZones.join(', ') : 'Not published'}
             </dd>
           </div>
+          {profile.verifiedBadge ? (
+            <>
+              <div>
+                <dt className="text-muted-foreground">Property types</dt>
+                <dd className="font-medium text-foreground">
+                  {profile.propertyTypes.length
+                    ? profile.propertyTypes.join(', ')
+                    : 'Not published'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Configurations</dt>
+                <dd className="font-medium text-foreground">
+                  {profile.configurations.length
+                    ? profile.configurations.join(', ')
+                    : 'Not published'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Verification expires</dt>
+                <dd className="font-medium text-foreground">
+                  {profile.verificationExpiresAt
+                    ? new Date(profile.verificationExpiresAt).toLocaleDateString('en-IN')
+                    : 'Not published'}
+                </dd>
+              </div>
+            </>
+          ) : null}
           <div>
             <dt className="text-muted-foreground">Website</dt>
             <dd className="font-medium text-foreground">{profile.website ?? 'Not published'}</dd>

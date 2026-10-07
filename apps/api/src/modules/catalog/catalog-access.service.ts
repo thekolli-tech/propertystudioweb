@@ -24,6 +24,38 @@ export class CatalogAccessService {
     permission: Permission,
     request?: AuthenticatedRequest,
   ) {
+    return this.requireOrganizationOfTypes(
+      actor,
+      organizationPublicId,
+      permission,
+      ['DEVELOPER'],
+      request,
+    );
+  }
+
+  /** Property catalog org access for developers and agencies (listing create still gated separately). */
+  async requirePropertyOrganization(
+    actor: AuthActor,
+    organizationPublicId: string,
+    permission: Permission,
+    request?: AuthenticatedRequest,
+  ) {
+    return this.requireOrganizationOfTypes(
+      actor,
+      organizationPublicId,
+      permission,
+      ['DEVELOPER', 'AGENCY'],
+      request,
+    );
+  }
+
+  private async requireOrganizationOfTypes(
+    actor: AuthActor,
+    organizationPublicId: string,
+    permission: Permission,
+    allowedTypes: Array<'DEVELOPER' | 'AGENCY'>,
+    request?: AuthenticatedRequest,
+  ) {
     const organization = await this.prisma.organization.findFirst({
       where: { publicId: organizationPublicId, status: 'ACTIVE' },
     });
@@ -32,7 +64,7 @@ export class CatalogAccessService {
       return await this.deny(actor, organizationPublicId, request);
     }
 
-    if (organization.type !== 'DEVELOPER') {
+    if (!allowedTypes.includes(organization.type as 'DEVELOPER' | 'AGENCY')) {
       return await this.deny(actor, organizationPublicId, request);
     }
 
