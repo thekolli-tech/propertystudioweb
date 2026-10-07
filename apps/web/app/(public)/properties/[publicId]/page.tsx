@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import { SavePropertyButton } from '@/components/discovery/save-property-button';
 import {
   IntelligencePanel,
@@ -279,6 +280,15 @@ export default async function PublicPropertyPage({ params }: PageProps) {
             Enquire now
           </Button>
           <SavePropertyButton propertyPublicId={property.publicId} />
+          <AskAiLink
+            className="w-full"
+            label="Ask AI about this property"
+            hints={{
+              propertyPublicId: property.publicId,
+              focus: 'property',
+              route: `/properties/${property.publicId}`,
+            }}
+          />
           <p className="text-xs text-muted-foreground">
             Enquiry workflows ship in a later phase. This CTA is visual-only until lead APIs exist.
           </p>

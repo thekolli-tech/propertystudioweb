@@ -13,7 +13,20 @@ export type AiToolName =
   | 'create_requirement'
   | 'analyze_document'
   | 'analyze_floorplan'
-  | 'estimate_property_value';
+  | 'estimate_property_value'
+  | 'get_current_user_context'
+  | 'get_saved_properties'
+  | 'get_saved_searches'
+  | 'get_active_requirements'
+  | 'get_my_crm_summary'
+  | 'get_my_followups'
+  | 'get_my_site_visits'
+  | 'get_my_deals'
+  | 'get_my_pipeline'
+  | 'get_project_context'
+  | 'get_property_context'
+  | 'compare_saved_properties'
+  | 'get_recommended_next_actions';
 
 export type AiToolResult = {
   tool: AiToolName;

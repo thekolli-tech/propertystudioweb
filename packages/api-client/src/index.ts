@@ -245,6 +245,8 @@ import {
   postAiConversationMessageRequestSchema,
   postAiConversationMessageResponseSchema,
   okAiConversationDeleteResponseSchema,
+  aiAssembledContextQuerySchema,
+  aiAssembledContextResponseSchema,
   developerDashboardResponseSchema,
   agentDashboardResponseSchema,
   seekerDashboardResponseSchema,
@@ -457,6 +459,9 @@ import {
   type PostAiConversationMessageRequest,
   type PostAiConversationMessageResponse,
   type OkAiConversationDeleteResponse,
+  type AiAssembledContextQuery,
+  type AiAssembledContextResponse,
+  type AiConversationContextHints,
   type DeveloperDashboardResponse,
   type AgentDashboardResponse,
   type SeekerDashboardResponse,
@@ -2006,6 +2011,19 @@ export class ApiClient {
       okAiConversationDeleteResponseSchema,
       { method: 'DELETE' },
     );
+  }
+
+  async getAiAssembledContext(
+    query: Partial<AiAssembledContextQuery> | AiConversationContextHints = {},
+  ): Promise<AiAssembledContextResponse> {
+    const parsed = aiAssembledContextQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value === undefined || value === null) continue;
+      params.set(key, String(value));
+    }
+    const q = params.toString();
+    return this.request(`/api/v1/ai/context${q ? `?${q}` : ''}`, aiAssembledContextResponseSchema);
   }
 
   async aiAssistant(input: AiAssistantRequest): Promise<AiAssistantResponse> {

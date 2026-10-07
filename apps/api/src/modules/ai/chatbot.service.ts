@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   type AiChatResultCard,
+  type AiConversationContextHints,
   type AiConversationDetail,
   type AiConversationMessage,
   type AiConversationSummary,
@@ -18,12 +19,14 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { AiAccessService } from './ai-access.service';
+import { AiContextAssemblyService } from './context/ai-context-assembly.service';
 import { parseNaturalLanguagePropertyQuery } from './nl-search.parser';
 import {
   AI_DISCLAIMER,
   AI_PROVIDER,
   type AiChatMessage,
   type AiProvider,
+  type AiToolName,
   type AiToolResult,
 } from './providers/ai-provider';
 import { AiToolsService } from './tools/ai-tools.service';
@@ -32,6 +35,7 @@ type ConversationContext = {
   lastPropertyPublicIds?: string[];
   lastProjectPublicIds?: string[];
   lastSearchQuery?: string | null;
+  hints?: AiConversationContextHints | null;
 };
 
 type PendingRequirement = {
@@ -56,6 +60,7 @@ export class ChatbotService {
     private readonly audit: AuditService,
     private readonly access: AiAccessService,
     private readonly tools: AiToolsService,
+    private readonly contextAssembly: AiContextAssemblyService,
     @Inject(AI_PROVIDER) private readonly provider: AiProvider,
   ) {}
 
@@ -94,6 +99,17 @@ export class ChatbotService {
       organizationPublicId = org?.publicId ?? null;
     }
 
+    const hints = this.contextAssembly.normalizeHints(body.contextHints);
+    // Never trust frontend org hint for tenancy — keep active org only.
+    if (
+      hints.organizationPublicId &&
+      hints.organizationPublicId !== organizationPublicId &&
+      !actor.platformRoles.includes('ADMIN') &&
+      !actor.platformRoles.includes('SUPER_ADMIN')
+    ) {
+      hints.organizationPublicId = organizationPublicId;
+    }
+
     const publicId = await this.publicIds.nextAiConversationPublicId();
     const row = await this.prisma.aiConversation.create({
       data: {
@@ -103,7 +119,7 @@ export class ChatbotService {
         organizationId,
         title: body.title ?? null,
         status: 'ACTIVE',
-        contextJson: {},
+        contextJson: { hints } as Prisma.InputJsonValue,
       },
     });
 
@@ -212,6 +228,12 @@ export class ChatbotService {
     await this.track(actor, conversation.id, 'MESSAGE_SENT', { role: 'USER' });
 
     const context = (conversation.contextJson ?? {}) as ConversationContext;
+    if (body.contextHints) {
+      context.hints = this.contextAssembly.normalizeHints({
+        ...context.hints,
+        ...body.contextHints,
+      });
+    }
     const pending = (conversation.pendingRequirementJson ?? null) as PendingRequirement | null;
 
     // Requirement confirmation gate — never create without explicit confirmation.
@@ -342,7 +364,8 @@ export class ChatbotService {
         });
         continue;
       }
-      const result = await this.tools.invoke(actor, call.tool, call.args, request);
+      const enrichedArgs = this.enrichToolArgsWithHints(call.tool, call.args, context.hints);
+      const result = await this.tools.invoke(actor, call.tool, enrichedArgs, request);
       toolResults.push(result);
       await this.track(actor, conversation.id, 'TOOL_INVOKED', {
         tool: call.tool,
@@ -382,7 +405,10 @@ export class ChatbotService {
     await this.prisma.aiConversation.update({
       where: { id: conversation.id },
       data: {
-        contextJson: nextContext as unknown as Prisma.InputJsonValue,
+        contextJson: {
+          ...nextContext,
+          hints: context.hints ?? null,
+        } as unknown as Prisma.InputJsonValue,
         lastMessageAt: new Date(),
         title: conversation.title ?? this.deriveTitle(body.message),
       },
@@ -427,6 +453,18 @@ export class ChatbotService {
     }
 
     const contextHints: string[] = [];
+    if (context.hints?.propertyPublicId) {
+      contextHints.push(`Focused property hint: ${context.hints.propertyPublicId}`);
+    }
+    if (context.hints?.projectPublicId) {
+      contextHints.push(`Focused project hint: ${context.hints.projectPublicId}`);
+    }
+    if (context.hints?.requirementPublicId) {
+      contextHints.push(`Focused requirement hint: ${context.hints.requirementPublicId}`);
+    }
+    if (context.hints?.focus && context.hints.focus !== 'general') {
+      contextHints.push(`Focus: ${context.hints.focus}`);
+    }
     if (context.lastPropertyPublicIds?.length) {
       contextHints.push(`Previous property results: ${context.lastPropertyPublicIds.join(', ')}`);
     }
@@ -437,13 +475,61 @@ export class ChatbotService {
       contextHints.push(`Previous search query: ${context.lastSearchQuery}`);
     }
 
+    let message = latestUserMessage;
+    // Seed focused public IDs into the user message so the deterministic provider can propose tools.
+    if (
+      context.hints?.propertyPublicId &&
+      !/PS-PROP-\d+/.test(message) &&
+      /this property|about this|current|know about|what do you know/i.test(message)
+    ) {
+      message = `${message} ${context.hints.propertyPublicId}`;
+    }
+    if (
+      context.hints?.projectPublicId &&
+      !/PS-PROJ-\d+/.test(message) &&
+      /this project|about this|current|know about|what do you know/i.test(message)
+    ) {
+      message = `${message} ${context.hints.projectPublicId}`;
+    }
+
     const enriched =
-      contextHints.length > 0 && this.isFollowUp(latestUserMessage)
-        ? `${latestUserMessage}\n\n[Conversation context — authorize before use]\n${contextHints.join('\n')}`
-        : latestUserMessage;
+      contextHints.length > 0
+        ? `${message}\n\n[Conversation context hints — authorize before use]\n${contextHints.join('\n')}`
+        : message;
 
     messages.push({ role: 'user', content: enriched });
     return messages;
+  }
+
+  private enrichToolArgsWithHints(
+    tool: AiToolName,
+    args: Record<string, unknown>,
+    hints: AiConversationContextHints | null | undefined,
+  ): Record<string, unknown> {
+    if (!hints) return args;
+    const next = { ...args };
+    if (
+      (tool === 'get_property_context' || tool === 'get_property_details') &&
+      !next.publicId &&
+      hints.propertyPublicId
+    ) {
+      next.publicId = hints.propertyPublicId;
+    }
+    if (
+      (tool === 'get_project_context' || tool === 'get_project_details') &&
+      !next.publicId &&
+      hints.projectPublicId
+    ) {
+      next.publicId = hints.projectPublicId;
+    }
+    if (tool === 'get_current_user_context' || tool === 'get_recommended_next_actions') {
+      if (hints.propertyPublicId) next.propertyPublicId = hints.propertyPublicId;
+      if (hints.projectPublicId) next.projectPublicId = hints.projectPublicId;
+      if (hints.requirementPublicId) next.requirementPublicId = hints.requirementPublicId;
+      if (hints.focus) next.focus = hints.focus;
+      if (hints.route) next.route = hints.route;
+    }
+    return next;
   }
 
   private isFollowUp(message: string): boolean {
@@ -582,13 +668,50 @@ export class ChatbotService {
         }
       }
 
-      if (result.tool === 'compare_properties') {
+      if (result.tool === 'compare_properties' || result.tool === 'compare_saved_properties') {
         cards.push({
           kind: 'COMPARISON',
           publicId: null,
           title: 'Property comparison',
           metadata: data,
         });
+      }
+
+      if (result.tool === 'get_recommended_next_actions') {
+        const actions =
+          (data.actions as Array<{
+            title?: string;
+            rationale?: string;
+            priority?: string;
+            href?: string | null;
+            entityPublicId?: string | null;
+          }> | null) ?? [];
+        for (const action of actions.slice(0, 6)) {
+          cards.push({
+            kind: 'NEXT_ACTION',
+            publicId: action.entityPublicId ?? null,
+            title: String(action.title ?? 'Recommended action'),
+            subtitle: action.rationale ? String(action.rationale) : null,
+            href: action.href ?? null,
+            metadata: { priority: action.priority ?? 'MEDIUM' },
+          });
+        }
+      }
+
+      if (result.tool === 'get_saved_properties') {
+        const items = (data.items as Array<Record<string, unknown>> | undefined) ?? [];
+        for (const item of items.slice(0, 12)) {
+          cards.push({
+            kind: 'PROPERTY',
+            publicId: String(item.propertyPublicId ?? ''),
+            title: String(item.title ?? item.propertyPublicId ?? 'Property'),
+            configuration: item.configuration ? String(item.configuration) : null,
+            priceMinor: item.priceMinor != null ? String(item.priceMinor) : null,
+            currency: item.currency ? String(item.currency) : 'INR',
+            location: [item.locality, item.city].filter(Boolean).join(', ') || null,
+            href: item.propertyPublicId ? `/properties/${item.propertyPublicId}` : null,
+          });
+        }
       }
 
       if (result.tool === 'get_market_data') {
@@ -690,14 +813,17 @@ export class ChatbotService {
       lastMessageAt: Date | null;
       createdAt: Date;
       updatedAt: Date;
+      contextJson?: unknown;
     },
     organizationPublicId: string | null,
   ): AiConversationSummary {
+    const context = (row.contextJson ?? {}) as ConversationContext;
     return {
       publicId: row.publicId,
       title: row.title,
       status: row.status as AiConversationSummary['status'],
       organizationPublicId,
+      contextHints: context.hints ?? null,
       lastMessageAt: row.lastMessageAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),

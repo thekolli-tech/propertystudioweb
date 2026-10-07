@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
+  AiAssembledContextResponse,
+  AiConversationContextHints,
   AiConversationDetail,
   AiConversationMessage,
   AiConversationSummary,
@@ -154,9 +156,29 @@ function MessageBubble({
 export type AiChatPanelProps = {
   organizationPublicId?: string | null;
   variant?: 'default' | 'broadcast';
+  contextHints?: AiConversationContextHints | null;
 };
 
-export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiChatPanelProps) {
+function describeHints(hints: AiConversationContextHints | null | undefined): string | null {
+  if (!hints) return null;
+  if (hints.propertyPublicId) return `Context: Property ${hints.propertyPublicId}`;
+  if (hints.projectPublicId) return `Context: Project ${hints.projectPublicId}`;
+  if (hints.requirementPublicId) return `Context: Requirement ${hints.requirementPublicId}`;
+  if (hints.focus === 'saved_properties') return 'Context: My saved properties';
+  if (hints.focus === 'saved_searches') return 'Context: My saved searches';
+  if (hints.focus === 'pipeline') return 'Context: My pipeline';
+  if (hints.focus === 'follow_ups') return "Context: Today's follow-ups";
+  if (hints.focus && hints.focus !== 'general') {
+    return `Context: ${hints.focus.replaceAll('_', ' ')}`;
+  }
+  return null;
+}
+
+export function AiChatPanel({
+  organizationPublicId,
+  variant = 'default',
+  contextHints = null,
+}: AiChatPanelProps) {
   const [conversations, setConversations] = useState<AiConversationSummary[]>([]);
   const [active, setActive] = useState<AiConversationDetail | null>(null);
   const [draft, setDraft] = useState('');
@@ -164,7 +186,12 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
   const [bootstrapping, setBootstrapping] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unauthorized, setUnauthorized] = useState(false);
+  const [assembled, setAssembled] = useState<AiAssembledContextResponse | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const resolvedHints: AiConversationContextHints = {
+    ...contextHints,
+    organizationPublicId: contextHints?.organizationPublicId ?? organizationPublicId ?? null,
+  };
 
   const loadConversations = useCallback(async () => {
     const client = createBrowserApiClient();
@@ -177,10 +204,15 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
     let cancelled = false;
     (async () => {
       try {
-        const items = await loadConversations();
+        const client = createBrowserApiClient();
+        const [items, context] = await Promise.all([
+          loadConversations(),
+          client.getAiAssembledContext(resolvedHints).catch(() => null),
+        ]);
         if (cancelled) return;
+        if (context) setAssembled(context);
         if (items[0]) {
-          const detail = await createBrowserApiClient().getAiConversation(items[0].publicId);
+          const detail = await client.getAiConversation(items[0].publicId);
           if (!cancelled) setActive(detail);
         }
       } catch (err) {
@@ -197,7 +229,14 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
     return () => {
       cancelled = true;
     };
-  }, [loadConversations]);
+  }, [
+    loadConversations,
+    resolvedHints.propertyPublicId,
+    resolvedHints.projectPublicId,
+    resolvedHints.requirementPublicId,
+    resolvedHints.focus,
+    resolvedHints.organizationPublicId,
+  ]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -210,6 +249,7 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
       const client = createBrowserApiClient();
       const created = await client.createAiConversation({
         organizationPublicId: organizationPublicId ?? null,
+        contextHints: resolvedHints,
       });
       const detail = await client.getAiConversation(created.publicId);
       setActive(detail);
@@ -251,6 +291,7 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
         const created = await client.createAiConversation({
           organizationPublicId: organizationPublicId ?? null,
           title: text.slice(0, 80) || 'New chat',
+          contextHints: resolvedHints,
         });
         conversationPublicId = created.publicId;
       }
@@ -258,6 +299,7 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
       const response = await client.postAiConversationMessage(conversationPublicId, {
         message: text || 'confirm',
         confirmRequirement: options?.confirmRequirement ?? false,
+        contextHints: resolvedHints,
       });
 
       const detail = await client.getAiConversation(conversationPublicId);
@@ -350,6 +392,18 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
       </aside>
 
       <section className="flex min-h-[28rem] flex-col rounded-xl border border-border bg-card">
+        {describeHints(resolvedHints) || assembled ? (
+          <div className="space-y-1 border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">
+              {describeHints(active?.contextHints ?? resolvedHints) ??
+                describeHints(resolvedHints) ??
+                'Authorized workspace context'}
+            </p>
+            {assembled ? (
+              <p className="line-clamp-2">{assembled.labels.slice(0, 6).join(' · ')}</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
           <div>
             <p className="font-medium">{active?.title ?? 'Property Studio AI Copilot'}</p>

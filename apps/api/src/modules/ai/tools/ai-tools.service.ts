@@ -15,6 +15,8 @@ import { ProjectIntelligenceService } from '../../intelligence/project-intellige
 import { PropertyIntelligenceService } from '../../intelligence/property-intelligence.service';
 import { RequirementsService } from '../../marketplace/requirements.service';
 import { AiAccessService } from '../ai-access.service';
+import { AiContextAssemblyService } from '../context/ai-context-assembly.service';
+import { NextBestActionService } from '../context/next-best-action.service';
 import { type AiToolName, type AiToolResult } from '../providers/ai-provider';
 import { parseNaturalLanguagePropertyQuery } from '../nl-search.parser';
 
@@ -29,6 +31,8 @@ export class AiToolsService {
     private readonly infrastructure: InfrastructureService,
     private readonly compareService: CompareService,
     private readonly requirements: RequirementsService,
+    private readonly contextAssembly: AiContextAssemblyService,
+    private readonly nextBestActions: NextBestActionService,
   ) {}
 
   async invoke(
@@ -45,8 +49,16 @@ export class AiToolsService {
           return await this.searchProjects(actor, args);
         case 'get_property_details':
           return await this.getPropertyDetails(actor, args, request);
+        case 'get_property_context': {
+          const result = await this.getPropertyDetails(actor, args, request);
+          return { ...result, tool: 'get_property_context' };
+        }
         case 'get_project_details':
           return await this.getProjectDetails(actor, args, request);
+        case 'get_project_context': {
+          const result = await this.getProjectDetails(actor, args, request);
+          return { ...result, tool: 'get_project_context' };
+        }
         case 'get_inventory':
           return await this.getInventory(actor, args);
         case 'get_market_data':
@@ -63,6 +75,27 @@ export class AiToolsService {
           return this.calculateRoi(args);
         case 'create_requirement':
           return await this.createRequirement(actor, args, request);
+        case 'get_current_user_context':
+          return await this.getCurrentUserContext(actor, args, request);
+        case 'get_saved_properties':
+          return await this.getSavedProperties(actor);
+        case 'get_saved_searches':
+          return await this.getSavedSearches(actor);
+        case 'get_active_requirements':
+          return await this.getActiveRequirements(actor);
+        case 'get_my_crm_summary':
+        case 'get_my_pipeline':
+          return await this.getMyCrmSummary(actor);
+        case 'get_my_followups':
+          return await this.getMyFollowUps(actor);
+        case 'get_my_site_visits':
+          return await this.getMySiteVisits(actor);
+        case 'get_my_deals':
+          return await this.getMyDeals(actor);
+        case 'compare_saved_properties':
+          return await this.compareSavedProperties(actor, args, request);
+        case 'get_recommended_next_actions':
+          return await this.getRecommendedNextActions(actor, args);
         case 'analyze_document':
         case 'analyze_floorplan':
         case 'estimate_property_value':
@@ -575,5 +608,307 @@ export class AiToolsService {
     }
 
     return await this.access.deny(actor, documentPublicId, 'document', request);
+  }
+
+  private async getCurrentUserContext(
+    actor: AuthActor,
+    args: Record<string, unknown>,
+    request?: AuthenticatedRequest,
+  ): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const hints = this.contextAssembly.normalizeHints({
+      route: typeof args.route === 'string' ? args.route : null,
+      propertyPublicId: typeof args.propertyPublicId === 'string' ? args.propertyPublicId : null,
+      projectPublicId: typeof args.projectPublicId === 'string' ? args.projectPublicId : null,
+      requirementPublicId:
+        typeof args.requirementPublicId === 'string' ? args.requirementPublicId : null,
+      organizationPublicId:
+        typeof args.organizationPublicId === 'string' ? args.organizationPublicId : null,
+      focus:
+        typeof args.focus === 'string'
+          ? (args.focus as
+              | 'general'
+              | 'saved_properties'
+              | 'saved_searches'
+              | 'pipeline'
+              | 'follow_ups'
+              | 'requirement'
+              | 'property'
+              | 'project')
+          : 'general',
+    });
+    const assembled = await this.contextAssembly.assemble(actor, hints, request);
+    return {
+      tool: 'get_current_user_context',
+      ok: true,
+      coverageState: assembled.coverageState,
+      data: assembled,
+    };
+  }
+
+  private async getSavedProperties(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const result = await this.contextAssembly.listAuthorizedSavedProperties(actor);
+    return {
+      tool: 'get_saved_properties',
+      ok: result.coverageState !== 'UNAVAILABLE',
+      coverageState: result.coverageState,
+      data: result,
+      error:
+        result.coverageState === 'UNAVAILABLE'
+          ? 'Missing saved-property:read permission.'
+          : undefined,
+    };
+  }
+
+  private async getSavedSearches(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const result = await this.contextAssembly.listAuthorizedSavedSearches(actor);
+    return {
+      tool: 'get_saved_searches',
+      ok: result.coverageState !== 'UNAVAILABLE',
+      coverageState: result.coverageState,
+      data: result,
+      error:
+        result.coverageState === 'UNAVAILABLE'
+          ? 'Missing saved-search:read permission.'
+          : undefined,
+    };
+  }
+
+  private async getActiveRequirements(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const result = await this.contextAssembly.listAuthorizedRequirements(actor);
+    return {
+      tool: 'get_active_requirements',
+      ok: result.coverageState !== 'UNAVAILABLE',
+      coverageState: result.coverageState,
+      data: result,
+      error:
+        result.coverageState === 'UNAVAILABLE'
+          ? 'Missing requirement:read:own permission.'
+          : undefined,
+    };
+  }
+
+  private requireActiveOrg(actor: AuthActor): string {
+    if (!actor.activeOrganizationId) {
+      throw new AppError('FORBIDDEN', 'Active organization context is required.');
+    }
+    if (!actorHasPermission(actor, 'crm:read') && !actorHasPermission(actor, 'lead:read')) {
+      throw new AppError('FORBIDDEN', 'Insufficient CRM permissions.');
+    }
+    return actor.activeOrganizationId;
+  }
+
+  private async getMyCrmSummary(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const orgId = this.requireActiveOrg(actor);
+    const now = new Date();
+    const [openLeads, overdueFollowUps, upcomingVisits, openDeals, pipeline] = await Promise.all([
+      this.prisma.lead.count({
+        where: {
+          recipientOrganizationId: orgId,
+          status: { notIn: ['CLOSED', 'LOST', 'BOOKED'] },
+        },
+      }),
+      this.prisma.crmFollowUp.count({
+        where: {
+          organizationId: orgId,
+          status: { in: ['OPEN', 'IN_PROGRESS'] },
+          dueAt: { lt: now },
+        },
+      }),
+      this.prisma.crmSiteVisit.count({
+        where: {
+          organizationId: orgId,
+          status: { in: ['SCHEDULED', 'CONFIRMED'] },
+          scheduledAt: { gte: now },
+        },
+      }),
+      this.prisma.crmDeal.count({
+        where: { organizationId: orgId, status: { in: ['OPEN', 'NEGOTIATION'] } },
+      }),
+      this.prisma.lead.groupBy({
+        by: ['status'],
+        where: { recipientOrganizationId: orgId },
+        _count: { _all: true },
+      }),
+    ]);
+    return {
+      tool: 'get_my_crm_summary',
+      ok: true,
+      coverageState: 'READY',
+      data: {
+        organizationPublicId: actor.activeOrganizationPublicId,
+        openLeads,
+        overdueFollowUps,
+        upcomingVisits,
+        openDeals,
+        pipeline: pipeline.map((row) => ({ status: row.status, count: row._count._all })),
+      },
+    };
+  }
+
+  private async getMyFollowUps(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const orgId = this.requireActiveOrg(actor);
+    const rows = await this.prisma.crmFollowUp.findMany({
+      where: {
+        organizationId: orgId,
+        status: { in: ['OPEN', 'IN_PROGRESS'] },
+      },
+      orderBy: { dueAt: 'asc' },
+      take: 20,
+      select: {
+        publicId: true,
+        title: true,
+        dueAt: true,
+        status: true,
+        priority: true,
+      },
+    });
+    return {
+      tool: 'get_my_followups',
+      ok: true,
+      coverageState: rows.length > 0 ? 'READY' : 'INSUFFICIENT_DATA',
+      data: {
+        items: rows.map((row) => ({
+          publicId: row.publicId,
+          title: row.title,
+          dueAt: row.dueAt.toISOString(),
+          status: row.status,
+          priority: row.priority,
+        })),
+      },
+    };
+  }
+
+  private async getMySiteVisits(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const orgId = this.requireActiveOrg(actor);
+    const rows = await this.prisma.crmSiteVisit.findMany({
+      where: {
+        organizationId: orgId,
+        status: { in: ['SCHEDULED', 'CONFIRMED'] },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: 20,
+      select: { publicId: true, scheduledAt: true, status: true },
+    });
+    return {
+      tool: 'get_my_site_visits',
+      ok: true,
+      coverageState: rows.length > 0 ? 'READY' : 'INSUFFICIENT_DATA',
+      data: {
+        items: rows.map((row) => ({
+          publicId: row.publicId,
+          scheduledAt: row.scheduledAt.toISOString(),
+          status: row.status,
+        })),
+      },
+    };
+  }
+
+  private async getMyDeals(actor: AuthActor): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const orgId = this.requireActiveOrg(actor);
+    const rows = await this.prisma.crmDeal.findMany({
+      where: { organizationId: orgId, status: { in: ['OPEN', 'NEGOTIATION'] } },
+      orderBy: { updatedAt: 'desc' },
+      take: 20,
+      select: {
+        publicId: true,
+        status: true,
+        expectedValueMinor: true,
+        currency: true,
+        updatedAt: true,
+      },
+    });
+    return {
+      tool: 'get_my_deals',
+      ok: true,
+      coverageState: rows.length > 0 ? 'READY' : 'INSUFFICIENT_DATA',
+      data: {
+        items: rows.map((row) => ({
+          publicId: row.publicId,
+          status: row.status,
+          expectedValueMinor: row.expectedValueMinor?.toString() ?? null,
+          currency: row.currency,
+          updatedAt: row.updatedAt.toISOString(),
+        })),
+      },
+    };
+  }
+
+  private async compareSavedProperties(
+    actor: AuthActor,
+    args: Record<string, unknown>,
+    request?: AuthenticatedRequest,
+  ): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    if (!actorHasPermission(actor, 'saved-property:read')) {
+      return {
+        tool: 'compare_saved_properties',
+        ok: false,
+        coverageState: 'UNAVAILABLE',
+        data: null,
+        error: 'Missing saved-property:read permission.',
+      };
+    }
+    const saved = await this.contextAssembly.listAuthorizedSavedProperties(actor, 5);
+    const publicIds =
+      Array.isArray(args.publicIds) && args.publicIds.length >= 2
+        ? (args.publicIds as string[]).filter((id) =>
+            saved.items.some((item) => item.propertyPublicId === id),
+          )
+        : saved.items.map((item) => item.propertyPublicId);
+
+    if (publicIds.length < 2) {
+      return {
+        tool: 'compare_saved_properties',
+        ok: true,
+        coverageState: 'INSUFFICIENT_DATA',
+        data: { message: 'Need at least two authorized saved properties to compare.' },
+      };
+    }
+
+    return this.compareProperties(
+      actor,
+      { publicIds: publicIds.slice(0, 5) } as Record<string, unknown>,
+      request,
+    ).then((result) => ({ ...result, tool: 'compare_saved_properties' as const }));
+  }
+
+  private async getRecommendedNextActions(
+    actor: AuthActor,
+    args: Record<string, unknown>,
+  ): Promise<AiToolResult> {
+    this.access.requirePermission(actor, 'ai:assistant');
+    const hints = this.contextAssembly.normalizeHints({
+      focus:
+        typeof args.focus === 'string'
+          ? (args.focus as
+              | 'general'
+              | 'saved_properties'
+              | 'saved_searches'
+              | 'pipeline'
+              | 'follow_ups'
+              | 'requirement'
+              | 'property'
+              | 'project')
+          : 'general',
+      propertyPublicId: typeof args.propertyPublicId === 'string' ? args.propertyPublicId : null,
+      projectPublicId: typeof args.projectPublicId === 'string' ? args.projectPublicId : null,
+      requirementPublicId:
+        typeof args.requirementPublicId === 'string' ? args.requirementPublicId : null,
+    });
+    const actions = await this.nextBestActions.recommend(actor, hints);
+    return {
+      tool: 'get_recommended_next_actions',
+      ok: true,
+      coverageState: actions.length > 0 ? 'READY' : 'INSUFFICIENT_DATA',
+      data: { actions, label: 'Recommended next actions' },
+    };
   }
 }

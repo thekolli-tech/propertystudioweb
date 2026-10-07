@@ -103,23 +103,66 @@ export class DeterministicAiProvider implements AiProvider {
     }
 
     const propId = message.match(/PS-PROP-\d+/)?.[0];
-    if (propId && /detail|about|tell me|info|show/.test(lower)) {
-      tools.push({ tool: 'get_property_details', args: { publicId: propId } });
+    if (propId && /detail|about|tell me|info|show|know about|this property/.test(lower)) {
+      tools.push({ tool: 'get_property_context', args: { publicId: propId } });
     }
 
     const projId = message.match(/PS-PROJ-\d+/)?.[0];
-    if (projId && /detail|about|tell me|info|show/.test(lower)) {
-      tools.push({ tool: 'get_project_details', args: { publicId: projId } });
+    if (projId && /detail|about|tell me|info|show|know about|this project/.test(lower)) {
+      tools.push({ tool: 'get_project_context', args: { publicId: projId } });
+    }
+
+    if (/saved propert|bookmark|my saves|compare my saved/.test(lower)) {
+      if (/compar/.test(lower)) {
+        tools.push({ tool: 'compare_saved_properties', args: {} });
+      } else {
+        tools.push({ tool: 'get_saved_properties', args: {} });
+      }
+    }
+
+    if (/saved search|smart alert|alert match/.test(lower)) {
+      tools.push({ tool: 'get_saved_searches', args: {} });
+    }
+
+    if (/my requirement|active requirement|match(es)? my requirement/.test(lower)) {
+      tools.push({ tool: 'get_active_requirements', args: {} });
+      tools.push({ tool: 'get_saved_properties', args: {} });
+    }
+
+    if (
+      /follow[- ]?up|pipeline|site visit|crm|my leads|today|what should i|next action|recommend/.test(
+        lower,
+      )
+    ) {
+      tools.push({ tool: 'get_recommended_next_actions', args: { focus: 'pipeline' } });
+      if (/follow/.test(lower)) {
+        tools.push({ tool: 'get_my_followups', args: {} });
+      }
+      if (/site visit|visit/.test(lower)) {
+        tools.push({ tool: 'get_my_site_visits', args: {} });
+      }
+      if (/pipeline|lead|deal|crm/.test(lower)) {
+        tools.push({ tool: 'get_my_crm_summary', args: {} });
+      }
+    }
+
+    if (/context|who am i|my workspace|what do you know about me/.test(lower)) {
+      tools.push({ tool: 'get_current_user_context', args: {} });
     }
 
     if (
       tools.length === 0 ||
       /find|search|looking for|bedroom|bhk|apartment|villa|budget/.test(lower)
     ) {
-      tools.push({
-        tool: 'search_properties',
-        args: { query: message },
-      });
+      // Prefer workspace context when the message is about "this" focused resource.
+      if (/this property|about this|current property/.test(lower) && !propId) {
+        tools.push({ tool: 'get_current_user_context', args: { focus: 'property' } });
+      } else {
+        tools.push({
+          tool: 'search_properties',
+          args: { query: message },
+        });
+      }
     }
 
     return tools.slice(0, 4);
@@ -225,7 +268,7 @@ export class DeterministicAiProvider implements AiProvider {
         } else {
           parts.push('Structured property comparison prepared from catalog fields.');
         }
-      } else if (result.tool === 'get_property_details') {
+      } else if (result.tool === 'get_property_details' || result.tool === 'get_property_context') {
         const data = result.data as { publicId?: string; title?: string };
         if (data.publicId) {
           parts.push(`Property details loaded for ${data.title ?? data.publicId}.`);
@@ -234,6 +277,76 @@ export class DeterministicAiProvider implements AiProvider {
             publicId: data.publicId,
             label: data.title ?? data.publicId,
           });
+        }
+      } else if (result.tool === 'get_current_user_context') {
+        const data = result.data as { labels?: string[]; roleLabel?: string };
+        parts.push(
+          `Authorized workspace context (${data.roleLabel ?? 'USER'}): ${(data.labels ?? [])
+            .slice(0, 8)
+            .join('; ')}.`,
+        );
+      } else if (result.tool === 'get_saved_properties') {
+        const data = result.data as {
+          items?: Array<{ propertyPublicId: string; title: string }>;
+        };
+        const items = data.items ?? [];
+        parts.push(
+          items.length === 0
+            ? 'No authorized saved properties are available.'
+            : `You have ${items.length} saved properties: ${items
+                .slice(0, 5)
+                .map((item) => `${item.title} (${item.propertyPublicId})`)
+                .join('; ')}.`,
+        );
+      } else if (result.tool === 'get_saved_searches') {
+        const data = result.data as {
+          items?: Array<{ publicId: string; name: string; matchCount: number }>;
+        };
+        const items = data.items ?? [];
+        parts.push(
+          items.length === 0
+            ? 'No authorized saved searches are available.'
+            : `Saved searches: ${items
+                .slice(0, 5)
+                .map((item) => `${item.name} (${item.matchCount} matches)`)
+                .join('; ')}.`,
+        );
+      } else if (result.tool === 'get_active_requirements') {
+        const data = result.data as {
+          items?: Array<{ publicId: string; title: string; city: string }>;
+        };
+        const items = data.items ?? [];
+        parts.push(
+          items.length === 0
+            ? 'No active requirements found for this account.'
+            : `Active requirements: ${items
+                .slice(0, 5)
+                .map((item) => `${item.title} in ${item.city} (${item.publicId})`)
+                .join('; ')}.`,
+        );
+      } else if (
+        result.tool === 'get_recommended_next_actions' ||
+        result.tool === 'get_my_crm_summary' ||
+        result.tool === 'get_my_followups' ||
+        result.tool === 'get_my_site_visits' ||
+        result.tool === 'get_my_deals' ||
+        result.tool === 'get_my_pipeline'
+      ) {
+        if (result.tool === 'get_recommended_next_actions') {
+          const data = result.data as {
+            actions?: Array<{ title: string; rationale: string; priority: string }>;
+          };
+          const actions = data.actions ?? [];
+          parts.push(
+            actions.length === 0
+              ? 'No recommended next actions from current authorized state (INSUFFICIENT_DATA).'
+              : `Recommended next actions (deterministic): ${actions
+                  .slice(0, 5)
+                  .map((action) => `[${action.priority}] ${action.title} — ${action.rationale}`)
+                  .join(' | ')}.`,
+          );
+        } else {
+          parts.push(`${result.tool}: completed with coverage ${result.coverageState}.`);
         }
       } else {
         parts.push(`${result.tool}: completed with coverage ${result.coverageState}.`);

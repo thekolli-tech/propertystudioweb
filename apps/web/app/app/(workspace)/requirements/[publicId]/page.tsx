@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState, PageHeader, PriceDisplay, StatusBadge } from '@property-studio/ui';
 
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import { createServerApiClient, ApiClientError } from '@/lib/api';
 import { getRequestCookieHeader } from '@/lib/auth';
 import { RequirementActions } from '@/components/requirements/requirement-actions';
@@ -82,6 +83,14 @@ export default async function RequirementDetailPage({
             publicId={requirement.publicId}
             status={requirement.status}
             version={requirement.version}
+          />
+          <AskAiLink
+            label="Find properties matching my requirement"
+            hints={{
+              requirementPublicId: requirement.publicId,
+              focus: 'requirement',
+              route: `/app/requirements/${requirement.publicId}`,
+            }}
           />
         </div>
 
