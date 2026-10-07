@@ -517,9 +517,14 @@ export class VerificationService {
     if (!['DRAFT', 'CHANGES_REQUESTED', 'SUBMITTED'].includes(verificationCase.status)) {
       throw new AppError('CONFLICT', 'Documents cannot be attached in the current case status.');
     }
-    if (!verificationCase.organizationId) {
+    if (!verificationCase.organizationId || !verificationCase.organization) {
       throw new AppError('VALIDATION_ERROR', 'Verification case has no organization.');
     }
+
+    const storageKey = this.storage.assertOrganizationScopedKey(
+      body.storageKey,
+      verificationCase.organization.publicId,
+    );
 
     const documentAsset = await this.prisma.documentAsset.create({
       data: {
@@ -528,7 +533,7 @@ export class VerificationService {
         organizationId: verificationCase.organizationId,
         entityType: 'VERIFICATION_CASE',
         entityId: verificationCase.id,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         documentType: body.documentType,
         title: body.title,

@@ -118,9 +118,11 @@ export class PartnerApiService {
   }
 
   async listLeads(actor: PartnerActor, limit = 20, cursor?: string) {
+    // Only leads with an access grant for this organization (purchase/entitlement boundary).
     const rows = await this.prisma.lead.findMany({
       where: {
         recipientOrganizationId: actor.organizationId,
+        leadAccessGrants: { some: { organizationId: actor.organizationId } },
         ...(cursor ? { publicId: { lt: cursor } } : {}),
       },
       include: {

@@ -55,8 +55,9 @@ export class AuthController {
     @Body(new ZodValidationPipe(changePasswordRequestSchema))
     body: Parameters<AuthService['changePassword']>[1],
     @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.changePassword(actor, body, request);
+    return this.authService.changePassword(actor, body, request, res);
   }
 }
 

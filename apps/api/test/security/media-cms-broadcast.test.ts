@@ -267,7 +267,7 @@ describe('Phase 12 media CMS broadcast security', () => {
       .set('Cookie', a.cookie)
       .send({
         organizationPublicId: orgA.orgPublicId,
-        storageKey: 'org-a/secure.jpg',
+        storageKey: `organizations/${orgA.orgPublicId}/media/secure.jpg`,
         mimeType: 'image/jpeg',
         mediaType: 'IMAGE',
         fileSizeBytes: '512',

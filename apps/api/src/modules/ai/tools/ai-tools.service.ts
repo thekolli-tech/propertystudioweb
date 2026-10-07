@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
-  type CreateRequirementRequest,
+  createRequirementRequestSchema,
   type IntelligenceCompareRequest,
 } from '@property-studio/contracts';
 
@@ -532,16 +532,19 @@ export class AiToolsService {
     if (!actorHasPermission(actor, 'requirement:create')) {
       throw new AppError('FORBIDDEN', 'Insufficient permissions.');
     }
-    const body = args as unknown as CreateRequirementRequest;
-    if (!body.city || !body.propertyType || !body.transactionType) {
+    const parsed = createRequirementRequestSchema.safeParse(args);
+    if (!parsed.success) {
       return {
         tool: 'create_requirement',
         ok: true,
         coverageState: 'INSUFFICIENT_DATA',
-        data: { error: 'city, propertyType, and transactionType are required' },
+        data: {
+          error: 'city, propertyType, transactionType, and valid requirement fields are required',
+        },
       };
     }
-    const created = await this.requirements.create(actor, body, request);
+    // Owner is always the authenticated actor — never trust client-supplied user IDs.
+    const created = await this.requirements.create(actor, parsed.data, request);
     return {
       tool: 'create_requirement',
       ok: true,

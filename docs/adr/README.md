@@ -32,3 +32,4 @@ Approved architecture decisions for Property Studio V3.
 | [0026](0026-advanced-discovery-saved-searches-alerts.md) | Advanced Discovery, Saved Searches & Smart Alerts |
 | [0027](0027-ai-contextual-intelligence.md) | AI Copilot Contextual Intelligence |
 | [0028](0028-admin-control-center-analytics.md) | Admin Control Center & Platform Analytics |
+| [0029](0029-production-security-performance-hardening.md) | Production Security, Performance & Hardening |

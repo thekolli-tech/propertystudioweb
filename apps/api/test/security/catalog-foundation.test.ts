@@ -413,7 +413,7 @@ describe('Phase 5 catalog foundation', () => {
       .send({
         entityType: 'PROPERTY',
         entityPublicId: property.body.publicId,
-        storageKey: 'organizations/PS-ORG-1/properties/PS-PROP-1/media/hero.jpg',
+        storageKey: `organizations/${orgA}/properties/${property.body.publicId}/media/hero.jpg`,
         mimeType: 'image/jpeg',
         mediaType: 'IMAGE',
         fileSizeBytes: '1024',
@@ -427,7 +427,7 @@ describe('Phase 5 catalog foundation', () => {
       .send({
         entityType: 'PROPERTY',
         entityPublicId: property.body.publicId,
-        storageKey: 'organizations/PS-ORG-1/properties/PS-PROP-1/documents/brochure.pdf',
+        storageKey: `organizations/${orgA}/properties/${property.body.publicId}/documents/brochure.pdf`,
         mimeType: 'application/pdf',
         documentType: 'BROCHURE',
         title: 'Brochure',

@@ -79,6 +79,7 @@ export class MediaCmsService {
     await this.access.requirePermission(actor, 'media:create', 'media', request);
 
     let organizationId: string | null = null;
+    let organizationPublicId: string | null = body.organizationPublicId ?? null;
     if (body.organizationPublicId) {
       const org = await this.prisma.organization.findFirst({
         where: { publicId: body.organizationPublicId, status: 'ACTIVE' },
@@ -91,6 +92,7 @@ export class MediaCmsService {
         return await this.access.deny(actor, body.organizationPublicId, request);
       }
       organizationId = org.id;
+      organizationPublicId = org.publicId;
     }
 
     let entityType = body.entityType ?? null;
@@ -103,6 +105,11 @@ export class MediaCmsService {
       entityType = body.entityType;
       entityId = resolved.id;
       organizationId = resolved.organizationId;
+      const org = await this.prisma.organization.findFirst({
+        where: { id: organizationId },
+        select: { publicId: true },
+      });
+      organizationPublicId = org?.publicId ?? null;
       const allowed = await this.access.canManageOrganizationMedia(
         actor,
         organizationId,
@@ -110,6 +117,29 @@ export class MediaCmsService {
       );
       if (!allowed) {
         return await this.access.deny(actor, body.entityPublicId, request);
+      }
+    }
+
+    let storageKey = this.storage.assertSafeStorageKey(body.storageKey);
+    let thumbnailStorageKey = body.thumbnailStorageKey
+      ? this.storage.assertSafeStorageKey(body.thumbnailStorageKey)
+      : null;
+    let posterStorageKey = body.posterStorageKey
+      ? this.storage.assertSafeStorageKey(body.posterStorageKey)
+      : null;
+    if (organizationPublicId && !storageKey.startsWith('embed://')) {
+      storageKey = this.storage.assertOrganizationScopedKey(storageKey, organizationPublicId);
+      if (thumbnailStorageKey) {
+        thumbnailStorageKey = this.storage.assertOrganizationScopedKey(
+          thumbnailStorageKey,
+          organizationPublicId,
+        );
+      }
+      if (posterStorageKey) {
+        posterStorageKey = this.storage.assertOrganizationScopedKey(
+          posterStorageKey,
+          organizationPublicId,
+        );
       }
     }
 
@@ -121,7 +151,7 @@ export class MediaCmsService {
         organizationId,
         entityType,
         entityId,
-        storageKey: body.storageKey,
+        storageKey,
         mimeType: body.mimeType,
         mediaType: body.mediaType,
         fileSizeBytes: body.fileSizeBytes,
@@ -135,8 +165,8 @@ export class MediaCmsService {
         durationSeconds: body.durationSeconds ?? null,
         widthPx: body.widthPx ?? null,
         heightPx: body.heightPx ?? null,
-        thumbnailStorageKey: body.thumbnailStorageKey ?? null,
-        posterStorageKey: body.posterStorageKey ?? null,
+        thumbnailStorageKey,
+        posterStorageKey,
         source: body.source ?? null,
         sourceUrl: body.sourceUrl ?? null,
         category: body.category ?? null,
