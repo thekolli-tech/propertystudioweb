@@ -388,6 +388,7 @@ export function AiChatPanel({ organizationPublicId, variant = 'default' }: AiCha
                 onPropertyClick={(publicId) => {
                   void createBrowserApiClient().postAiConversationMessage(active.publicId, {
                     message: `Open ${publicId}`,
+                    confirmRequirement: false,
                     clickedPropertyPublicId: publicId,
                   });
                 }}

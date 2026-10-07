@@ -5,10 +5,10 @@ import {
   type AiConversationMessage,
   type AiConversationSummary,
   type CreateAiConversationRequest,
-  type CreateRequirementRequest,
   type PostAiConversationMessageRequest,
   type PostAiConversationMessageResponse,
 } from '@property-studio/contracts';
+import { Prisma } from '../../generated/prisma/client';
 
 import { AuditService } from '../../common/audit/audit.service';
 import { type AuthenticatedRequest } from '../../common/auth/current-actor.decorator';
@@ -34,8 +34,18 @@ type ConversationContext = {
   lastSearchQuery?: string | null;
 };
 
-type PendingRequirement = Partial<CreateRequirementRequest> & {
+type PendingRequirement = {
   summary: string;
+  city: string;
+  propertyType: string;
+  transactionType: string;
+  configuration?: string;
+  bedrooms?: number;
+  budgetMinMinor?: string;
+  budgetMaxMinor?: string;
+  locality?: string;
+  purpose?: string;
+  timeline?: string;
 };
 
 @Injectable()
@@ -217,7 +227,7 @@ export class ChatbotService {
             ? `Requirement created: ${created.requirementPublicId}.`
             : `Could not create requirement: ${created.error ?? 'unavailable'}.`,
           coverageState: created.ok ? 'READY' : 'UNAVAILABLE',
-          cardsJson: created.ok
+          cardsJson: (created.ok
             ? [
                 {
                   kind: 'GENERIC',
@@ -229,16 +239,25 @@ export class ChatbotService {
                     : null,
                 },
               ]
-            : [],
-          referencesJson: [],
-          toolResultsJson: created.toolResult ? [created.toolResult] : [],
+            : []) as Prisma.InputJsonValue,
+          referencesJson: [] as Prisma.InputJsonValue,
+          toolResultsJson: (created.toolResult
+            ? [
+                {
+                  tool: created.toolResult.tool,
+                  ok: created.toolResult.ok,
+                  coverageState: created.toolResult.coverageState,
+                  error: created.toolResult.error ?? null,
+                },
+              ]
+            : []) as Prisma.InputJsonValue,
         },
       });
 
       await this.prisma.aiConversation.update({
         where: { id: conversation.id },
         data: {
-          pendingRequirementJson: null,
+          pendingRequirementJson: Prisma.JsonNull,
           lastMessageAt: new Date(),
           title: conversation.title ?? this.deriveTitle(body.message),
         },
@@ -277,15 +296,15 @@ export class ChatbotService {
               subtitle: requirementDraft.summary,
               metadata: requirementDraft,
             },
-          ],
-          referencesJson: [],
+          ] as Prisma.InputJsonValue,
+          referencesJson: [] as Prisma.InputJsonValue,
         },
       });
 
       await this.prisma.aiConversation.update({
         where: { id: conversation.id },
         data: {
-          pendingRequirementJson: requirementDraft as object,
+          pendingRequirementJson: requirementDraft as unknown as Prisma.InputJsonValue,
           lastMessageAt: new Date(),
           title: conversation.title ?? this.deriveTitle(body.message),
         },
@@ -348,22 +367,22 @@ export class ChatbotService {
         role: 'ASSISTANT',
         content: completed.answer || 'No answer could be assembled from authorized tools.',
         coverageState: completed.coverageState,
-        toolCallsJson: proposal.toolCalls as object[],
+        toolCallsJson: proposal.toolCalls as unknown as Prisma.InputJsonValue,
         toolResultsJson: toolResults.map((result) => ({
           tool: result.tool,
           ok: result.ok,
           coverageState: result.coverageState,
           error: result.error ?? null,
-        })) as object[],
-        cardsJson: cards as object[],
-        referencesJson: completed.references as object[],
+        })) as unknown as Prisma.InputJsonValue,
+        cardsJson: cards as unknown as Prisma.InputJsonValue,
+        referencesJson: completed.references as unknown as Prisma.InputJsonValue,
       },
     });
 
     await this.prisma.aiConversation.update({
       where: { id: conversation.id },
       data: {
-        contextJson: nextContext as object,
+        contextJson: nextContext as unknown as Prisma.InputJsonValue,
         lastMessageAt: new Date(),
         title: conversation.title ?? this.deriveTitle(body.message),
       },
