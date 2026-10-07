@@ -7,6 +7,7 @@ import type {
   SeekerDashboardResponse,
 } from '@property-studio/contracts';
 
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import {
   ActivityFeed,
   AttentionItems,
@@ -22,6 +23,14 @@ export function DeveloperDashboardView({ data }: { data: DeveloperDashboardRespo
       <PageHeader
         title={`${data.organizationName} · Developer dashboard`}
         description="Aggregated from live catalog, CRM, verification, and integration services."
+      />
+      <AskAiLink
+        label="Review my pipeline"
+        hints={{
+          focus: 'pipeline',
+          organizationPublicId: data.organizationPublicId,
+          route: '/app/org',
+        }}
       />
       <DashboardSection title="Overview metrics">
         <MetricSummary metrics={data.metrics} />
@@ -64,6 +73,14 @@ export function AgentDashboardView({ data }: { data: AgentDashboardResponse }) {
       <PageHeader
         title={`${data.organizationName} · Agency dashboard`}
         description="Requirements, entitled leads, CRM pipeline, and wallet — no fabricated totals."
+      />
+      <AskAiLink
+        label="Review today's follow-ups"
+        hints={{
+          focus: 'follow_ups',
+          organizationPublicId: data.organizationPublicId,
+          route: '/app/org',
+        }}
       />
       <DashboardSection title="Overview metrics">
         <MetricSummary metrics={data.metrics} />
@@ -108,6 +125,10 @@ export function SeekerDashboardView({ data }: { data: SeekerDashboardResponse })
       <PageHeader
         title="Your workspace"
         description="Requirements, conversations, and notifications from your account."
+      />
+      <AskAiLink
+        label="Find properties matching my requirement"
+        hints={{ focus: 'requirement', route: '/app' }}
       />
       <DashboardSection title="Overview">
         <MetricSummary metrics={data.metrics} />

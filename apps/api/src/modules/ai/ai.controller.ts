@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
+  aiAssembledContextQuerySchema,
   aiAssistantRequestSchema,
   aiDocumentAnalysisRequestSchema,
   aiFloorPlanAnalysisRequestSchema,
@@ -13,10 +14,29 @@ import { CurrentActor, type AuthenticatedRequest } from '../../common/auth/curre
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
 import { AiOrchestrationService } from './ai-orchestration.service';
+import { AiContextAssemblyService } from './context/ai-context-assembly.service';
 
 @Controller()
 export class AiController {
-  constructor(private readonly ai: AiOrchestrationService) {}
+  constructor(
+    private readonly ai: AiOrchestrationService,
+    private readonly contextAssembly: AiContextAssemblyService,
+  ) {}
+
+  @Get('ai/context')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('ai:assistant')
+  getContext(
+    @CurrentActor() actor: AuthActor,
+    @Query(new ZodValidationPipe(aiAssembledContextQuerySchema)) query: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.contextAssembly.assemble(
+      actor,
+      query as Parameters<AiContextAssemblyService['assemble']>[1],
+      request,
+    );
+  }
 
   @Post('ai/assistant')
   @UseGuards(AuthGuard, PermissionsGuard)

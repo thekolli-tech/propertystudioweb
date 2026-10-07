@@ -4155,6 +4155,7 @@ export const aiChatCardKindSchema = z.enum([
   'INFRASTRUCTURE',
   'REQUIREMENT_CONFIRMATION',
   'CALCULATION',
+  'NEXT_ACTION',
   'GENERIC',
 ]);
 export type AiChatCardKind = z.infer<typeof aiChatCardKindSchema>;
@@ -4187,6 +4188,45 @@ export const aiChatToolInvocationSchema = z.object({
 });
 export type AiChatToolInvocation = z.infer<typeof aiChatToolInvocationSchema>;
 
+/** Route/resource hints only — never treated as authorization proof. */
+export const aiConversationContextHintsSchema = z.object({
+  route: z.string().trim().max(200).optional().nullable(),
+  propertyPublicId: z
+    .string()
+    .regex(/^PS-PROP-\d+$/)
+    .optional()
+    .nullable(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional()
+    .nullable(),
+  requirementPublicId: z
+    .string()
+    .regex(/^PS-REQ-\d+$/)
+    .optional()
+    .nullable(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional()
+    .nullable(),
+  focus: z
+    .enum([
+      'general',
+      'saved_properties',
+      'saved_searches',
+      'pipeline',
+      'follow_ups',
+      'requirement',
+      'property',
+      'project',
+    ])
+    .optional()
+    .nullable(),
+});
+export type AiConversationContextHints = z.infer<typeof aiConversationContextHintsSchema>;
+
 export const createAiConversationRequestSchema = z.object({
   title: z.string().trim().min(1).max(200).optional().nullable(),
   organizationPublicId: z
@@ -4194,6 +4234,7 @@ export const createAiConversationRequestSchema = z.object({
     .regex(/^PS-ORG-\d+$/)
     .optional()
     .nullable(),
+  contextHints: aiConversationContextHintsSchema.optional().nullable(),
 });
 export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
 
@@ -4202,6 +4243,7 @@ export const aiConversationSummarySchema = z.object({
   title: z.string().nullable(),
   status: aiConversationStatusSchema,
   organizationPublicId: z.string().nullable(),
+  contextHints: aiConversationContextHintsSchema.nullable().optional(),
   lastMessageAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -4242,6 +4284,7 @@ export const postAiConversationMessageRequestSchema = z.object({
     .regex(/^PS-PROP-\d+$/)
     .optional()
     .nullable(),
+  contextHints: aiConversationContextHintsSchema.optional().nullable(),
 });
 export type PostAiConversationMessageRequest = z.infer<
   typeof postAiConversationMessageRequestSchema
@@ -4565,3 +4608,72 @@ export const savedSearchMatchListQuerySchema = cursorPaginationQuerySchema.exten
     .optional(),
 });
 export type SavedSearchMatchListQuery = z.infer<typeof savedSearchMatchListQuerySchema>;
+
+// ─── Phase 14C: AI Contextual Intelligence ──────────────────────────────────
+
+export const aiNextBestActionSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  rationale: z.string(),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+  category: z.enum([
+    'FOLLOW_UP',
+    'SITE_VISIT',
+    'LEAD',
+    'DEAL',
+    'SAVED_SEARCH',
+    'SAVED_PROPERTY',
+    'REQUIREMENT',
+    'GENERAL',
+  ]),
+  href: z.string().nullable(),
+  entityType: z.string().nullable(),
+  entityPublicId: z.string().nullable(),
+  evidence: z.array(z.string()).default([]),
+});
+export type AiNextBestAction = z.infer<typeof aiNextBestActionSchema>;
+
+export const aiAssembledContextQuerySchema = aiConversationContextHintsSchema;
+export type AiAssembledContextQuery = z.infer<typeof aiAssembledContextQuerySchema>;
+
+export const aiAssembledContextResponseSchema = z.object({
+  roleLabel: z.string(),
+  userPublicId: z.string(),
+  activeOrganizationPublicId: z.string().nullable(),
+  labels: z.array(z.string()),
+  hints: aiConversationContextHintsSchema,
+  summary: z.object({
+    savedPropertyCount: z.number().int().nonnegative().nullable(),
+    savedSearchCount: z.number().int().nonnegative().nullable(),
+    activeRequirementCount: z.number().int().nonnegative().nullable(),
+    openLeadCount: z.number().int().nonnegative().nullable(),
+    overdueFollowUpCount: z.number().int().nonnegative().nullable(),
+    upcomingSiteVisitCount: z.number().int().nonnegative().nullable(),
+    openDealCount: z.number().int().nonnegative().nullable(),
+  }),
+  focusedProperty: z
+    .object({
+      publicId: z.string(),
+      title: z.string(),
+      coverageState: intelligenceDataStateSchema,
+    })
+    .nullable(),
+  focusedProject: z
+    .object({
+      publicId: z.string(),
+      name: z.string(),
+      coverageState: intelligenceDataStateSchema,
+    })
+    .nullable(),
+  focusedRequirement: z
+    .object({
+      publicId: z.string(),
+      title: z.string().nullable(),
+      coverageState: intelligenceDataStateSchema,
+    })
+    .nullable(),
+  nextBestActions: z.array(aiNextBestActionSchema),
+  coverageState: intelligenceDataStateSchema,
+  disclaimer: z.string(),
+});
+export type AiAssembledContextResponse = z.infer<typeof aiAssembledContextResponseSchema>;

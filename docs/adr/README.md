@@ -30,3 +30,4 @@ Approved architecture decisions for Property Studio V3.
 | [0024](0024-partner-api-integrations-automation.md) | Partner API, Integrations & Automation |
 | [0025](0025-unified-dashboards-workflow-orchestration.md) | Unified Dashboards & Cross-Module Workflow Orchestration |
 | [0026](0026-advanced-discovery-saved-searches-alerts.md) | Advanced Discovery, Saved Searches & Smart Alerts |
+| [0027](0027-ai-contextual-intelligence.md) | AI Copilot Contextual Intelligence |

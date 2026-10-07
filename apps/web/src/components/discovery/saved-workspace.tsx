@@ -9,6 +9,7 @@ import type {
   SavedSearchSummary,
 } from '@property-studio/contracts';
 
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import { ApiClientError, createBrowserApiClient } from '@/lib/api';
 
 type Tab = 'properties' | 'searches' | 'matches';
@@ -103,6 +104,17 @@ export function SavedWorkspace() {
         title="Saved"
         description="Bookmarks, saved discovery filters, and smart-alert matches — all owned by your account."
       />
+
+      <div className="flex flex-wrap gap-2">
+        <AskAiLink
+          label="Compare my saved properties"
+          hints={{ focus: 'saved_properties', route: '/app/saved' }}
+        />
+        <AskAiLink
+          label="Ask AI about saved searches"
+          hints={{ focus: 'saved_searches', route: '/app/saved' }}
+        />
+      </div>
 
       <div className="flex flex-wrap gap-2">
         {(

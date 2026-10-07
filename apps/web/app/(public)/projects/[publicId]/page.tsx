@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import {
   IntelligencePanel,
   projectIntelligenceToPanelProps,
@@ -223,6 +224,15 @@ export default async function PublicProjectPage({ params }: PageProps) {
           <Button className="w-full" disabled>
             Enquire now
           </Button>
+          <AskAiLink
+            className="w-full"
+            label="Ask AI about this project"
+            hints={{
+              projectPublicId: project.publicId,
+              focus: 'project',
+              route: `/projects/${project.publicId}`,
+            }}
+          />
           <p className="text-xs text-muted-foreground">
             Lead capture arrives in a later phase. No fabricated enquiry counts are shown.
           </p>

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
+import { AskAiLink } from '@/components/ai/ask-ai-link';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { getRequestCookieHeader, requireSessionUser } from '@/lib/auth';
 import { isPublicIdForKind } from '@/lib/public-id';
@@ -48,6 +49,15 @@ export default async function OrganizationProjectDetailPage({ params }: PageProp
           <Badge variant="secondary">{project.publicId}</Badge>
           <Badge variant="outline">{project.lifecycleStatus}</Badge>
           <Badge variant="outline">{project.projectType.replaceAll('_', ' ')}</Badge>
+          <AskAiLink
+            label="Ask AI about this project"
+            hints={{
+              projectPublicId: project.publicId,
+              organizationPublicId: orgPublicId,
+              focus: 'project',
+              route: `/app/org/${orgPublicId}/projects/${project.publicId}`,
+            }}
+          />
         </div>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>
