@@ -11,6 +11,7 @@ import { OriginCheckMiddleware } from './common/security/origin-check.middleware
 import { SecurityKernelModule } from './common/security/security-kernel.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
+import { AdminControlModule } from './modules/admin-control/admin-control.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
@@ -87,6 +88,7 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     AiModule,
     IntegrationsModule,
     DashboardModule,
+    AdminControlModule,
     WorkflowsModule,
   ],
   providers: [OriginCheckMiddleware],
