@@ -167,6 +167,14 @@ export const PERMISSIONS = [
   'automations:manage',
   'admin:integrations:read',
   'admin:integrations:manage',
+  'discovery:read',
+  'saved-search:create',
+  'saved-search:read',
+  'saved-search:update',
+  'saved-search:delete',
+  'saved-property:create',
+  'saved-property:read',
+  'saved-property:delete',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -259,6 +267,17 @@ const COMMUNICATIONS_ORG_STAFF_PERMISSIONS = [
 const LEAD_ACCESS_PERMISSIONS = [
   'leads:access',
   'leads:contact:reveal',
+] as const satisfies readonly Permission[];
+
+const DISCOVERY_SAVED_PERMISSIONS = [
+  'discovery:read',
+  'saved-search:create',
+  'saved-search:read',
+  'saved-search:update',
+  'saved-search:delete',
+  'saved-property:create',
+  'saved-property:read',
+  'saved-property:delete',
 ] as const satisfies readonly Permission[];
 
 const PERSONA_PHASE10_PERMISSIONS = [
@@ -470,6 +489,7 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<PlatformRole, readonly Permission
     ...ADMIN_MEDIA_CMS_PERMISSIONS,
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
     ...ADMIN_INTEGRATIONS_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
   ],
   PROPERTY_ADMIN: [
     'organization:read',
@@ -534,6 +554,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'ai:floorplan:analyze',
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
     ...INTEGRATIONS_ORG_MANAGE_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
   ],
   DEVELOPER_STAFF: [
     'organization:read',
@@ -558,6 +579,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...AI_CORE_PERMISSIONS,
     ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
     ...INTEGRATIONS_ORG_STAFF_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
   ],
   AGENT: [
     'organization:read',
@@ -579,6 +601,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     'ai:floorplan:analyze',
     ...MEDIA_CMS_ORG_MANAGE_PERMISSIONS,
     ...INTEGRATIONS_ORG_MANAGE_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
   ],
   AGENT_STAFF: [
     'organization:read',
@@ -594,6 +617,7 @@ export const ORGANIZATION_ROLE_PERMISSIONS: Record<OrganizationRole, readonly Pe
     ...AI_CORE_PERMISSIONS,
     ...MEDIA_CMS_ORG_STAFF_PERMISSIONS,
     ...INTEGRATIONS_ORG_STAFF_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
   ],
 };
 
@@ -604,6 +628,7 @@ export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>
     ...PERSONA_PHASE10_PERMISSIONS,
     ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
     ...AI_MATCH_VALUATION_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
     'media:analytics:write',
   ],
   INVESTOR: [
@@ -611,6 +636,7 @@ export const PERSONA_PERMISSIONS: Partial<Record<Persona, readonly Permission[]>
     ...PERSONA_PHASE10_PERMISSIONS,
     ...INTELLIGENCE_COMPARE_MATCH_PERMISSIONS,
     ...AI_MATCH_VALUATION_PERMISSIONS,
+    ...DISCOVERY_SAVED_PERMISSIONS,
     'media:analytics:write',
   ],
 };

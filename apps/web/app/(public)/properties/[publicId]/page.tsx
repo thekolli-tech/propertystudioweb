@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { SavePropertyButton } from '@/components/discovery/save-property-button';
 import {
   IntelligencePanel,
   propertyIntelligenceToPanelProps,
@@ -277,6 +278,7 @@ export default async function PublicPropertyPage({ params }: PageProps) {
           <Button className="w-full" disabled>
             Enquire now
           </Button>
+          <SavePropertyButton propertyPublicId={property.publicId} />
           <p className="text-xs text-muted-foreground">
             Enquiry workflows ship in a later phase. This CTA is visual-only until lead APIs exist.
           </p>

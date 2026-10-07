@@ -18,6 +18,7 @@ import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { MediaModule } from './modules/media/media.module';
@@ -73,6 +74,7 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     AuthModule,
     OrganizationsModule,
     CatalogModule,
+    DiscoveryModule,
     MediaModule,
     MarketplaceModule,
     CrmModule,

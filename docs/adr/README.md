@@ -27,5 +27,6 @@ Approved architecture decisions for Property Studio V3.
 | [0021](0021-trust-verification-communication.md) | Trust, verification, and communication |
 | [0022](0022-intelligence-ai-foundation.md) | Intelligence and AI foundation |
 | [0023](0023-media-cms-broadcast-studio.md) | Media CMS and Broadcast Studio |
-| [0024](0024-partner-api-integrations-automation.md
-0025-unified-dashboards-workflow-orchestration.md) | Partner API, Integrations & Automation |
+| [0024](0024-partner-api-integrations-automation.md) | Partner API, Integrations & Automation |
+| [0025](0025-unified-dashboards-workflow-orchestration.md) | Unified Dashboards & Cross-Module Workflow Orchestration |
+| [0026](0026-advanced-discovery-saved-searches-alerts.md) | Advanced Discovery, Saved Searches & Smart Alerts |

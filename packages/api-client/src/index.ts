@@ -252,6 +252,20 @@ import {
   adminDashboardResponseSchema,
   ensureCrmContactFromLeadRequestSchema,
   ensureCrmContactFromLeadResponseSchema,
+  discoveryPropertyListQuerySchema,
+  discoveryPropertyListResponseSchema,
+  createSavedSearchRequestSchema,
+  updateSavedSearchRequestSchema,
+  savedSearchSummarySchema,
+  savedSearchListQuerySchema,
+  savedSearchListResponseSchema,
+  runSavedSearchResponseSchema,
+  createSavedPropertyRequestSchema,
+  savedPropertySummarySchema,
+  savedPropertyListQuerySchema,
+  savedPropertyListResponseSchema,
+  savedSearchMatchListQuerySchema,
+  savedSearchMatchListResponseSchema,
   type CreateApiClientRequest,
   type CreateApiClientResponse,
   type CreateAutomationRuleRequest,
@@ -449,6 +463,20 @@ import {
   type PropertyAdminDashboardResponse,
   type AdminDashboardResponse,
   type EnsureCrmContactFromLeadRequest,
+  type DiscoveryPropertyListQuery,
+  type DiscoveryPropertyListResponse,
+  type CreateSavedSearchRequest,
+  type UpdateSavedSearchRequest,
+  type SavedSearchSummary,
+  type SavedSearchListQuery,
+  type SavedSearchListResponse,
+  type RunSavedSearchResponse,
+  type CreateSavedPropertyRequest,
+  type SavedPropertySummary,
+  type SavedPropertyListQuery,
+  type SavedPropertyListResponse,
+  type SavedSearchMatchListQuery,
+  type SavedSearchMatchListResponse,
   type EnsureCrmContactFromLeadResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
@@ -2609,6 +2637,122 @@ export class ApiClient {
         method: 'POST',
         body: JSON.stringify(body),
       },
+    );
+  }
+
+  async searchDiscoveryProperties(
+    query: Partial<DiscoveryPropertyListQuery> = {},
+  ): Promise<DiscoveryPropertyListResponse> {
+    const parsed = discoveryPropertyListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value === undefined || value === null) continue;
+      params.set(key, typeof value === 'bigint' ? value.toString() : String(value));
+    }
+    return this.request(
+      `/api/v1/public/discovery/properties?${params.toString()}`,
+      discoveryPropertyListResponseSchema,
+    );
+  }
+
+  async listSavedSearches(
+    query: Partial<SavedSearchListQuery> = {},
+  ): Promise<SavedSearchListResponse> {
+    const parsed = savedSearchListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    return this.request(
+      `/api/v1/saved-searches?${params.toString()}`,
+      savedSearchListResponseSchema,
+    );
+  }
+
+  async createSavedSearch(input: CreateSavedSearchRequest): Promise<SavedSearchSummary> {
+    const body = createSavedSearchRequestSchema.parse(input);
+    return this.request('/api/v1/saved-searches', savedSearchSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getSavedSearch(publicId: string): Promise<SavedSearchSummary> {
+    return this.request(
+      `/api/v1/saved-searches/${encodeURIComponent(publicId)}`,
+      savedSearchSummarySchema,
+    );
+  }
+
+  async updateSavedSearch(
+    publicId: string,
+    input: UpdateSavedSearchRequest,
+  ): Promise<SavedSearchSummary> {
+    const body = updateSavedSearchRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/saved-searches/${encodeURIComponent(publicId)}`,
+      savedSearchSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async deleteSavedSearch(publicId: string): Promise<OkResponse> {
+    return this.request(
+      `/api/v1/saved-searches/${encodeURIComponent(publicId)}`,
+      okResponseSchema,
+      { method: 'DELETE' },
+    );
+  }
+
+  async runSavedSearch(publicId: string): Promise<RunSavedSearchResponse> {
+    return this.request(
+      `/api/v1/saved-searches/${encodeURIComponent(publicId)}/run`,
+      runSavedSearchResponseSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async listSavedSearchMatches(
+    query: Partial<SavedSearchMatchListQuery> = {},
+  ): Promise<SavedSearchMatchListResponse> {
+    const parsed = savedSearchMatchListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    if (parsed.savedSearchPublicId) {
+      params.set('savedSearchPublicId', parsed.savedSearchPublicId);
+    }
+    return this.request(
+      `/api/v1/saved-searches/matches?${params.toString()}`,
+      savedSearchMatchListResponseSchema,
+    );
+  }
+
+  async listSavedProperties(
+    query: Partial<SavedPropertyListQuery> = {},
+  ): Promise<SavedPropertyListResponse> {
+    const parsed = savedPropertyListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    return this.request(
+      `/api/v1/saved-properties?${params.toString()}`,
+      savedPropertyListResponseSchema,
+    );
+  }
+
+  async createSavedProperty(input: CreateSavedPropertyRequest): Promise<SavedPropertySummary> {
+    const body = createSavedPropertyRequestSchema.parse(input);
+    return this.request('/api/v1/saved-properties', savedPropertySummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteSavedProperty(publicId: string): Promise<OkResponse> {
+    return this.request(
+      `/api/v1/saved-properties/${encodeURIComponent(publicId)}`,
+      okResponseSchema,
+      { method: 'DELETE' },
     );
   }
 

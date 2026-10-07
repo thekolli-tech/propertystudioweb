@@ -537,7 +537,13 @@ enum NotificationType {
   REVIEW_PUBLISHED
   REVIEW_REPORTED
   MESSAGE_RECEIVED
+  SAVED_SEARCH_MATCH
   SYSTEM
+}
+
+enum SavedSearchAlertFrequency {
+  OFF
+  IMMEDIATE
 }
 
 enum NotificationSeverity {
@@ -685,6 +691,9 @@ model User {
   authoredMedia MediaAsset[] @relation("MediaAuthor")
   authoredEditorial EditorialContent[] @relation("EditorialAuthor")
   ownedCollections MediaCollection[] @relation("CollectionOwner")
+  savedSearches SavedSearch[]
+  savedProperties SavedProperty[]
+  savedSearchMatches SavedSearchMatch[]
 
   @@map("users")
 }
@@ -1038,6 +1047,8 @@ model Property {
   matchedLeads Lead[]
   crmSiteVisits CrmSiteVisit[]
   crmDeals     CrmDeal[]
+  savedByUsers SavedProperty[]
+  savedSearchMatches SavedSearchMatch[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -2868,4 +2879,66 @@ model AutomationRule {
   @@index([organizationId])
   @@index([triggerEvent, status])
   @@map("automation_rules")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 14B — Advanced Discovery, Saved Searches & Smart Alerts
+// ---------------------------------------------------------------------------
+
+model SavedSearch {
+  id             String                     @id @db.Uuid
+  publicId       String                     @unique @map("public_id") @db.VarChar(32)
+  userId         String                     @map("user_id") @db.Uuid
+  name           String                     @db.VarChar(120)
+  criteria       Json
+  alertFrequency SavedSearchAlertFrequency  @default(OFF) @map("alert_frequency")
+  lastAlertedAt  DateTime?                  @map("last_alerted_at") @db.Timestamptz(3)
+  lastRunAt      DateTime?                  @map("last_run_at") @db.Timestamptz(3)
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt      DateTime?                  @map("deleted_at") @db.Timestamptz(3)
+
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches SavedSearchMatch[]
+
+  @@index([userId, deletedAt])
+  @@index([alertFrequency, deletedAt])
+  @@map("saved_searches")
+}
+
+model SavedProperty {
+  id         String    @id @db.Uuid
+  publicId   String    @unique @map("public_id") @db.VarChar(32)
+  userId     String    @map("user_id") @db.Uuid
+  propertyId String    @map("property_id") @db.Uuid
+  note       String?   @db.VarChar(500)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId, deletedAt])
+  @@index([propertyId])
+  @@map("saved_properties")
+}
+
+model SavedSearchMatch {
+  id            String   @id @db.Uuid
+  publicId      String   @unique @map("public_id") @db.VarChar(32)
+  savedSearchId String   @map("saved_search_id") @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  propertyId    String   @map("property_id") @db.Uuid
+  matchedAt     DateTime @default(now()) @map("matched_at") @db.Timestamptz(3)
+  notifiedAt    DateTime? @map("notified_at") @db.Timestamptz(3)
+
+  savedSearch SavedSearch @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([savedSearchId, propertyId])
+  @@index([userId, matchedAt])
+  @@index([propertyId])
+  @@map("saved_search_matches")
 }

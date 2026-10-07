@@ -2251,6 +2251,7 @@ export const notificationTypeSchema = z.enum([
   'REVIEW_PUBLISHED',
   'REVIEW_REPORTED',
   'MESSAGE_RECEIVED',
+  'SAVED_SEARCH_MATCH',
   'SYSTEM',
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
@@ -4396,3 +4397,171 @@ export const ensureCrmContactFromLeadResponseSchema = z.object({
 export type EnsureCrmContactFromLeadResponse = z.infer<
   typeof ensureCrmContactFromLeadResponseSchema
 >;
+
+// ---------------------------------------------------------------------------
+// Phase 14B — Advanced Discovery, Saved Searches & Smart Alerts
+// ---------------------------------------------------------------------------
+
+export const discoverySortSchema = z.enum(['newest', 'price_asc', 'price_desc', 'bedrooms_desc']);
+export type DiscoverySort = z.infer<typeof discoverySortSchema>;
+
+export const savedSearchAlertFrequencySchema = z.enum(['OFF', 'IMMEDIATE']);
+export type SavedSearchAlertFrequency = z.infer<typeof savedSearchAlertFrequencySchema>;
+
+/** Durable filter criteria stored on saved searches and used by advanced discovery. */
+export const discoveryCriteriaSchema = z.object({
+  city: z.string().trim().max(80).optional(),
+  locality: z.string().trim().max(120).optional(),
+  state: z.string().trim().max(80).optional(),
+  propertyType: propertyTypeSchema.optional(),
+  listingType: listingTypeSchema.optional(),
+  configuration: propertyConfigurationSchema.optional(),
+  bedrooms: z.number().int().min(0).max(50).optional(),
+  minBedrooms: z.number().int().min(0).max(50).optional(),
+  /** Stored as decimal string of minor units for JSON durability. */
+  minPriceMinor: z.string().regex(/^\d+$/).optional(),
+  maxPriceMinor: z.string().regex(/^\d+$/).optional(),
+  availabilityStatus: propertyAvailabilityStatusSchema.optional(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional(),
+  q: z.string().trim().max(120).optional(),
+});
+export type DiscoveryCriteria = z.infer<typeof discoveryCriteriaSchema>;
+
+export const discoveryPropertyListQuerySchema = cursorPaginationQuerySchema.extend({
+  city: z.string().trim().max(80).optional(),
+  locality: z.string().trim().max(120).optional(),
+  state: z.string().trim().max(80).optional(),
+  propertyType: propertyTypeSchema.optional(),
+  listingType: listingTypeSchema.optional(),
+  configuration: propertyConfigurationSchema.optional(),
+  bedrooms: z.coerce.number().int().min(0).max(50).optional(),
+  minBedrooms: z.coerce.number().int().min(0).max(50).optional(),
+  minPriceMinor: z.coerce.bigint().optional(),
+  maxPriceMinor: z.coerce.bigint().optional(),
+  availabilityStatus: propertyAvailabilityStatusSchema.optional(),
+  projectPublicId: z
+    .string()
+    .regex(/^PS-PROJ-\d+$/)
+    .optional(),
+  q: z.string().trim().max(120).optional(),
+  sort: discoverySortSchema.default('newest'),
+  includeFacets: z.coerce.boolean().optional().default(false),
+});
+export type DiscoveryPropertyListQuery = z.infer<typeof discoveryPropertyListQuerySchema>;
+
+export const discoveryFacetBucketSchema = z.object({
+  value: z.string(),
+  count: z.number().int().nonnegative(),
+});
+export type DiscoveryFacetBucket = z.infer<typeof discoveryFacetBucketSchema>;
+
+export const discoveryFacetsSchema = z.object({
+  propertyTypes: z.array(discoveryFacetBucketSchema),
+  cities: z.array(discoveryFacetBucketSchema),
+  configurations: z.array(discoveryFacetBucketSchema),
+  listingTypes: z.array(discoveryFacetBucketSchema),
+});
+export type DiscoveryFacets = z.infer<typeof discoveryFacetsSchema>;
+
+export const discoveryPropertyListResponseSchema = z.object({
+  properties: z.array(publicPropertySummarySchema),
+  nextCursor: z.string().nullable(),
+  totalEstimate: z.number().int().nonnegative().nullable(),
+  facets: discoveryFacetsSchema.nullable(),
+  sort: discoverySortSchema,
+});
+export type DiscoveryPropertyListResponse = z.infer<typeof discoveryPropertyListResponseSchema>;
+
+export const createSavedSearchRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  criteria: discoveryCriteriaSchema,
+  alertFrequency: savedSearchAlertFrequencySchema.optional().default('OFF'),
+});
+export type CreateSavedSearchRequest = z.infer<typeof createSavedSearchRequestSchema>;
+
+export const updateSavedSearchRequestSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  criteria: discoveryCriteriaSchema.optional(),
+  alertFrequency: savedSearchAlertFrequencySchema.optional(),
+});
+export type UpdateSavedSearchRequest = z.infer<typeof updateSavedSearchRequestSchema>;
+
+export const savedSearchSummarySchema = z.object({
+  publicId: z.string(),
+  name: z.string(),
+  criteria: discoveryCriteriaSchema,
+  alertFrequency: savedSearchAlertFrequencySchema,
+  lastAlertedAt: z.string().datetime().nullable(),
+  lastRunAt: z.string().datetime().nullable(),
+  matchCount: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type SavedSearchSummary = z.infer<typeof savedSearchSummarySchema>;
+
+export const savedSearchListResponseSchema = z.object({
+  savedSearches: z.array(savedSearchSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type SavedSearchListResponse = z.infer<typeof savedSearchListResponseSchema>;
+
+export const savedSearchListQuerySchema = cursorPaginationQuerySchema;
+export type SavedSearchListQuery = z.infer<typeof savedSearchListQuerySchema>;
+
+export const runSavedSearchResponseSchema = z.object({
+  savedSearchPublicId: z.string(),
+  result: discoveryPropertyListResponseSchema,
+});
+export type RunSavedSearchResponse = z.infer<typeof runSavedSearchResponseSchema>;
+
+export const createSavedPropertyRequestSchema = z.object({
+  propertyPublicId: z.string().regex(/^PS-PROP-\d+$/),
+  note: z.string().trim().max(500).optional().nullable(),
+});
+export type CreateSavedPropertyRequest = z.infer<typeof createSavedPropertyRequestSchema>;
+
+export const savedPropertySummarySchema = z.object({
+  publicId: z.string(),
+  propertyPublicId: z.string(),
+  note: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  property: publicPropertySummarySchema.nullable(),
+});
+export type SavedPropertySummary = z.infer<typeof savedPropertySummarySchema>;
+
+export const savedPropertyListResponseSchema = z.object({
+  savedProperties: z.array(savedPropertySummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type SavedPropertyListResponse = z.infer<typeof savedPropertyListResponseSchema>;
+
+export const savedPropertyListQuerySchema = cursorPaginationQuerySchema;
+export type SavedPropertyListQuery = z.infer<typeof savedPropertyListQuerySchema>;
+
+export const savedSearchMatchSummarySchema = z.object({
+  publicId: z.string(),
+  savedSearchPublicId: z.string(),
+  savedSearchName: z.string(),
+  propertyPublicId: z.string(),
+  propertyTitle: z.string().nullable(),
+  matchedAt: z.string().datetime(),
+  notifiedAt: z.string().datetime().nullable(),
+});
+export type SavedSearchMatchSummary = z.infer<typeof savedSearchMatchSummarySchema>;
+
+export const savedSearchMatchListResponseSchema = z.object({
+  matches: z.array(savedSearchMatchSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type SavedSearchMatchListResponse = z.infer<typeof savedSearchMatchListResponseSchema>;
+
+export const savedSearchMatchListQuerySchema = cursorPaginationQuerySchema.extend({
+  savedSearchPublicId: z
+    .string()
+    .regex(/^PS-SSEARCH-\d+$/)
+    .optional(),
+});
+export type SavedSearchMatchListQuery = z.infer<typeof savedSearchMatchListQuerySchema>;

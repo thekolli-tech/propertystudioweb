@@ -60,6 +60,9 @@ export const PUBLIC_ID_PREFIXES = {
   ACONV: 'ACONV',
   AMSG: 'AMSG',
   ACHEV: 'ACHEV',
+  SSEARCH: 'SSEARCH',
+  SPROP: 'SPROP',
+  SMATCH: 'SMATCH',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -181,7 +184,10 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'RULE'
   | 'ACONV'
   | 'AMSG'
-  | 'ACHEV',
+  | 'ACHEV'
+  | 'SSEARCH'
+  | 'SPROP'
+  | 'SMATCH',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -245,4 +251,7 @@ export const PUBLIC_ID_SEQUENCES: Record<
   ACONV: 'public_id_aconv_seq',
   AMSG: 'public_id_amsg_seq',
   ACHEV: 'public_id_achev_seq',
+  SSEARCH: 'public_id_ssearch_seq',
+  SPROP: 'public_id_sprop_seq',
+  SMATCH: 'public_id_smatch_seq',
 };

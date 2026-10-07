@@ -113,6 +113,9 @@ describe('Phase 14A unified dashboards & workflows security', () => {
     );
 
     for (const table of [
+      'saved_search_matches',
+      'saved_searches',
+      'saved_properties',
       'ai_chat_analytics_events',
       'ai_conversation_messages',
       'ai_conversations',
