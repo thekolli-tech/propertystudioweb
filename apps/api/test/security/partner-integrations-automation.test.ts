@@ -185,6 +185,15 @@ describe('Phase 13 partner API integrations automation security', () => {
       await prisma.$executeRawUnsafe(`DELETE FROM ${table}`);
     }
     await prisma.$executeRawUnsafe('DELETE FROM idempotency_keys');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_follow_ups');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_activities');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_site_visits');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_deals');
+    await prisma.$executeRawUnsafe('DELETE FROM crm_contacts');
+    await prisma.$executeRawUnsafe('DELETE FROM lead_purchases');
+    await prisma.$executeRawUnsafe('DELETE FROM lead_access_grants');
+    await prisma.$executeRawUnsafe('DELETE FROM leads');
+    await prisma.$executeRawUnsafe('DELETE FROM requirements');
     await prisma.$executeRawUnsafe('DELETE FROM sessions');
     await prisma.$executeRawUnsafe('DELETE FROM user_platform_roles');
     await prisma.$executeRawUnsafe('DELETE FROM user_personas');
@@ -340,17 +349,17 @@ describe('Phase 13 partner API integrations automation security', () => {
       .get('/api/v1/partner/properties')
       .set('Authorization', `Bearer ${a.apiSecret}`)
       .expect(200);
-    expect(listA.body.items.some((p: { publicId: string }) => p.publicId === 'PS-PROP-900001')).toBe(
-      true,
-    );
+    expect(
+      listA.body.items.some((p: { publicId: string }) => p.publicId === 'PS-PROP-900001'),
+    ).toBe(true);
 
     const listB = await request(app.getHttpServer())
       .get('/api/v1/partner/properties')
       .set('Authorization', `Bearer ${b.apiSecret}`)
       .expect(200);
-    expect(listB.body.items.some((p: { publicId: string }) => p.publicId === 'PS-PROP-900001')).toBe(
-      false,
-    );
+    expect(
+      listB.body.items.some((p: { publicId: string }) => p.publicId === 'PS-PROP-900001'),
+    ).toBe(false);
 
     await request(app.getHttpServer())
       .get('/api/v1/partner/properties/PS-PROP-900001')
@@ -539,9 +548,7 @@ describe('Phase 13 partner API integrations automation security', () => {
     const ingestion = app.get(IngestionService);
     expect(ingestion.providerStatus().status).toBe('UNAVAILABLE');
 
-    const stranger = await register(app, `stranger-${Date.now()}@example.com`, [
-      'PROPERTY_SEEKER',
-    ]);
+    const stranger = await register(app, `stranger-${Date.now()}@example.com`, ['PROPERTY_SEEKER']);
     await request(app.getHttpServer())
       .post('/api/v1/integrations/external-mappings')
       .set('Cookie', stranger.cookie)
@@ -576,14 +583,12 @@ describe('Phase 13 partner API integrations automation security', () => {
 
     const webhooks = app.get(WebhooksService);
     const first = await webhooks.enqueueDeliveriesForEvent(
-      (
-        await prisma.domainEventRecord.findUniqueOrThrow({ where: { publicId: emitted.publicId } })
-      ).id,
+      (await prisma.domainEventRecord.findUniqueOrThrow({ where: { publicId: emitted.publicId } }))
+        .id,
     );
     const second = await webhooks.enqueueDeliveriesForEvent(
-      (
-        await prisma.domainEventRecord.findUniqueOrThrow({ where: { publicId: emitted.publicId } })
-      ).id,
+      (await prisma.domainEventRecord.findUniqueOrThrow({ where: { publicId: emitted.publicId } }))
+        .id,
     );
     expect(first).toBeGreaterThanOrEqual(0);
     expect(second).toBe(0);
@@ -595,12 +600,7 @@ describe('Phase 13 partner API integrations automation security', () => {
   });
 
   it('admin integrations UI APIs require admin permission; PROPERTY_ADMIN denied', async () => {
-    const admin = await grantPlatformRole(
-      app,
-      prisma,
-      `admin-${Date.now()}@example.com`,
-      'ADMIN',
-    );
+    const admin = await grantPlatformRole(app, prisma, `admin-${Date.now()}@example.com`, 'ADMIN');
     const propAdmin = await grantPlatformRole(
       app,
       prisma,
@@ -623,9 +623,9 @@ describe('Phase 13 partner API integrations automation security', () => {
       .set('Cookie', admin.cookie)
       .expect(200)
       .expect((res) => {
-        expect(res.body.providers.every((p: { status: string }) => p.status === 'UNAVAILABLE')).toBe(
-          true,
-        );
+        expect(
+          res.body.providers.every((p: { status: string }) => p.status === 'UNAVAILABLE'),
+        ).toBe(true);
       });
   });
 

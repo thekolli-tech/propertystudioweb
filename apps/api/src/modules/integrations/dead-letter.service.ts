@@ -59,7 +59,7 @@ export class DeadLetterService {
         createdAt: row.createdAt.toISOString(),
         resolvedAt: row.resolvedAt?.toISOString() ?? null,
       })),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 

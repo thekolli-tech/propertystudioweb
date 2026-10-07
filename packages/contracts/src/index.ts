@@ -3787,9 +3787,7 @@ export const automationRuleStatusSchema = z.enum(['ENABLED', 'DISABLED']);
 export type AutomationRuleStatus = z.infer<typeof automationRuleStatusSchema>;
 
 export const notificationChannelProviderKindSchema = z.enum(['EMAIL', 'SMS', 'WHATSAPP']);
-export type NotificationChannelProviderKind = z.infer<
-  typeof notificationChannelProviderKindSchema
->;
+export type NotificationChannelProviderKind = z.infer<typeof notificationChannelProviderKindSchema>;
 
 export const notificationChannelProviderStatusSchema = z.enum([
   'CONFIGURED',
@@ -3809,18 +3807,14 @@ export const createPartnerIntegrationRequestSchema = z.object({
   organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
-export type CreatePartnerIntegrationRequest = z.infer<
-  typeof createPartnerIntegrationRequestSchema
->;
+export type CreatePartnerIntegrationRequest = z.infer<typeof createPartnerIntegrationRequestSchema>;
 
 export const updatePartnerIntegrationRequestSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
   status: partnerIntegrationStatusSchema.optional(),
   metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
-export type UpdatePartnerIntegrationRequest = z.infer<
-  typeof updatePartnerIntegrationRequestSchema
->;
+export type UpdatePartnerIntegrationRequest = z.infer<typeof updatePartnerIntegrationRequestSchema>;
 
 export const partnerIntegrationSummarySchema = z.object({
   publicId: z.string(),
@@ -3840,9 +3834,7 @@ export const partnerIntegrationListResponseSchema = z.object({
   items: z.array(partnerIntegrationSummarySchema),
   nextCursor: z.string().nullable(),
 });
-export type PartnerIntegrationListResponse = z.infer<
-  typeof partnerIntegrationListResponseSchema
->;
+export type PartnerIntegrationListResponse = z.infer<typeof partnerIntegrationListResponseSchema>;
 
 export const createApiClientRequestSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -3982,11 +3974,7 @@ export type IntegrationUsageListResponse = z.infer<typeof integrationUsageListRe
 export const createAutomationRuleRequestSchema = z.object({
   name: z.string().trim().min(2).max(120),
   triggerEvent: z.string().trim().min(2).max(80),
-  actionType: z.enum([
-    'CREATE_FOLLOW_UP',
-    'SEND_NOTIFICATION',
-    'NOOP',
-  ]),
+  actionType: z.enum(['CREATE_FOLLOW_UP', 'SEND_NOTIFICATION', 'NOOP']),
   actionConfig: z.record(z.string(), z.unknown()).default({}),
 });
 export type CreateAutomationRuleRequest = z.infer<typeof createAutomationRuleRequestSchema>;
@@ -4017,9 +4005,7 @@ export const externalResourceMappingSummarySchema = z.object({
   conflictReason: z.string().nullable(),
   lastSyncedAt: z.string().datetime().nullable(),
 });
-export type ExternalResourceMappingSummary = z.infer<
-  typeof externalResourceMappingSummarySchema
->;
+export type ExternalResourceMappingSummary = z.infer<typeof externalResourceMappingSummarySchema>;
 
 export const upsertExternalResourceMappingRequestSchema = z.object({
   provider: z.string().trim().min(2).max(80),
@@ -4144,6 +4130,4 @@ export const verifyWebhookSignatureResponseSchema = z.object({
   valid: z.boolean(),
   reason: z.string().nullable(),
 });
-export type VerifyWebhookSignatureResponse = z.infer<
-  typeof verifyWebhookSignatureResponseSchema
->;
+export type VerifyWebhookSignatureResponse = z.infer<typeof verifyWebhookSignatureResponseSchema>;

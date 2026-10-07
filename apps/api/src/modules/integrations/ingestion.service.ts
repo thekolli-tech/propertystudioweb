@@ -206,12 +206,7 @@ export class IngestionService {
       resourceType: row.resourceType as UpsertExternalResourceMappingRequest['resourceType'],
       externalId: row.externalId,
       canonicalPublicId: row.canonicalPublicId,
-      status: row.status as
-        | 'NEW'
-        | 'UPDATED'
-        | 'REMOVED'
-        | 'UNAVAILABLE'
-        | 'CONFLICT',
+      status: row.status as 'NEW' | 'UPDATED' | 'REMOVED' | 'UNAVAILABLE' | 'CONFLICT',
       conflictReason: row.conflictReason,
       lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
     };

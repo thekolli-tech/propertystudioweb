@@ -12,11 +12,7 @@ export type NotificationSendResult = {
 export interface EmailProvider {
   readonly kind: 'EMAIL';
   status(): NotificationChannelProviderStatus;
-  send(input: {
-    to: string;
-    subject: string;
-    body: string;
-  }): Promise<NotificationSendResult>;
+  send(input: { to: string; subject: string; body: string }): Promise<NotificationSendResult>;
 }
 
 export interface SmsProvider {
@@ -37,7 +33,11 @@ export class NullEmailProvider implements EmailProvider {
     return 'UNAVAILABLE';
   }
   async send(): Promise<NotificationSendResult> {
-    return { status: 'UNAVAILABLE', providerMessageId: null, message: 'Email provider not configured.' };
+    return {
+      status: 'UNAVAILABLE',
+      providerMessageId: null,
+      message: 'Email provider not configured.',
+    };
   }
 }
 
@@ -47,7 +47,11 @@ export class NullSmsProvider implements SmsProvider {
     return 'UNAVAILABLE';
   }
   async send(): Promise<NotificationSendResult> {
-    return { status: 'UNAVAILABLE', providerMessageId: null, message: 'SMS provider not configured.' };
+    return {
+      status: 'UNAVAILABLE',
+      providerMessageId: null,
+      message: 'SMS provider not configured.',
+    };
   }
 }
 

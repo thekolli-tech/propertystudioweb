@@ -1,9 +1,4 @@
-import {
-  type CanActivate,
-  type ExecutionContext,
-  Injectable,
-  SetMetadata,
-} from '@nestjs/common';
+import { type CanActivate, type ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { type PartnerApiScope } from '@property-studio/contracts';
 import { type Request, type Response } from 'express';
@@ -77,7 +72,10 @@ export class PartnerAuthGuard implements CanActivate {
       throw new AppError('UNAUTHORIZED', 'API key has been revoked.');
     }
 
-    if (client.status === 'EXPIRED' || (client.expiresAt && client.expiresAt.getTime() <= Date.now())) {
+    if (
+      client.status === 'EXPIRED' ||
+      (client.expiresAt && client.expiresAt.getTime() <= Date.now())
+    ) {
       throw new AppError('UNAUTHORIZED', 'API key has expired.');
     }
 

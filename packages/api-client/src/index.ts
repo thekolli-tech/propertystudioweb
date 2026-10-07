@@ -2301,7 +2301,6 @@ export class ApiClient {
     });
   }
 
-
   async getOrgIntegrationsOverview(orgPublicId: string): Promise<IntegrationsOverviewResponse> {
     return this.request(
       `/api/v1/org/${encodeURIComponent(orgPublicId)}/integrations/overview`,
@@ -2481,6 +2480,11 @@ export class ApiClient {
       verifyWebhookSignatureResponseSchema,
       { method: 'POST', body: JSON.stringify(body) },
     );
+  }
+
+
+  async getPartnerApiDocs(): Promise<PartnerApiDocsResponse> {
+    return this.request('/api/v1/partner/docs', partnerApiDocsResponseSchema);
   }
 
   async getMyCreatorProfile(): Promise<CreatorProfileSummary> {

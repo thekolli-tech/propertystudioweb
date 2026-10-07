@@ -10,16 +10,17 @@ import {
 import { PartnerApiService } from './partner-api.service';
 
 @Controller('partner')
-@UseGuards(PartnerAuthGuard)
 export class PartnerApiController {
   constructor(private readonly partnerApi: PartnerApiService) {}
 
   @Get('docs')
   docs() {
+    // Public documentation foundation — no API key required.
     return this.partnerApi.docs();
   }
 
   @Get('properties')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('properties:read')
   async listProperties(
     @Req() req: PartnerAuthenticatedRequest,
@@ -44,11 +45,9 @@ export class PartnerApiController {
   }
 
   @Get('properties/:publicId')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('properties:read')
-  async getProperty(
-    @Req() req: PartnerAuthenticatedRequest,
-    @Param('publicId') publicId: string,
-  ) {
+  async getProperty(@Req() req: PartnerAuthenticatedRequest, @Param('publicId') publicId: string) {
     const started = Date.now();
     const result = await this.partnerApi.getProperty(req.partnerActor!, publicId);
     await this.partnerApi.recordUsage({
@@ -65,6 +64,7 @@ export class PartnerApiController {
   }
 
   @Get('projects')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('projects:read')
   async listProjects(
     @Req() req: PartnerAuthenticatedRequest,
@@ -89,6 +89,7 @@ export class PartnerApiController {
   }
 
   @Get('inventory')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('inventory:read')
   async listInventory(
     @Req() req: PartnerAuthenticatedRequest,
@@ -113,6 +114,7 @@ export class PartnerApiController {
   }
 
   @Get('leads')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('leads:receive')
   async listLeads(
     @Req() req: PartnerAuthenticatedRequest,
@@ -137,6 +139,7 @@ export class PartnerApiController {
   }
 
   @Get('leads/:publicId')
+  @UseGuards(PartnerAuthGuard)
   @RequirePartnerScopes('leads:receive')
   async getLead(@Req() req: PartnerAuthenticatedRequest, @Param('publicId') publicId: string) {
     const started = Date.now();

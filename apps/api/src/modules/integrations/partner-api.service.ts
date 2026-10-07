@@ -38,7 +38,7 @@ export class PartnerApiService {
         city: row.city,
         organizationPublicId: row.organization.publicId,
       })),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 
@@ -86,7 +86,7 @@ export class PartnerApiService {
         city: row.city,
         organizationPublicId: row.organization.publicId,
       })),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 
@@ -113,7 +113,7 @@ export class PartnerApiService {
         city: row.city,
         organizationPublicId: row.organization.publicId,
       })),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 
@@ -155,7 +155,7 @@ export class PartnerApiService {
               : null,
         };
       }),
-      nextCursor: hasMore ? page[page.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (page[page.length - 1]?.publicId ?? null) : null,
     };
   }
 
@@ -237,15 +237,7 @@ export class PartnerApiService {
       },
       idempotency:
         'Write operations accept Idempotency-Key and reuse Phase 2 IdempotencyService scopes.',
-      resources: [
-        'properties',
-        'projects',
-        'inventory',
-        'leads',
-        'media',
-        'webhooks',
-        'docs',
-      ],
+      resources: ['properties', 'projects', 'inventory', 'leads', 'media', 'webhooks', 'docs'],
     };
   }
 }

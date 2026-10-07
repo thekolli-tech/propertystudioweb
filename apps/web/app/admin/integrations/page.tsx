@@ -135,9 +135,7 @@ export default async function AdminIntegrationsPage() {
                 <li key={provider.kind} className="border border-border p-4">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{provider.kind}</Badge>
-                    <StatusBadge
-                      tone={provider.status === 'CONFIGURED' ? 'success' : 'neutral'}
-                    >
+                    <StatusBadge tone={provider.status === 'CONFIGURED' ? 'success' : 'neutral'}>
                       {provider.status}
                     </StatusBadge>
                   </div>

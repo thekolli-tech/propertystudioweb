@@ -159,7 +159,7 @@ export class IntegrationsService {
     const items = hasMore ? rows.slice(0, limit) : rows;
     return {
       items: items.map((row) => this.toIntegrationSummary(row, row.organization.publicId)),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 
@@ -369,12 +369,7 @@ export class IntegrationsService {
       integrationType: row.integrationType as CreatePartnerIntegrationRequest['integrationType'],
       status: row.status as 'ACTIVE' | 'SUSPENDED' | 'REVOKED',
       healthStatus: row.healthStatus as
-        | 'CONNECTED'
-        | 'HEALTHY'
-        | 'DEGRADED'
-        | 'FAILING'
-        | 'SUSPENDED'
-        | 'UNAVAILABLE',
+        'CONNECTED' | 'HEALTHY' | 'DEGRADED' | 'FAILING' | 'SUSPENDED' | 'UNAVAILABLE',
       lastSuccessfulAt: row.lastSuccessfulAt?.toISOString() ?? null,
       lastFailedAt: row.lastFailedAt?.toISOString() ?? null,
       errorCount: row.errorCount,

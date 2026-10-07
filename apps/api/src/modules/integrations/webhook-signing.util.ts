@@ -12,7 +12,12 @@ export function buildWebhookSigningPayload(
   return `${timestamp}.${eventId}.${body}`;
 }
 
-export function signWebhookPayload(secret: string, timestamp: string, eventId: string, body: string): string {
+export function signWebhookPayload(
+  secret: string,
+  timestamp: string,
+  eventId: string,
+  body: string,
+): string {
   const payload = buildWebhookSigningPayload(timestamp, eventId, body);
   return createHmac('sha256', secret).update(payload).digest('hex');
 }

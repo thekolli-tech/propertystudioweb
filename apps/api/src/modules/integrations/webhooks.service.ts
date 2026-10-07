@@ -134,7 +134,7 @@ export class WebhooksService {
         completedAt: row.completedAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
       })),
-      nextCursor: hasMore ? items[items.length - 1]?.publicId ?? null : null,
+      nextCursor: hasMore ? (items[items.length - 1]?.publicId ?? null) : null,
     };
   }
 

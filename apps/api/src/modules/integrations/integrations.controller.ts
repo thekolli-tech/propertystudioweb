@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   createApiClientRequestSchema,
   createAutomationRuleRequestSchema,
@@ -20,10 +10,7 @@ import {
 } from '@property-studio/contracts';
 
 import { AuthGuard, PermissionsGuard, RequirePermissions } from '../../common/auth/auth.guards';
-import {
-  CurrentActor,
-  type AuthenticatedRequest,
-} from '../../common/auth/current-actor.decorator';
+import { CurrentActor, type AuthenticatedRequest } from '../../common/auth/current-actor.decorator';
 import { type AuthActor } from '../../common/tenancy/access-scope';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
 import { AutomationService } from './automation.service';
@@ -215,9 +202,7 @@ export class IntegrationsController {
 
   @Post('integrations/webhooks/verify-signature')
   @RequirePermissions('integrations:read')
-  verifySignature(
-    @Body(new ZodValidationPipe(verifyWebhookSignatureRequestSchema)) body: unknown,
-  ) {
+  verifySignature(@Body(new ZodValidationPipe(verifyWebhookSignatureRequestSchema)) body: unknown) {
     const parsed = body as Parameters<WebhooksService['verifySignature']>[0];
     return this.webhooks.verifySignature(parsed);
   }
@@ -256,10 +241,7 @@ export class IntegrationsController {
 
   @Post('admin/integrations/dead-letters/:publicId/retry')
   @RequirePermissions('admin:integrations:manage')
-  adminRetryDeadLetter(
-    @CurrentActor() actor: AuthActor,
-    @Param('publicId') publicId: string,
-  ) {
+  adminRetryDeadLetter(@CurrentActor() actor: AuthActor, @Param('publicId') publicId: string) {
     return this.webhooks.retryDeadLetter(actor, publicId);
   }
 
