@@ -274,6 +274,19 @@ import {
   savedPropertyListResponseSchema,
   savedSearchMatchListQuerySchema,
   savedSearchMatchListResponseSchema,
+  constructionUpdateListQuerySchema,
+  constructionUpdateListResponseSchema,
+  constructionUpdateSummarySchema,
+  createConstructionUpdateRequestSchema,
+  updateConstructionUpdateRequestSchema,
+  createProjectClaimRequestSchema,
+  projectClaimListQuerySchema,
+  projectClaimListResponseSchema,
+  projectClaimSummarySchema,
+  reviewProjectClaimRequestSchema,
+  projectWorkspaceResponseSchema,
+  projectInventoryListQuerySchema,
+  projectInventoryListResponseSchema,
   type CreateApiClientRequest,
   type CreateApiClientResponse,
   type CreateAutomationRuleRequest,
@@ -494,6 +507,19 @@ import {
   type SavedPropertyListResponse,
   type SavedSearchMatchListQuery,
   type SavedSearchMatchListResponse,
+  type ConstructionUpdateListQuery,
+  type ConstructionUpdateListResponse,
+  type ConstructionUpdateSummary,
+  type CreateConstructionUpdateRequest,
+  type UpdateConstructionUpdateRequest,
+  type CreateProjectClaimRequest,
+  type ProjectClaimListQuery,
+  type ProjectClaimListResponse,
+  type ProjectClaimSummary,
+  type ReviewProjectClaimRequest,
+  type ProjectWorkspaceResponse,
+  type ProjectInventoryListQuery,
+  type ProjectInventoryListResponse,
   type EnsureCrmContactFromLeadResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
@@ -2833,6 +2859,163 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async getProjectWorkspace(
+    orgPublicId: string,
+    projectPublicId: string,
+  ): Promise<ProjectWorkspaceResponse> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/projects/${encodeURIComponent(projectPublicId)}/workspace`,
+      projectWorkspaceResponseSchema,
+    );
+  }
+
+  async listProjectInventory(
+    orgPublicId: string,
+    projectPublicId: string,
+    query: Partial<ProjectInventoryListQuery> = {},
+  ): Promise<ProjectInventoryListResponse> {
+    const parsed = projectInventoryListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    if (parsed.availabilityStatus) params.set('availabilityStatus', parsed.availabilityStatus);
+    if (parsed.publicationStatus) params.set('publicationStatus', parsed.publicationStatus);
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/projects/${encodeURIComponent(projectPublicId)}/inventory${qs ? `?${qs}` : ''}`,
+      projectInventoryListResponseSchema,
+    );
+  }
+
+  async listConstructionUpdates(
+    projectPublicId: string,
+    query: Partial<ConstructionUpdateListQuery> = {},
+  ): Promise<ConstructionUpdateListResponse> {
+    const parsed = constructionUpdateListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/projects/${encodeURIComponent(projectPublicId)}/construction-updates${qs ? `?${qs}` : ''}`,
+      constructionUpdateListResponseSchema,
+    );
+  }
+
+  async listPublicConstructionUpdates(
+    projectPublicId: string,
+    query: Partial<ConstructionUpdateListQuery> = {},
+  ): Promise<ConstructionUpdateListResponse> {
+    const parsed = constructionUpdateListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/public/projects/${encodeURIComponent(projectPublicId)}/construction-updates${qs ? `?${qs}` : ''}`,
+      constructionUpdateListResponseSchema,
+    );
+  }
+
+  async createConstructionUpdate(
+    projectPublicId: string,
+    input: CreateConstructionUpdateRequest,
+  ): Promise<ConstructionUpdateSummary> {
+    const body = createConstructionUpdateRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/projects/${encodeURIComponent(projectPublicId)}/construction-updates`,
+      constructionUpdateSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async updateConstructionUpdate(
+    publicId: string,
+    input: UpdateConstructionUpdateRequest,
+  ): Promise<ConstructionUpdateSummary> {
+    const body = updateConstructionUpdateRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/construction-updates/${encodeURIComponent(publicId)}`,
+      constructionUpdateSummarySchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async publishConstructionUpdate(publicId: string): Promise<ConstructionUpdateSummary> {
+    return this.request(
+      `/api/v1/construction-updates/${encodeURIComponent(publicId)}/publish`,
+      constructionUpdateSummarySchema,
+      { method: 'POST' },
+    );
+  }
+
+  async createProjectClaim(
+    projectPublicId: string,
+    input: CreateProjectClaimRequest,
+  ): Promise<ProjectClaimSummary> {
+    const body = createProjectClaimRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/projects/${encodeURIComponent(projectPublicId)}/claims`,
+      projectClaimSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async listProjectClaims(
+    orgPublicId: string,
+    query: Partial<ProjectClaimListQuery> = {},
+  ): Promise<ProjectClaimListResponse> {
+    const parsed = projectClaimListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    if (parsed.limit !== undefined) params.set('limit', String(parsed.limit));
+    if (parsed.status) params.set('status', parsed.status);
+    const qs = params.toString();
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/project-claims${qs ? `?${qs}` : ''}`,
+      projectClaimListResponseSchema,
+    );
+  }
+
+  async getProjectClaim(publicId: string): Promise<ProjectClaimSummary> {
+    return this.request(
+      `/api/v1/project-claims/${encodeURIComponent(publicId)}`,
+      projectClaimSummarySchema,
+    );
+  }
+
+  async submitProjectClaim(publicId: string): Promise<ProjectClaimSummary> {
+    return this.request(
+      `/api/v1/project-claims/${encodeURIComponent(publicId)}/submit`,
+      projectClaimSummarySchema,
+      { method: 'POST' },
+    );
+  }
+
+  async approveProjectClaim(
+    publicId: string,
+    input: ReviewProjectClaimRequest = {},
+  ): Promise<ProjectClaimSummary> {
+    const body = reviewProjectClaimRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/project-claims/${encodeURIComponent(publicId)}/approve`,
+      projectClaimSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async rejectProjectClaim(
+    publicId: string,
+    input: ReviewProjectClaimRequest = {},
+  ): Promise<ProjectClaimSummary> {
+    const body = reviewProjectClaimRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/project-claims/${encodeURIComponent(publicId)}/reject`,
+      projectClaimSummarySchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
   }
 
   private async request<T>(

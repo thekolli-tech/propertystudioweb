@@ -79,6 +79,35 @@ enum ProjectLifecycleStatus {
   ARCHIVED
 }
 
+enum ConstructionPhase {
+  NOT_STARTED
+  FOUNDATION
+  STRUCTURE
+  BRICKWORK
+  ELECTRICAL
+  PLUMBING
+  FINISHING
+  INFRASTRUCTURE
+  HANDOVER
+  COMPLETED
+  OTHER
+}
+
+enum ConstructionUpdatePublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProjectClaimStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum PropertyType {
   APARTMENT
   VILLA
@@ -694,6 +723,9 @@ model User {
   savedSearches SavedSearch[]
   savedProperties SavedProperty[]
   savedSearchMatches SavedSearchMatch[]
+  constructionUpdatesAuthored ConstructionUpdate[] @relation("ConstructionUpdateAuthor")
+  projectClaimsSubmitted ProjectClaim[] @relation("ProjectClaimSubmitter")
+  projectClaimsReviewed ProjectClaim[] @relation("ProjectClaimReviewer")
 
   @@map("users")
 }
@@ -798,6 +830,8 @@ model Organization {
   externalMediaMappings ExternalMediaMapping[]
   partnerIntegrations PartnerIntegration[]
   domainEvents        DomainEventRecord[]
+  constructionUpdates ConstructionUpdate[]
+  projectClaims       ProjectClaim[] @relation("ProjectClaimOrganization")
   automationRules     AutomationRule[]
   externalResourceMappings ExternalResourceMapping[]
 
@@ -976,6 +1010,8 @@ model Project {
   currency         String                @default("INR") @db.VarChar(3)
   possessionDate   DateTime?             @map("possession_date") @db.Date
   trustStatus      TrustSubjectStatus    @default(UNVERIFIED) @map("trust_status")
+  constructionPhase ConstructionPhase    @default(NOT_STARTED) @map("construction_phase")
+  constructionPercent Int?               @map("construction_percent")
   publishedAt      DateTime?             @map("published_at") @db.Timestamptz(3)
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -988,6 +1024,8 @@ model Project {
   matchedLeads Lead[]
   crmSiteVisits CrmSiteVisit[]
   crmDeals     CrmDeal[]
+  constructionUpdates ConstructionUpdate[]
+  projectClaims ProjectClaim[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -999,7 +1037,73 @@ model Project {
   @@index([publishedAt])
   @@index([deletedAt])
   @@index([trustStatus])
+  @@index([constructionPhase])
   @@map("projects")
+}
+
+model ConstructionUpdate {
+  id                String                              @id @db.Uuid
+  publicId          String                              @unique @map("public_id") @db.VarChar(32)
+  projectId         String                              @map("project_id") @db.Uuid
+  organizationId    String                              @map("organization_id") @db.Uuid
+  authorUserId      String                              @map("author_user_id") @db.Uuid
+  title             String                              @db.VarChar(200)
+  description       String?                             @db.VarChar(5000)
+  milestone         ConstructionPhase                   @default(OTHER)
+  percentComplete   Int?                                @map("percent_complete")
+  updateDate        DateTime                            @map("update_date") @db.Date
+  publicationStatus ConstructionUpdatePublicationStatus @default(DRAFT) @map("publication_status")
+  mediaPublicIds    String[]                            @default([]) @map("media_public_ids")
+  publishedAt       DateTime?                           @map("published_at") @db.Timestamptz(3)
+  createdAt         DateTime                            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime                            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy         String?                             @map("created_by") @db.Uuid
+  updatedBy         String?                             @map("updated_by") @db.Uuid
+  version           Int                                 @default(1)
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  authorUser   User         @relation("ConstructionUpdateAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, publicationStatus])
+  @@index([organizationId])
+  @@index([updateDate])
+  @@index([publicationStatus])
+  @@map("construction_updates")
+}
+
+/// Dedicated claim relationship — does not transfer ownership until APPROVED + entitlement.
+model ProjectClaim {
+  id                      String            @id @db.Uuid
+  publicId                String            @unique @map("public_id") @db.VarChar(32)
+  projectId               String            @map("project_id") @db.Uuid
+  claimingOrganizationId  String            @map("claiming_organization_id") @db.Uuid
+  submittedByUserId       String            @map("submitted_by_user_id") @db.Uuid
+  verificationCaseId      String?           @map("verification_case_id") @db.Uuid
+  status                  ProjectClaimStatus @default(DRAFT)
+  justification           String            @db.VarChar(2000)
+  authorizationNotes      String?           @map("authorization_notes") @db.VarChar(2000)
+  reviewNotes             String?           @map("review_notes") @db.VarChar(2000)
+  reviewedByUserId        String?           @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt              DateTime?         @map("reviewed_at") @db.Timestamptz(3)
+  submittedAt             DateTime?         @map("submitted_at") @db.Timestamptz(3)
+  approvedAt              DateTime?         @map("approved_at") @db.Timestamptz(3)
+  entitlementCheckedAt    DateTime?         @map("entitlement_checked_at") @db.Timestamptz(3)
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  version                 Int               @default(1)
+
+  project              Project       @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  claimingOrganization Organization  @relation("ProjectClaimOrganization", fields: [claimingOrganizationId], references: [id], onDelete: Restrict)
+  submittedByUser      User          @relation("ProjectClaimSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  reviewedByUser       User?         @relation("ProjectClaimReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  verificationCase     VerificationCase? @relation(fields: [verificationCaseId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status])
+  @@index([claimingOrganizationId, status])
+  @@index([status])
+  @@index([verificationCaseId])
+  @@map("project_claims")
 }
 
 model Property {
@@ -1786,6 +1890,7 @@ model VerificationCase {
   submittedBy  User?         @relation("VerificationSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
   reviewedBy   User?         @relation("VerificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   documents    VerificationDocument[]
+  projectClaims ProjectClaim[]
 
   @@index([subjectType, subjectId, verificationType])
   @@index([organizationId])

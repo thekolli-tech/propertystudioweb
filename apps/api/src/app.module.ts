@@ -25,6 +25,7 @@ import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { MediaModule } from './modules/media/media.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { ProjectOpsModule } from './modules/project-ops/project-ops.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { VerificationModule } from './modules/verification/verification.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
@@ -89,6 +90,7 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     AuthModule,
     OrganizationsModule,
     CatalogModule,
+    ProjectOpsModule,
     DiscoveryModule,
     MediaModule,
     MarketplaceModule,

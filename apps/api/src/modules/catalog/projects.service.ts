@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  type ConstructionPhase,
   type CreateDocumentAssetRequest,
   type CreateMediaAssetRequest,
   type CreateProjectRequest,
@@ -16,6 +17,7 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { CatalogAccessService } from './catalog-access.service';
 import {
   bigintToString,
@@ -35,6 +37,7 @@ export class ProjectsService {
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
     private readonly storage: ObjectStorageService,
+    private readonly domainEvents: DomainEventBus,
   ) {}
 
   async create(actor: AuthActor, body: CreateProjectRequest, request?: AuthenticatedRequest) {
@@ -93,6 +96,18 @@ export class ProjectsService {
       resourceId: publicId,
       requestId: request?.requestId,
       after: { name: project.name, lifecycleStatus: project.lifecycleStatus },
+    });
+
+    await this.domainEvents.emit({
+      eventType: 'project.created',
+      resourceType: 'project',
+      resourcePublicId: publicId,
+      organizationId: organization.id,
+      payload: {
+        projectPublicId: publicId,
+        organizationPublicId: organization.publicId,
+        lifecycleStatus: project.lifecycleStatus,
+      },
     });
 
     return this.toDetail(project, organization.publicId, 0, [], []);
@@ -283,6 +298,34 @@ export class ProjectsService {
       before: { lifecycleStatus: project.lifecycleStatus, version: project.version },
       after: { lifecycleStatus: updated.lifecycleStatus, version: updated.version },
     });
+
+    if (action === 'project.published') {
+      await this.domainEvents.emit({
+        eventType: 'project.published',
+        resourceType: 'project',
+        resourcePublicId: publicId,
+        organizationId: project.organizationId,
+        payload: {
+          projectPublicId: publicId,
+          lifecycleStatus: updated.lifecycleStatus,
+        },
+      });
+    } else if (
+      action === 'project.updated' ||
+      action === 'project.unpublished' ||
+      action === 'project.archived'
+    ) {
+      await this.domainEvents.emit({
+        eventType: 'project.updated',
+        resourceType: 'project',
+        resourcePublicId: publicId,
+        organizationId: project.organizationId,
+        payload: {
+          projectPublicId: publicId,
+          lifecycleStatus: updated.lifecycleStatus,
+        },
+      });
+    }
 
     const [media, documents] = await Promise.all([
       this.listMedia(updated.id, false),
@@ -626,6 +669,8 @@ export class ProjectsService {
       microMarket: string | null;
       startingPriceMinor: bigint | null;
       currency: string;
+      constructionPhase?: string;
+      trustStatus?: string;
       publishedAt: Date | null;
       createdAt: Date;
       updatedAt: Date;
@@ -644,6 +689,10 @@ export class ProjectsService {
       microMarket: row.microMarket,
       startingPriceMinor: bigintToString(row.startingPriceMinor),
       currency: row.currency,
+      constructionPhase: row.constructionPhase
+        ? (row.constructionPhase as ConstructionPhase)
+        : undefined,
+      trustStatus: row.trustStatus,
       publishedAt: toIso(row.publishedAt),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
