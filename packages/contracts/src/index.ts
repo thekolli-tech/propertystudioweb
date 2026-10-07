@@ -3747,8 +3747,14 @@ export const domainEventTypeSchema = z.enum([
   'inventory.updated',
   'lead.created',
   'lead.assigned',
+  'lead.accessed',
   'lead.status_changed',
   'requirement.created',
+  'requirement.published',
+  'crm.contact.created',
+  'crm.follow_up.created',
+  'crm.site_visit.scheduled',
+  'crm.site_visit.completed',
   'crm.deal.created',
   'crm.deal.updated',
   'crm.deal.closed',
@@ -4255,3 +4261,138 @@ export const okAiConversationDeleteResponseSchema = z.object({
   publicId: z.string(),
 });
 export type OkAiConversationDeleteResponse = z.infer<typeof okAiConversationDeleteResponseSchema>;
+
+// ─── Phase 14A: Unified dashboards & workflow orchestration ─────────────────
+
+export const dashboardMetricSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.number().int().nonnegative(),
+  href: z.string().nullable().optional(),
+});
+export type DashboardMetric = z.infer<typeof dashboardMetricSchema>;
+
+export const dashboardPipelineStageSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  count: z.number().int().nonnegative(),
+});
+export type DashboardPipelineStage = z.infer<typeof dashboardPipelineStageSchema>;
+
+export const dashboardActivityItemSchema = z.object({
+  id: z.string(),
+  action: z.string(),
+  resourceType: z.string().nullable(),
+  resourcePublicId: z.string().nullable(),
+  summary: z.string(),
+  occurredAt: z.string().datetime(),
+});
+export type DashboardActivityItem = z.infer<typeof dashboardActivityItemSchema>;
+
+export const dashboardAttentionItemSchema = z.object({
+  key: z.string(),
+  severity: z.enum(['INFO', 'WARNING', 'CRITICAL']),
+  title: z.string(),
+  description: z.string(),
+  href: z.string().nullable(),
+  count: z.number().int().nonnegative().optional(),
+});
+export type DashboardAttentionItem = z.infer<typeof dashboardAttentionItemSchema>;
+
+export const dashboardQuickActionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  href: z.string(),
+  description: z.string().nullable().optional(),
+});
+export type DashboardQuickAction = z.infer<typeof dashboardQuickActionSchema>;
+
+export const dashboardRecentItemSchema = z.object({
+  publicId: z.string(),
+  title: z.string(),
+  subtitle: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  href: z.string().nullable(),
+  occurredAt: z.string().datetime().nullable().optional(),
+});
+export type DashboardRecentItem = z.infer<typeof dashboardRecentItemSchema>;
+
+export const developerDashboardResponseSchema = z.object({
+  role: z.literal('DEVELOPER'),
+  organizationPublicId: z.string(),
+  organizationName: z.string(),
+  metrics: z.array(dashboardMetricSchema),
+  pipeline: z.array(dashboardPipelineStageSchema),
+  recentActivity: z.array(dashboardActivityItemSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  recentProjects: z.array(dashboardRecentItemSchema),
+  recentProperties: z.array(dashboardRecentItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  generatedAt: z.string().datetime(),
+});
+export type DeveloperDashboardResponse = z.infer<typeof developerDashboardResponseSchema>;
+
+export const agentDashboardResponseSchema = z.object({
+  role: z.literal('AGENT'),
+  organizationPublicId: z.string(),
+  organizationName: z.string(),
+  metrics: z.array(dashboardMetricSchema),
+  pipeline: z.array(dashboardPipelineStageSchema),
+  recentActivity: z.array(dashboardActivityItemSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  recentLeads: z.array(dashboardRecentItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  walletBalanceMinor: z.string().nullable(),
+  walletCurrency: z.string().nullable(),
+  generatedAt: z.string().datetime(),
+});
+export type AgentDashboardResponse = z.infer<typeof agentDashboardResponseSchema>;
+
+export const seekerDashboardResponseSchema = z.object({
+  role: z.literal('SEEKER'),
+  metrics: z.array(dashboardMetricSchema),
+  recentRequirements: z.array(dashboardRecentItemSchema),
+  recentNotifications: z.array(dashboardRecentItemSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  generatedAt: z.string().datetime(),
+});
+export type SeekerDashboardResponse = z.infer<typeof seekerDashboardResponseSchema>;
+
+export const propertyAdminDashboardResponseSchema = z.object({
+  role: z.literal('PROPERTY_ADMIN'),
+  metrics: z.array(dashboardMetricSchema),
+  assignedProperties: z.array(dashboardRecentItemSchema),
+  assignedProjects: z.array(dashboardRecentItemSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  generatedAt: z.string().datetime(),
+});
+export type PropertyAdminDashboardResponse = z.infer<typeof propertyAdminDashboardResponseSchema>;
+
+export const adminDashboardResponseSchema = z.object({
+  role: z.literal('ADMIN'),
+  metrics: z.array(dashboardMetricSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  recentActivity: z.array(dashboardActivityItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  generatedAt: z.string().datetime(),
+});
+export type AdminDashboardResponse = z.infer<typeof adminDashboardResponseSchema>;
+
+export const ensureCrmContactFromLeadRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  leadPublicId: z.string().regex(/^PS-LEAD-\d+$/),
+  includeRevealedContact: z.boolean().optional().default(false),
+});
+export type EnsureCrmContactFromLeadRequest = z.infer<typeof ensureCrmContactFromLeadRequestSchema>;
+
+export const ensureCrmContactFromLeadResponseSchema = z.object({
+  created: z.boolean(),
+  contactPublicId: z.string(),
+  sourceLeadPublicId: z.string(),
+  contactFieldsIncluded: z.boolean(),
+});
+export type EnsureCrmContactFromLeadResponse = z.infer<
+  typeof ensureCrmContactFromLeadResponseSchema
+>;

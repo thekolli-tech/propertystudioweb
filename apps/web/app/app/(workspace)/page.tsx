@@ -6,10 +6,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyState,
   PageHeader,
 } from '@property-studio/ui';
 
-import { createServerApiClient } from '@/lib/api';
+import { SeekerDashboardView } from '@/components/dashboard/role-dashboard';
+import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { getRequestCookieHeader, getSessionUser } from '@/lib/auth';
 
 export const metadata = { title: 'Application' };
@@ -17,54 +19,51 @@ export const metadata = { title: 'Application' };
 export default async function AppHomePage() {
   const user = await getSessionUser();
   const cookieHeader = await getRequestCookieHeader();
+  const client = createServerApiClient(cookieHeader);
+
   let organizations: Array<{ publicId: string; name: string; type: string }> = [];
   try {
     if (cookieHeader) {
-      const result = await createServerApiClient(cookieHeader).listOrganizations();
-      organizations = result.organizations;
+      organizations = (await client.listOrganizations()).organizations;
     }
   } catch {
     organizations = [];
   }
 
+  let seekerDashboard: Awaited<ReturnType<typeof client.getSeekerDashboard>> | null = null;
+  let seekerError: string | null = null;
+  try {
+    seekerDashboard = await client.getSeekerDashboard();
+  } catch (error) {
+    if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
+      seekerError = null;
+    } else if (error instanceof ApiClientError) {
+      seekerError = error.message;
+    }
+  }
+
   return (
-    <div>
-      <PageHeader
-        title="Welcome back"
-        description={user ? `Signed in as ${user.email}` : undefined}
-      />
+    <div className="space-y-8">
+      {seekerDashboard ? (
+        <SeekerDashboardView data={seekerDashboard} />
+      ) : (
+        <>
+          <PageHeader
+            title="Welcome back"
+            description={user ? `Signed in as ${user.email}` : undefined}
+          />
+          {seekerError ? (
+            <EmptyState title="Dashboard unavailable" description={seekerError} />
+          ) : null}
+        </>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Your workspace</CardTitle>
-            <CardDescription>
-              Personal tools for requirements, saved properties, and inbox.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/app/requirements">Requirements</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/app/saved">Saved</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/app/inbox">Inbox</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/app/ai">AI tools</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/app/me">Profile</Link>
-            </Button>
-          </CardContent>
-        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Organizations</CardTitle>
             <CardDescription>
-              Create a Developer or Agency workspace, then switch context via the organization
-              switcher. Access is enforced by the API.
+              Developer and Agency workspaces use role-aware dashboards under each organization.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -78,14 +77,25 @@ export default async function AppHomePage() {
                 <div key={org.publicId} className="flex items-center justify-between gap-2 text-sm">
                   <span>
                     <span className="font-medium text-foreground">{org.name}</span>
-                    <span className="ml-2 text-muted-foreground">{org.publicId}</span>
+                    <span className="ml-2 text-muted-foreground">{org.type}</span>
                   </span>
                   <Button asChild variant="ghost" size="sm">
-                    <Link href={`/app/org/${org.publicId}`}>Open</Link>
+                    <Link href={`/app/org/${org.publicId}`}>Open dashboard</Link>
                   </Button>
                 </div>
               ))
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Copilot</CardTitle>
+            <CardDescription>Phase 13 chatbot — same backend for all entry points.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="sm">
+              <Link href="/app/ai/chat">Open AI Copilot</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

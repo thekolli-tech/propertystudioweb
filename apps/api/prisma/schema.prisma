@@ -1319,6 +1319,7 @@ model CrmContact {
   siteVisits   CrmSiteVisit[]
   deals        CrmDeal[]
 
+  @@unique([organizationId, sourceLeadId])
   @@index([organizationId])
   @@index([sourceLeadId])
   @@index([ownerUserId])

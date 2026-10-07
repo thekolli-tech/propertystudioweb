@@ -31,6 +31,7 @@ import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { toPublicRequirementSummary } from '../marketplace/marketplace.util';
 import { CrmAccessService } from './crm-access.service';
 import {
@@ -66,6 +67,7 @@ export class CrmService {
     private readonly audit: AuditService,
     private readonly access: CrmAccessService,
     private readonly transitions: LeadTransitionService,
+    private readonly domainEvents: DomainEventBus,
   ) {}
 
   async overview(actor: AuthActor, query: CrmOverviewQuery, request?: AuthenticatedRequest) {
@@ -260,6 +262,17 @@ export class CrmService {
       requestId: request?.requestId,
       after: {
         displayName: contact.displayName,
+        sourceLeadPublicId: body.sourceLeadPublicId ?? null,
+      },
+    });
+
+    await this.domainEvents.emit({
+      eventType: 'crm.contact.created',
+      resourceType: 'crm_contact',
+      resourcePublicId: publicId,
+      organizationId: organization.id,
+      payload: {
+        contactPublicId: publicId,
         sourceLeadPublicId: body.sourceLeadPublicId ?? null,
       },
     });
@@ -564,6 +577,14 @@ export class CrmService {
       after: { title: followUp.title, dueAt: followUp.dueAt.toISOString() },
     });
 
+    await this.domainEvents.emit({
+      eventType: 'crm.follow_up.created',
+      resourceType: 'crm_follow_up',
+      resourcePublicId: publicId,
+      organizationId: organization.id,
+      payload: { followUpPublicId: publicId, dueAt: followUp.dueAt.toISOString() },
+    });
+
     return this.toFollowUpSummary(followUp);
   }
 
@@ -745,6 +766,18 @@ export class CrmService {
       after: { leadPublicId: body.leadPublicId, scheduledAt: siteVisit.scheduledAt.toISOString() },
     });
 
+    await this.domainEvents.emit({
+      eventType: 'crm.site_visit.scheduled',
+      resourceType: 'crm_site_visit',
+      resourcePublicId: publicId,
+      organizationId: organization.id,
+      payload: {
+        siteVisitPublicId: publicId,
+        leadPublicId: body.leadPublicId,
+        scheduledAt: siteVisit.scheduledAt.toISOString(),
+      },
+    });
+
     return this.toSiteVisitSummary(siteVisit);
   }
 
@@ -820,6 +853,19 @@ export class CrmService {
       },
       include: this.siteVisitInclude(),
     });
+
+    if (body.status === 'COMPLETED' && siteVisit.status !== 'COMPLETED') {
+      await this.domainEvents.emit({
+        eventType: 'crm.site_visit.completed',
+        resourceType: 'crm_site_visit',
+        resourcePublicId: publicId,
+        organizationId: siteVisit.organizationId,
+        payload: {
+          siteVisitPublicId: publicId,
+          outcome: updated.outcome ?? null,
+        },
+      });
+    }
 
     await this.audit.write({
       actorUserId: actor.userId,
@@ -932,6 +978,14 @@ export class CrmService {
       resourceId: publicId,
       requestId: request?.requestId,
       after: { leadPublicId: body.leadPublicId, status: deal.status },
+    });
+
+    await this.domainEvents.emit({
+      eventType: 'crm.deal.created',
+      resourceType: 'crm_deal',
+      resourcePublicId: publicId,
+      organizationId: organization.id,
+      payload: { dealPublicId: publicId, leadPublicId: body.leadPublicId, status: deal.status },
     });
 
     return this.toDealSummary(deal);
