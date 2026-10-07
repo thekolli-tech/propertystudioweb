@@ -5,17 +5,38 @@ import { type AuthenticatedRequest } from '../../common/auth/current-actor.decor
 import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
-import { EntitlementService } from '../billing/entitlement.service';
 
 const EXPIRING_SOON_MS = 30 * 24 * 60 * 60 * 1000;
+const ACTIVE_SUBSCRIPTION_STATUSES = ['TRIALING', 'ACTIVE'] as const;
 
 @Injectable()
 export class AgentProfessionalAccessService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly entitlements: EntitlementService,
   ) {}
+
+  /** Local entitlement read — avoids importing BillingModule (circular with Marketplace). */
+  private async hasLeadMarketplaceEntitlement(organizationId: string): Promise<boolean> {
+    const subscription = await this.prisma.organizationSubscription.findFirst({
+      where: {
+        organizationId,
+        status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] },
+        currentPeriodEnd: { gt: new Date() },
+      },
+      include: {
+        plan: {
+          include: {
+            entitlements: { where: { enabled: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return Boolean(
+      subscription?.plan.entitlements.some((row) => row.key === 'LEAD_MARKETPLACE_ACCESS'),
+    );
+  }
 
   /**
    * Authoritative professional access for agency organizations.
@@ -174,7 +195,7 @@ export class AgentProfessionalAccessService {
     if (!evaluation.eligible) {
       return { eligible: false, reason: evaluation.reason };
     }
-    const hasEntitlement = await this.entitlements.has(organizationId, 'LEAD_MARKETPLACE_ACCESS');
+    const hasEntitlement = await this.hasLeadMarketplaceEntitlement(organizationId);
     if (!hasEntitlement) {
       return {
         eligible: false,

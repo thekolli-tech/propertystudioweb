@@ -126,11 +126,17 @@ describe('Phase 15B agent verification & professional operations', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'silent';
+    process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = '2000';
+    process.env.RATE_LIMIT_MAX_REQUESTS = '2000';
+    process.env.PAYMENTS_PROVIDER = 'SANDBOX';
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
     app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
     app.use(cookieParser());
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
@@ -142,20 +148,40 @@ describe('Phase 15B agent verification & professional operations', () => {
   });
 
   beforeEach(async () => {
-    await prisma.verificationDocument.deleteMany();
-    await prisma.verificationCase.updateMany({ data: { processingFeeTransactionId: null } });
-    await prisma.verificationCase.deleteMany();
-    await prisma.financialTransaction.deleteMany();
-    await prisma.property.deleteMany();
-    await prisma.planEntitlement.deleteMany();
-    await prisma.organizationSubscription.deleteMany();
-    await prisma.subscriptionPlan.deleteMany();
-    await prisma.agencyProfile.deleteMany();
-    await prisma.organizationMembership.deleteMany();
-    await prisma.organization.deleteMany();
-    await prisma.userPlatformRole.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany();
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE audit_events DISABLE TRIGGER audit_events_no_delete',
+    );
+    await prisma.$executeRawUnsafe('DELETE FROM audit_events');
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE audit_events ENABLE TRIGGER audit_events_no_delete',
+    );
+    for (const table of [
+      'notifications',
+      'verification_documents',
+      'construction_updates',
+      'project_claims',
+      'verification_cases',
+      'financial_transactions',
+      'properties',
+      'communities',
+      'projects',
+      'plan_entitlements',
+      'organization_subscriptions',
+      'subscription_plans',
+      'wallet_ledger_entries',
+      'wallets',
+      'agency_profiles',
+      'developer_profiles',
+      'organization_memberships',
+      'organizations',
+      'sessions',
+      'user_platform_roles',
+      'user_personas',
+      'user_credentials',
+      'users',
+    ] as const) {
+      await prisma.$executeRawUnsafe(`DELETE FROM ${table}`);
+    }
   });
 
   it('1-4. unverified/pending cannot create listings; public mutate denied', async () => {

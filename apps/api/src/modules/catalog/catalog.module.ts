@@ -1,6 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
-import { AgentOpsModule } from '../agent-ops/agent-ops.module';
+import { AgentAccessModule } from '../agent-ops/agent-access.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { CatalogAccessService } from './catalog-access.service';
 import { CommunitiesController } from './communities.controller';
@@ -11,7 +11,7 @@ import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
 
 @Module({
-  imports: [IntegrationsModule, forwardRef(() => AgentOpsModule)],
+  imports: [IntegrationsModule, AgentAccessModule],
   controllers: [ProjectsController, PropertiesController, CommunitiesController],
   providers: [CatalogAccessService, ProjectsService, PropertiesService, CommunitiesService],
   exports: [ProjectsService, PropertiesService, CommunitiesService, CatalogAccessService],
