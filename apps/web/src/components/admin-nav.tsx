@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Building2,
+  Clapperboard,
   ClipboardList,
   CreditCard,
   FileText,
   Flag,
+  Images,
   Inbox,
   LayoutDashboard,
   LineChart,
+  Radio,
   ScrollText,
   Settings,
   Shield,
@@ -18,6 +21,10 @@ import {
   Sparkles,
   Star,
   Users,
+  BarChart3,
+  ExternalLink,
+  Library,
+  PenLine,
 } from 'lucide-react';
 import { SidebarNav } from '@property-studio/ui';
 
@@ -52,6 +59,26 @@ const SECTIONS = [
         icon: <ClipboardList className="h-4 w-4" />,
       },
       { href: '/admin/leads', label: 'Leads', icon: <Inbox className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'Media CMS',
+    items: [
+      { href: '/admin/media', label: 'Media', icon: <Images className="h-4 w-4" /> },
+      { href: '/admin/content', label: 'Content', icon: <PenLine className="h-4 w-4" /> },
+      { href: '/admin/collections', label: 'Collections', icon: <Library className="h-4 w-4" /> },
+      { href: '/admin/creators', label: 'Creators', icon: <Clapperboard className="h-4 w-4" /> },
+      {
+        href: '/admin/external-media',
+        label: 'External providers',
+        icon: <ExternalLink className="h-4 w-4" />,
+      },
+      { href: '/admin/broadcast', label: 'Broadcast', icon: <Radio className="h-4 w-4" /> },
+      {
+        href: '/admin/media/analytics',
+        label: 'Analytics',
+        icon: <BarChart3 className="h-4 w-4" />,
+      },
     ],
   },
   {

@@ -18,6 +18,7 @@ import { CrmModule } from './modules/crm/crm.module';
 import { HealthModule } from './modules/health/health.module';
 import { IntelligenceModule } from './modules/intelligence/intelligence.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { MediaModule } from './modules/media/media.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
@@ -66,6 +67,7 @@ import { VerificationModule } from './modules/verification/verification.module';
     AuthModule,
     OrganizationsModule,
     CatalogModule,
+    MediaModule,
     MarketplaceModule,
     CrmModule,
     BillingModule,

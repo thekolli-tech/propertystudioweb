@@ -185,6 +185,36 @@ import {
   marketTrendResponseSchema,
   projectIntelligenceDetailSchema,
   propertyIntelligenceDetailSchema,
+  addMediaCollectionItemRequestSchema,
+  broadcastProjectPresentationSchema,
+  broadcastPropertyPresentationSchema,
+  broadcastStudioConfigSchema,
+  createCreatorProfileRequestSchema,
+  createEditorialContentRequestSchema,
+  createExternalMediaMappingRequestSchema,
+  createMediaAnalyticsEventRequestSchema,
+  createMediaCmsRequestSchema,
+  createMediaCollectionRequestSchema,
+  creatorProfileSummarySchema,
+  editorialContentDetailSchema,
+  editorialListQuerySchema,
+  editorialListResponseSchema,
+  externalMediaMappingSummarySchema,
+  externalMediaMetricsResponseSchema,
+  externalMediaProviderListResponseSchema,
+  mediaAccessUrlResponseSchema,
+  mediaAnalyticsEventSummarySchema,
+  mediaAnalyticsListResponseSchema,
+  mediaCmsDetailSchema,
+  mediaCmsListQuerySchema,
+  mediaCmsListResponseSchema,
+  mediaCollectionDetailSchema,
+  mediaCollectionListResponseSchema,
+  moderateMediaRequestSchema,
+  updateBroadcastStudioConfigRequestSchema,
+  updateEditorialContentRequestSchema,
+  updateMediaCmsRequestSchema,
+  updateMediaCollectionRequestSchema,
   type AddOrganizationMemberRequest,
   type AgencyProfile,
   type AuthSuccessResponse,
@@ -371,6 +401,36 @@ import {
   type MarketTrendResponse,
   type ProjectIntelligenceDetail,
   type PropertyIntelligenceDetail,
+  type AddMediaCollectionItemRequest,
+  type BroadcastProjectPresentation,
+  type BroadcastPropertyPresentation,
+  type BroadcastStudioConfig,
+  type CreateCreatorProfileRequest,
+  type CreateEditorialContentRequest,
+  type CreateExternalMediaMappingRequest,
+  type CreateMediaAnalyticsEventRequest,
+  type CreateMediaCmsRequest,
+  type CreateMediaCollectionRequest,
+  type CreatorProfileSummary,
+  type EditorialContentDetail,
+  type EditorialListQuery,
+  type EditorialListResponse,
+  type ExternalMediaMappingSummary,
+  type ExternalMediaMetricsResponse,
+  type ExternalMediaProviderListResponse,
+  type MediaAccessUrlResponse,
+  type MediaAnalyticsEventSummary,
+  type MediaAnalyticsListResponse,
+  type MediaCmsDetail,
+  type MediaCmsListQuery,
+  type MediaCmsListResponse,
+  type MediaCollectionDetail,
+  type MediaCollectionListResponse,
+  type ModerateMediaRequest,
+  type UpdateBroadcastStudioConfigRequest,
+  type UpdateEditorialContentRequest,
+  type UpdateMediaCmsRequest,
+  type UpdateMediaCollectionRequest,
 } from '@property-studio/contracts';
 
 export class ApiClientError extends Error {
@@ -1845,6 +1905,366 @@ export class ApiClient {
 
   async getAiJob(publicId: string): Promise<AiJobSummary> {
     return this.request(`/api/v1/ai/jobs/${encodeURIComponent(publicId)}`, aiJobSummarySchema);
+  }
+
+  // --- Phase 12: Media CMS / Broadcast Studio ---
+
+  async listPublicMedia(query: Partial<MediaCmsListQuery> = {}): Promise<MediaCmsListResponse> {
+    const parsed = mediaCmsListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.mediaType) params.set('mediaType', parsed.mediaType);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.tag) params.set('tag', parsed.tag);
+    if (parsed.lifecycleStatus) params.set('lifecycleStatus', parsed.lifecycleStatus);
+    if (parsed.organizationPublicId) {
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    }
+    return this.request(`/api/v1/public/media?${params.toString()}`, mediaCmsListResponseSchema);
+  }
+
+  async getPublicMedia(slugOrPublicId: string): Promise<MediaCmsDetail> {
+    return this.request(
+      `/api/v1/public/media/${encodeURIComponent(slugOrPublicId)}`,
+      mediaCmsDetailSchema,
+    );
+  }
+
+  async createCmsMedia(input: CreateMediaCmsRequest): Promise<MediaCmsDetail> {
+    const body = createMediaCmsRequestSchema.parse(input);
+    return this.request('/api/v1/media', mediaCmsDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateCmsMedia(publicId: string, input: UpdateMediaCmsRequest): Promise<MediaCmsDetail> {
+    const body = updateMediaCmsRequestSchema.parse(input);
+    return this.request(`/api/v1/media/${encodeURIComponent(publicId)}`, mediaCmsDetailSchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async publishCmsMedia(publicId: string): Promise<MediaCmsDetail> {
+    return this.request(
+      `/api/v1/media/${encodeURIComponent(publicId)}/publish`,
+      mediaCmsDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async archiveCmsMedia(publicId: string): Promise<MediaCmsDetail> {
+    return this.request(
+      `/api/v1/media/${encodeURIComponent(publicId)}/archive`,
+      mediaCmsDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async moderateCmsMedia(publicId: string, input: ModerateMediaRequest): Promise<MediaCmsDetail> {
+    const body = moderateMediaRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/media/${encodeURIComponent(publicId)}/moderate`,
+      mediaCmsDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async getMediaAccessUrl(publicId: string): Promise<MediaAccessUrlResponse> {
+    return this.request(
+      `/api/v1/media/${encodeURIComponent(publicId)}/access-url`,
+      mediaAccessUrlResponseSchema,
+    );
+  }
+
+  async listPublicEditorial(
+    query: Partial<EditorialListQuery> = {},
+  ): Promise<EditorialListResponse> {
+    const parsed = editorialListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.kind) params.set('kind', parsed.kind);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.featured !== undefined) params.set('featured', String(parsed.featured));
+    return this.request(
+      `/api/v1/public/editorial?${params.toString()}`,
+      editorialListResponseSchema,
+    );
+  }
+
+  async getPublicEditorial(slug: string): Promise<EditorialContentDetail> {
+    return this.request(
+      `/api/v1/public/editorial/${encodeURIComponent(slug)}`,
+      editorialContentDetailSchema,
+    );
+  }
+
+  async createEditorial(input: CreateEditorialContentRequest): Promise<EditorialContentDetail> {
+    const body = createEditorialContentRequestSchema.parse(input);
+    return this.request('/api/v1/editorial', editorialContentDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateEditorial(
+    publicId: string,
+    input: UpdateEditorialContentRequest,
+  ): Promise<EditorialContentDetail> {
+    const body = updateEditorialContentRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/editorial/${encodeURIComponent(publicId)}`,
+      editorialContentDetailSchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async submitEditorialReview(publicId: string): Promise<EditorialContentDetail> {
+    return this.request(
+      `/api/v1/editorial/${encodeURIComponent(publicId)}/submit-review`,
+      editorialContentDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async approveEditorial(publicId: string): Promise<EditorialContentDetail> {
+    return this.request(
+      `/api/v1/editorial/${encodeURIComponent(publicId)}/approve`,
+      editorialContentDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async publishEditorial(publicId: string): Promise<EditorialContentDetail> {
+    return this.request(
+      `/api/v1/editorial/${encodeURIComponent(publicId)}/publish`,
+      editorialContentDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async archiveEditorial(publicId: string): Promise<EditorialContentDetail> {
+    return this.request(
+      `/api/v1/editorial/${encodeURIComponent(publicId)}/archive`,
+      editorialContentDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async listPublicCollections(
+    query: { cursor?: string; limit?: number; category?: string } = {},
+  ): Promise<MediaCollectionListResponse> {
+    const params = new URLSearchParams();
+    if (query.cursor) params.set('cursor', query.cursor);
+    params.set('limit', String(query.limit ?? 20));
+    if (query.category) params.set('category', query.category);
+    return this.request(
+      `/api/v1/public/collections?${params.toString()}`,
+      mediaCollectionListResponseSchema,
+    );
+  }
+
+  async getPublicCollection(slug: string): Promise<MediaCollectionDetail> {
+    return this.request(
+      `/api/v1/public/collections/${encodeURIComponent(slug)}`,
+      mediaCollectionDetailSchema,
+    );
+  }
+
+  async createMediaCollection(input: CreateMediaCollectionRequest): Promise<MediaCollectionDetail> {
+    const body = createMediaCollectionRequestSchema.parse(input);
+    return this.request('/api/v1/collections', mediaCollectionDetailSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateMediaCollection(
+    publicId: string,
+    input: UpdateMediaCollectionRequest,
+  ): Promise<MediaCollectionDetail> {
+    const body = updateMediaCollectionRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/collections/${encodeURIComponent(publicId)}`,
+      mediaCollectionDetailSchema,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async addMediaCollectionItem(
+    publicId: string,
+    input: AddMediaCollectionItemRequest,
+  ): Promise<MediaCollectionDetail> {
+    const body = addMediaCollectionItemRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/collections/${encodeURIComponent(publicId)}/items`,
+      mediaCollectionDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async publishMediaCollection(publicId: string): Promise<MediaCollectionDetail> {
+    return this.request(
+      `/api/v1/collections/${encodeURIComponent(publicId)}/publish`,
+      mediaCollectionDetailSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async writeMediaAnalyticsEvent(
+    input: CreateMediaAnalyticsEventRequest,
+  ): Promise<{ event: MediaAnalyticsEventSummary }> {
+    const body = createMediaAnalyticsEventRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/media/analytics/events',
+      {
+        parse: (data: unknown) => {
+          const obj = data as { event?: unknown };
+          return { event: mediaAnalyticsEventSummarySchema.parse(obj.event) };
+        },
+      },
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async getStudioPropertyPresentation(publicId: string): Promise<BroadcastPropertyPresentation> {
+    return this.request(
+      `/api/v1/studio/presentation/property/${encodeURIComponent(publicId)}`,
+      broadcastPropertyPresentationSchema,
+    );
+  }
+
+  async getStudioProjectPresentation(publicId: string): Promise<BroadcastProjectPresentation> {
+    return this.request(
+      `/api/v1/studio/presentation/project/${encodeURIComponent(publicId)}`,
+      broadcastProjectPresentationSchema,
+    );
+  }
+
+  async listAdminMedia(query: Partial<MediaCmsListQuery> = {}): Promise<MediaCmsListResponse> {
+    const parsed = mediaCmsListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.mediaType) params.set('mediaType', parsed.mediaType);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.tag) params.set('tag', parsed.tag);
+    if (parsed.lifecycleStatus) params.set('lifecycleStatus', parsed.lifecycleStatus);
+    if (parsed.organizationPublicId) {
+      params.set('organizationPublicId', parsed.organizationPublicId);
+    }
+    return this.request(`/api/v1/admin/media?${params.toString()}`, mediaCmsListResponseSchema);
+  }
+
+  async listAdminEditorial(
+    query: Partial<EditorialListQuery> = {},
+  ): Promise<EditorialListResponse> {
+    const parsed = editorialListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    if (parsed.cursor) params.set('cursor', parsed.cursor);
+    params.set('limit', String(parsed.limit));
+    if (parsed.kind) params.set('kind', parsed.kind);
+    if (parsed.status) params.set('status', parsed.status);
+    if (parsed.category) params.set('category', parsed.category);
+    if (parsed.featured !== undefined) params.set('featured', String(parsed.featured));
+    return this.request(
+      `/api/v1/admin/editorial?${params.toString()}`,
+      editorialListResponseSchema,
+    );
+  }
+
+  async listAdminCollections(
+    query: { cursor?: string; limit?: number; organizationPublicId?: string } = {},
+  ): Promise<MediaCollectionListResponse> {
+    const params = new URLSearchParams();
+    if (query.cursor) params.set('cursor', query.cursor);
+    params.set('limit', String(query.limit ?? 20));
+    if (query.organizationPublicId) {
+      params.set('organizationPublicId', query.organizationPublicId);
+    }
+    return this.request(
+      `/api/v1/admin/collections?${params.toString()}`,
+      mediaCollectionListResponseSchema,
+    );
+  }
+
+  async listAdminMediaAnalytics(
+    query: {
+      cursor?: string;
+      limit?: number;
+      organizationPublicId?: string;
+      eventType?: string;
+    } = {},
+  ): Promise<MediaAnalyticsListResponse> {
+    const params = new URLSearchParams();
+    if (query.cursor) params.set('cursor', query.cursor);
+    params.set('limit', String(query.limit ?? 20));
+    if (query.organizationPublicId) {
+      params.set('organizationPublicId', query.organizationPublicId);
+    }
+    if (query.eventType) params.set('eventType', query.eventType);
+    return this.request(
+      `/api/v1/admin/media/analytics?${params.toString()}`,
+      mediaAnalyticsListResponseSchema,
+    );
+  }
+
+  async listExternalMediaProviders(): Promise<ExternalMediaProviderListResponse> {
+    return this.request(
+      '/api/v1/admin/external-media/providers',
+      externalMediaProviderListResponseSchema,
+    );
+  }
+
+  async createExternalMediaMapping(
+    input: CreateExternalMediaMappingRequest,
+  ): Promise<ExternalMediaMappingSummary> {
+    const body = createExternalMediaMappingRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/admin/external-media/mappings',
+      externalMediaMappingSummarySchema,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    );
+  }
+
+  async getExternalMediaMetrics(publicId: string): Promise<ExternalMediaMetricsResponse> {
+    return this.request(
+      `/api/v1/admin/external-media/mappings/${encodeURIComponent(publicId)}/metrics`,
+      externalMediaMetricsResponseSchema,
+    );
+  }
+
+  async getBroadcastStudioConfig(): Promise<BroadcastStudioConfig> {
+    return this.request('/api/v1/admin/broadcast/config', broadcastStudioConfigSchema);
+  }
+
+  async updateBroadcastStudioConfig(
+    input: UpdateBroadcastStudioConfigRequest,
+  ): Promise<BroadcastStudioConfig> {
+    const body = updateBroadcastStudioConfigRequestSchema.parse(input);
+    return this.request('/api/v1/admin/broadcast/config', broadcastStudioConfigSchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getMyCreatorProfile(): Promise<CreatorProfileSummary> {
+    return this.request('/api/v1/creators/me', creatorProfileSummarySchema);
+  }
+
+  async createCreatorProfile(input: CreateCreatorProfileRequest): Promise<CreatorProfileSummary> {
+    const body = createCreatorProfileRequestSchema.parse(input);
+    return this.request('/api/v1/creators', creatorProfileSummarySchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   }
 
   private async request<T>(

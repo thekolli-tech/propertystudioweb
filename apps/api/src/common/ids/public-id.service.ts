@@ -169,6 +169,38 @@ export class PublicIdService {
     return this.next('VAL');
   }
 
+  async nextCreatorProfilePublicId(): Promise<string> {
+    return this.next('CRT');
+  }
+
+  async nextEditorialContentPublicId(): Promise<string> {
+    return this.next('EDC');
+  }
+
+  async nextEditorialRevisionPublicId(): Promise<string> {
+    return this.next('EDCR');
+  }
+
+  async nextMediaCollectionPublicId(): Promise<string> {
+    return this.next('MCOL');
+  }
+
+  async nextMediaCollectionItemPublicId(): Promise<string> {
+    return this.next('MCIT');
+  }
+
+  async nextMediaAnalyticsEventPublicId(): Promise<string> {
+    return this.next('MAEV');
+  }
+
+  async nextExternalMediaMappingPublicId(): Promise<string> {
+    return this.next('EMAP');
+  }
+
+  async nextBroadcastConfigPublicId(): Promise<string> {
+    return this.next('BCFG');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

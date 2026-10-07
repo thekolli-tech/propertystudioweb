@@ -21,7 +21,10 @@ export function ChartContainer({
 }: ChartContainerProps) {
   return (
     <section
-      className={cn('rounded-xl border border-border bg-card p-5 ps-card-elevated', className)}
+      className={cn(
+        'ps-broadcast-chart rounded-xl border border-border bg-card p-5 ps-card-elevated',
+        className,
+      )}
     >
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>

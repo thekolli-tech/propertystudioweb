@@ -477,6 +477,8 @@ export class ProjectsService {
         sortOrder: body.sortOrder,
         altText: body.altText ?? null,
         visibility: body.visibility,
+        lifecycleStatus: 'READY',
+        moderationStatus: 'APPROVED',
         createdBy: actor.userId,
       },
     });
@@ -668,7 +670,7 @@ export class ProjectsService {
     propertyCount: number,
     media: Array<{
       publicId: string;
-      mediaType: 'IMAGE' | 'VIDEO' | 'FLOOR_PLAN' | 'OTHER';
+      mediaType: 'IMAGE' | 'VIDEO' | 'FLOOR_PLAN' | 'AUDIO' | 'DOCUMENT' | 'EMBED' | 'OTHER';
       mimeType: string;
       sortOrder: number;
       altText: string | null;

@@ -148,4 +148,30 @@ describe('permissions catalog', () => {
     expect(moderator.has('intelligence:read')).toBe(true);
     expect(moderator.has('ai:assistant')).toBe(false);
   });
+
+  it('grants Phase 12 media CMS permissions without global PROPERTY_ADMIN publish', () => {
+    const editor = collectPermissions({ platformRoles: ['CONTENT_EDITOR'] });
+    expect(editor.has('media:publish')).toBe(true);
+    expect(editor.has('content:publish')).toBe(true);
+    expect(editor.has('collections:create')).toBe(true);
+
+    const moderator = collectPermissions({ platformRoles: ['MODERATOR'] });
+    expect(moderator.has('media:moderate')).toBe(true);
+    expect(moderator.has('content:moderate')).toBe(true);
+    expect(moderator.has('media:publish')).toBe(false);
+
+    const developer = collectPermissions({
+      platformRoles: [],
+      organizationRole: 'DEVELOPER',
+    });
+    expect(developer.has('media:create')).toBe(true);
+    expect(developer.has('content:publish')).toBe(true);
+    expect(developer.has('admin:media:manage')).toBe(false);
+
+    const propertyAdmin = collectPermissions({ platformRoles: ['PROPERTY_ADMIN'] });
+    expect(propertyAdmin.has('media:read')).toBe(true);
+    expect(propertyAdmin.has('media:publish')).toBe(false);
+    expect(propertyAdmin.has('content:publish')).toBe(false);
+    expect(propertyAdmin.has('admin:media:manage')).toBe(false);
+  });
 });
