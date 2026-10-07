@@ -319,7 +319,32 @@ export class PropertiesService {
           publicationStatus: updated.publicationStatus,
         },
       });
-    } else if (action === 'property.updated' || action === 'property.availability_changed') {
+    } else if (action === 'property.availability_changed') {
+      await this.domainEvents.emit({
+        eventType: 'inventory.updated',
+        resourceType: 'property',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: {
+          propertyPublicId: updated.publicId,
+          projectPublicId: updated.project?.publicId ?? null,
+          availabilityStatus: updated.availabilityStatus,
+          previousAvailabilityStatus: property.availabilityStatus,
+        },
+      });
+      await this.domainEvents.emit({
+        eventType: 'project.inventory.availability_changed',
+        resourceType: 'property',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: {
+          propertyPublicId: updated.publicId,
+          projectPublicId: updated.project?.publicId ?? null,
+          availabilityStatus: updated.availabilityStatus,
+          previousAvailabilityStatus: property.availabilityStatus,
+        },
+      });
+    } else if (action === 'property.updated') {
       await this.domainEvents.emit({
         eventType: 'property.updated',
         resourceType: 'property',

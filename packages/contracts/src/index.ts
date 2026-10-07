@@ -3746,6 +3746,11 @@ export const domainEventTypeSchema = z.enum([
   'project.updated',
   'project.published',
   'inventory.updated',
+  'project.claim.submitted',
+  'project.claim.approved',
+  'project.claim.rejected',
+  'project.construction.updated',
+  'project.inventory.availability_changed',
   'lead.created',
   'lead.assigned',
   'lead.accessed',
@@ -4896,3 +4901,188 @@ export const adminAiGovernanceResponseSchema = z.object({
   generatedAt: z.string().datetime(),
 });
 export type AdminAiGovernanceResponse = z.infer<typeof adminAiGovernanceResponseSchema>;
+
+// --- Phase 15A: Developer & Project Operations ---
+
+export const constructionPhaseSchema = z.enum([
+  'NOT_STARTED',
+  'FOUNDATION',
+  'STRUCTURE',
+  'BRICKWORK',
+  'ELECTRICAL',
+  'PLUMBING',
+  'FINISHING',
+  'INFRASTRUCTURE',
+  'HANDOVER',
+  'COMPLETED',
+  'OTHER',
+]);
+export type ConstructionPhase = z.infer<typeof constructionPhaseSchema>;
+
+export const constructionUpdatePublicationStatusSchema = z.enum([
+  'DRAFT',
+  'PUBLISHED',
+  'ARCHIVED',
+]);
+export type ConstructionUpdatePublicationStatus = z.infer<
+  typeof constructionUpdatePublicationStatusSchema
+>;
+
+export const projectClaimStatusSchema = z.enum([
+  'DRAFT',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'APPROVED',
+  'REJECTED',
+  'CANCELLED',
+]);
+export type ProjectClaimStatus = z.infer<typeof projectClaimStatusSchema>;
+
+export const createConstructionUpdateRequestSchema = z.object({
+  title: z.string().trim().min(2).max(200),
+  description: z.string().trim().max(5000).optional().nullable(),
+  milestone: constructionPhaseSchema.default('OTHER'),
+  percentComplete: z.number().int().min(0).max(100).optional().nullable(),
+  updateDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  mediaPublicIds: z.array(z.string().regex(/^PS-MED-\d+$/)).max(40).default([]),
+});
+export type CreateConstructionUpdateRequest = z.infer<
+  typeof createConstructionUpdateRequestSchema
+>;
+
+export const updateConstructionUpdateRequestSchema = z.object({
+  title: z.string().trim().min(2).max(200).optional(),
+  description: z.string().trim().max(5000).optional().nullable(),
+  milestone: constructionPhaseSchema.optional(),
+  percentComplete: z.number().int().min(0).max(100).optional().nullable(),
+  updateDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  mediaPublicIds: z.array(z.string().regex(/^PS-MED-\d+$/)).max(40).optional(),
+  expectedVersion: z.number().int().positive().optional(),
+});
+export type UpdateConstructionUpdateRequest = z.infer<
+  typeof updateConstructionUpdateRequestSchema
+>;
+
+export const constructionUpdateSummarySchema = z.object({
+  publicId: z.string(),
+  projectPublicId: z.string(),
+  organizationPublicId: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  milestone: constructionPhaseSchema,
+  percentComplete: z.number().int().nullable(),
+  updateDate: z.string(),
+  publicationStatus: constructionUpdatePublicationStatusSchema,
+  mediaPublicIds: z.array(z.string()),
+  publishedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  version: z.number().int(),
+});
+export type ConstructionUpdateSummary = z.infer<typeof constructionUpdateSummarySchema>;
+
+export const constructionUpdateListQuerySchema = cursorPaginationQuerySchema.extend({});
+export type ConstructionUpdateListQuery = z.infer<typeof constructionUpdateListQuerySchema>;
+
+export const constructionUpdateListResponseSchema = z.object({
+  updates: z.array(constructionUpdateSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type ConstructionUpdateListResponse = z.infer<typeof constructionUpdateListResponseSchema>;
+
+export const createProjectClaimRequestSchema = z.object({
+  organizationPublicId: z.string().regex(/^PS-ORG-\d+$/),
+  justification: z.string().trim().min(10).max(2000),
+  authorizationNotes: z.string().trim().max(2000).optional().nullable(),
+  verificationCasePublicId: z
+    .string()
+    .regex(/^PS-VCASE-\d+$/)
+    .optional()
+    .nullable(),
+  submit: z.boolean().optional().default(false),
+});
+export type CreateProjectClaimRequest = z.infer<typeof createProjectClaimRequestSchema>;
+
+export const reviewProjectClaimRequestSchema = z.object({
+  reviewNotes: z.string().trim().max(2000).optional().nullable(),
+});
+export type ReviewProjectClaimRequest = z.infer<typeof reviewProjectClaimRequestSchema>;
+
+export const projectClaimSummarySchema = z.object({
+  publicId: z.string(),
+  projectPublicId: z.string(),
+  claimingOrganizationPublicId: z.string(),
+  status: projectClaimStatusSchema,
+  justification: z.string(),
+  authorizationNotes: z.string().nullable(),
+  verificationCasePublicId: z.string().nullable(),
+  reviewNotes: z.string().nullable(),
+  submittedAt: z.string().datetime().nullable(),
+  reviewedAt: z.string().datetime().nullable(),
+  approvedAt: z.string().datetime().nullable(),
+  entitlementCheckedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  version: z.number().int(),
+});
+export type ProjectClaimSummary = z.infer<typeof projectClaimSummarySchema>;
+
+export const projectClaimListQuerySchema = cursorPaginationQuerySchema.extend({
+  status: projectClaimStatusSchema.optional(),
+});
+export type ProjectClaimListQuery = z.infer<typeof projectClaimListQuerySchema>;
+
+export const projectClaimListResponseSchema = z.object({
+  claims: z.array(projectClaimSummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type ProjectClaimListResponse = z.infer<typeof projectClaimListResponseSchema>;
+
+export const projectWorkspaceInventoryCountSchema = z.object({
+  availabilityStatus: propertyAvailabilityStatusSchema,
+  count: z.number().int().nonnegative(),
+});
+export type ProjectWorkspaceInventoryCount = z.infer<
+  typeof projectWorkspaceInventoryCountSchema
+>;
+
+export const projectWorkspaceResponseSchema = z.object({
+  project: projectSummarySchema.extend({
+    constructionPhase: constructionPhaseSchema,
+    constructionPercent: z.number().int().nullable(),
+    totalUnits: z.number().int().nullable(),
+    trustStatus: z.string(),
+  }),
+  inventoryByAvailability: z.array(projectWorkspaceInventoryCountSchema),
+  latestConstructionUpdates: z.array(constructionUpdateSummarySchema),
+  communities: z.array(
+    z.object({
+      publicId: z.string(),
+      name: z.string(),
+      visibility: communityVisibilitySchema,
+      status: communityStatusSchema,
+    }),
+  ),
+  mediaCount: z.number().int().nonnegative(),
+  documentCount: z.number().int().nonnegative(),
+  leadCount: z.number().int().nonnegative(),
+  openDealCount: z.number().int().nonnegative(),
+  openSiteVisitCount: z.number().int().nonnegative(),
+  claim: projectClaimSummarySchema.nullable(),
+});
+export type ProjectWorkspaceResponse = z.infer<typeof projectWorkspaceResponseSchema>;
+
+export const projectInventoryListQuerySchema = cursorPaginationQuerySchema.extend({
+  availabilityStatus: propertyAvailabilityStatusSchema.optional(),
+  publicationStatus: propertyPublicationStatusSchema.optional(),
+});
+export type ProjectInventoryListQuery = z.infer<typeof projectInventoryListQuerySchema>;
+
+export const projectInventoryListResponseSchema = z.object({
+  properties: z.array(propertySummarySchema),
+  nextCursor: z.string().nullable(),
+});
+export type ProjectInventoryListResponse = z.infer<typeof projectInventoryListResponseSchema>;

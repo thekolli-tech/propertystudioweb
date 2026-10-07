@@ -265,6 +265,14 @@ export class PublicIdService {
     return this.next('SMATCH');
   }
 
+  async nextConstructionUpdatePublicId(): Promise<string> {
+    return this.next('CUPD');
+  }
+
+  async nextProjectClaimPublicId(): Promise<string> {
+    return this.next('PCLAIM');
+  }
+
   private async next(kind: PublicIdKind): Promise<string> {
     const sequence = PUBLIC_ID_SEQUENCES[kind];
     const rows = await this.prisma.$queryRawUnsafe<Array<{ n: bigint | number }>>(

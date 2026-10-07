@@ -63,6 +63,8 @@ export const PUBLIC_ID_PREFIXES = {
   SSEARCH: 'SSEARCH',
   SPROP: 'SPROP',
   SMATCH: 'SMATCH',
+  CUPD: 'CUPD',
+  PCLAIM: 'PCLAIM',
 } as const;
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES];
@@ -187,7 +189,9 @@ export const PUBLIC_ID_SEQUENCES: Record<
   | 'ACHEV'
   | 'SSEARCH'
   | 'SPROP'
-  | 'SMATCH',
+  | 'SMATCH'
+  | 'CUPD'
+  | 'PCLAIM',
   string
 > = {
   USER: 'public_id_user_seq',
@@ -254,4 +258,6 @@ export const PUBLIC_ID_SEQUENCES: Record<
   SSEARCH: 'public_id_ssearch_seq',
   SPROP: 'public_id_sprop_seq',
   SMATCH: 'public_id_smatch_seq',
+  CUPD: 'public_id_cupd_seq',
+  PCLAIM: 'public_id_pclaim_seq',
 };
