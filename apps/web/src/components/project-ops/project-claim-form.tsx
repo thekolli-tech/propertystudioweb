@@ -54,7 +54,6 @@ export function ProjectClaimForm({ projectPublicId, organizationPublicId }: Prop
       <p className="text-xs text-muted-foreground">
         Claiming as organization <span className="font-medium">{organizationPublicId}</span>
       </p>
-      <Input type="hidden" value={organizationPublicId} readOnly aria-hidden />
       <Button type="submit" disabled={pending || justification.trim().length < 10} className="w-full">
         {pending ? 'Submitting…' : 'Submit claim'}
       </Button>
