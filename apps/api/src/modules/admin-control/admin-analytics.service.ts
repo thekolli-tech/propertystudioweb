@@ -129,7 +129,7 @@ export class AdminAnalyticsService {
       marketplaceReqsCreatedInPeriod,
       contactedLeads,
       qualifiedLeads,
-      siteVisitLeads,
+      _siteVisitLeads,
       negotiationLeads,
       bookedLeads,
       closedLeads,
