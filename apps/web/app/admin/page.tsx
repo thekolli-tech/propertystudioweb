@@ -1,32 +1,25 @@
-import { EmptyState, PageHeader } from '@property-studio/ui';
+export const dynamic = 'force-dynamic';
 
-import { AdminDashboardView } from '@/components/dashboard/role-dashboard';
-import { ApiClientError, createServerApiClient } from '@/lib/api';
-import { getRequestCookieHeader } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-export const metadata = { title: 'Admin dashboard' };
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function AdminHomePage() {
-  const cookie = await getRequestCookieHeader();
-  const client = createServerApiClient(cookie);
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-  try {
-    const dashboard = await client.getAdminDashboard();
-    return <AdminDashboardView data={dashboard} />;
-  } catch (error) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Platform overview"
-          description="Super Admin console. Metrics only appear when backed by live APIs."
-        />
-        <EmptyState
-          title="Admin dashboard unavailable"
-          description={
-            error instanceof ApiClientError ? error.message : 'Could not load platform aggregates.'
-          }
-        />
-      </div>
-    );
-  }
+/** Canonical overview lives at /admin/overview — keep /admin as the entry redirect. */
+export default async function AdminHomePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const qs = new URLSearchParams();
+  const period = first(params.period);
+  const from = first(params.from);
+  const to = first(params.to);
+  if (period) qs.set('period', period);
+  if (from) qs.set('from', from);
+  if (to) qs.set('to', to);
+  const suffix = qs.toString();
+  redirect(suffix ? `/admin/overview?${suffix}` : '/admin/overview');
 }

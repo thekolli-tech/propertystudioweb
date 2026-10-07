@@ -252,6 +252,12 @@ import {
   seekerDashboardResponseSchema,
   propertyAdminDashboardResponseSchema,
   adminDashboardResponseSchema,
+  adminAnalyticsQuerySchema,
+  adminControlCenterResponseSchema,
+  adminSystemHealthResponseSchema,
+  adminAuditListQuerySchema,
+  adminAuditListResponseSchema,
+  adminAiGovernanceResponseSchema,
   ensureCrmContactFromLeadRequestSchema,
   ensureCrmContactFromLeadResponseSchema,
   discoveryPropertyListQuerySchema,
@@ -467,6 +473,12 @@ import {
   type SeekerDashboardResponse,
   type PropertyAdminDashboardResponse,
   type AdminDashboardResponse,
+  type AdminAnalyticsQuery,
+  type AdminControlCenterResponse,
+  type AdminSystemHealthResponse,
+  type AdminAuditListQuery,
+  type AdminAuditListResponse,
+  type AdminAiGovernanceResponse,
   type EnsureCrmContactFromLeadRequest,
   type DiscoveryPropertyListQuery,
   type DiscoveryPropertyListResponse,
@@ -2642,6 +2654,43 @@ export class ApiClient {
 
   async getAdminDashboard(): Promise<AdminDashboardResponse> {
     return this.request('/api/v1/dashboard/admin', adminDashboardResponseSchema);
+  }
+
+  async getAdminControlCenter(
+    query: Partial<AdminAnalyticsQuery> = {},
+  ): Promise<AdminControlCenterResponse> {
+    const parsed = adminAnalyticsQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value === undefined || value === null) continue;
+      params.set(key, String(value));
+    }
+    const q = params.toString();
+    return this.request(
+      `/api/v1/admin/dashboard${q ? `?${q}` : ''}`,
+      adminControlCenterResponseSchema,
+    );
+  }
+
+  async getAdminSystemHealth(): Promise<AdminSystemHealthResponse> {
+    return this.request('/api/v1/admin/system/health', adminSystemHealthResponseSchema);
+  }
+
+  async listAdminAuditEvents(
+    query: Partial<AdminAuditListQuery> = {},
+  ): Promise<AdminAuditListResponse> {
+    const parsed = adminAuditListQuerySchema.parse(query);
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value === undefined || value === null) continue;
+      params.set(key, String(value));
+    }
+    const q = params.toString();
+    return this.request(`/api/v1/admin/audit${q ? `?${q}` : ''}`, adminAuditListResponseSchema);
+  }
+
+  async getAdminAiGovernance(): Promise<AdminAiGovernanceResponse> {
+    return this.request('/api/v1/admin/ai/governance', adminAiGovernanceResponseSchema);
   }
 
   async ensureCrmContactFromLead(

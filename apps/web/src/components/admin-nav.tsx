@@ -33,13 +33,14 @@ const SECTIONS = [
   {
     title: 'Platform',
     items: [
-      { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
+      { href: '/admin/overview', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
       { href: '/admin/users', label: 'Users', icon: <Users className="h-4 w-4" /> },
       {
         href: '/admin/organizations',
         label: 'Organizations',
         icon: <Building2 className="h-4 w-4" />,
       },
+      { href: '/admin/system', label: 'System health', icon: <Settings className="h-4 w-4" /> },
     ],
   },
   {
@@ -111,6 +112,7 @@ const SECTIONS = [
       { href: '/admin/moderation', label: 'Moderation', icon: <Shield className="h-4 w-4" /> },
       { href: '/admin/audit', label: 'Audit logs', icon: <ScrollText className="h-4 w-4" /> },
       { href: '/admin/documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+      { href: '/admin/billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> },
       {
         href: '/admin/subscriptions',
         label: 'Subscriptions',

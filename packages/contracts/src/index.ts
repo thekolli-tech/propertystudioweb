@@ -4677,3 +4677,222 @@ export const aiAssembledContextResponseSchema = z.object({
   disclaimer: z.string(),
 });
 export type AiAssembledContextResponse = z.infer<typeof aiAssembledContextResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 14D — Admin Control Center & Platform Analytics
+// ---------------------------------------------------------------------------
+
+export const adminAnalyticsPeriodSchema = z.enum([
+  'TODAY',
+  'DAYS_7',
+  'DAYS_30',
+  'DAYS_90',
+  'CUSTOM',
+]);
+export type AdminAnalyticsPeriod = z.infer<typeof adminAnalyticsPeriodSchema>;
+
+export const adminAnalyticsQuerySchema = z.object({
+  period: adminAnalyticsPeriodSchema.default('DAYS_30'),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+});
+export type AdminAnalyticsQuery = z.infer<typeof adminAnalyticsQuerySchema>;
+
+export const adminMetricCoverageSchema = z.enum(['READY', 'ZERO', 'UNAVAILABLE']);
+export type AdminMetricCoverage = z.infer<typeof adminMetricCoverageSchema>;
+
+export const adminControlMetricSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.union([z.number(), z.string()]).nullable(),
+  coverageState: adminMetricCoverageSchema,
+  unit: z.enum(['count', 'money_minor', 'ratio', 'text']).default('count'),
+  currency: z.string().nullable().optional(),
+  href: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+});
+export type AdminControlMetric = z.infer<typeof adminControlMetricSchema>;
+
+export const adminNamedCountSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  count: z.number().int().nonnegative(),
+});
+export type AdminNamedCount = z.infer<typeof adminNamedCountSchema>;
+
+export const adminFunnelStepSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  count: z.number().int().nonnegative().nullable(),
+  coverageState: adminMetricCoverageSchema,
+  note: z.string().nullable().optional(),
+});
+export type AdminFunnelStep = z.infer<typeof adminFunnelStepSchema>;
+
+export const adminControlCenterResponseSchema = z.object({
+  period: adminAnalyticsPeriodSchema,
+  timezone: z.literal('Asia/Kolkata'),
+  rangeStart: z.string().datetime(),
+  rangeEnd: z.string().datetime(),
+  users: z.object({
+    total: adminControlMetricSchema,
+    newInPeriod: adminControlMetricSchema,
+    byPersona: z.array(adminNamedCountSchema),
+    byPlatformRole: z.array(adminNamedCountSchema),
+    activeUsers: adminControlMetricSchema,
+  }),
+  organizations: z.object({
+    total: adminControlMetricSchema,
+    developers: adminControlMetricSchema,
+    agencies: adminControlMetricSchema,
+    pendingVerification: adminControlMetricSchema,
+  }),
+  catalog: z.object({
+    projects: adminControlMetricSchema,
+    properties: adminControlMetricSchema,
+    publishedProperties: adminControlMetricSchema,
+    draftProperties: adminControlMetricSchema,
+    communities: adminControlMetricSchema,
+    mediaAssets: adminControlMetricSchema,
+    projectsByStatus: z.array(adminNamedCountSchema),
+    propertiesByStatus: z.array(adminNamedCountSchema),
+    propertiesByCity: z.array(adminNamedCountSchema),
+  }),
+  demand: z.object({
+    requirements: adminControlMetricSchema,
+    activeRequirements: adminControlMetricSchema,
+    marketplaceRequirements: adminControlMetricSchema,
+    leads: adminControlMetricSchema,
+    leadsCreatedInPeriod: adminControlMetricSchema,
+    leadLifecycle: z.array(adminNamedCountSchema),
+    requirementsByPropertyType: z.array(adminNamedCountSchema),
+    requirementsByCity: z.array(adminNamedCountSchema),
+  }),
+  crm: z.object({
+    contacts: adminControlMetricSchema,
+    openFollowUps: adminControlMetricSchema,
+    scheduledSiteVisits: adminControlMetricSchema,
+    openDeals: adminControlMetricSchema,
+    closedDeals: adminControlMetricSchema,
+  }),
+  trust: z.object({
+    pendingVerificationCases: adminControlMetricSchema,
+    verifiedDevelopers: adminControlMetricSchema,
+    verifiedAgents: adminControlMetricSchema,
+    publishedReviews: adminControlMetricSchema,
+    openReviewReports: adminControlMetricSchema,
+    openContentReports: adminControlMetricSchema,
+  }),
+  money: z.object({
+    activeSubscriptions: adminControlMetricSchema,
+    subscriptionsByStatus: z.array(adminNamedCountSchema),
+    paymentVolumeCapturedMinor: adminControlMetricSchema,
+    walletBalancesMinor: adminControlMetricSchema,
+    leadPurchasesInPeriod: adminControlMetricSchema,
+    refundsInPeriod: adminControlMetricSchema,
+    failedPaymentsInPeriod: adminControlMetricSchema,
+  }),
+  media: z.object({
+    publishedMedia: adminControlMetricSchema,
+    pendingModeration: adminControlMetricSchema,
+    analyticsEventsInPeriod: adminControlMetricSchema,
+  }),
+  integrations: z.object({
+    activeApiClients: adminControlMetricSchema,
+    activeWebhookEndpoints: adminControlMetricSchema,
+    failedWebhookDeliveries: adminControlMetricSchema,
+    openDeadLetters: adminControlMetricSchema,
+    failedBackgroundJobs: adminControlMetricSchema,
+  }),
+  ai: z.object({
+    conversations: adminControlMetricSchema,
+    messagesInPeriod: adminControlMetricSchema,
+    toolInvocationsInPeriod: adminControlMetricSchema,
+    unavailableResponsesInPeriod: adminControlMetricSchema,
+    providerName: z.string(),
+    providerStatus: z.enum(['CONFIGURED', 'UNAVAILABLE']),
+  }),
+  funnel: z.array(adminFunnelStepSchema),
+  attentionItems: z.array(dashboardAttentionItemSchema),
+  recentAudit: z.array(dashboardActivityItemSchema),
+  quickActions: z.array(dashboardQuickActionSchema),
+  generatedAt: z.string().datetime(),
+});
+export type AdminControlCenterResponse = z.infer<typeof adminControlCenterResponseSchema>;
+
+export const adminSystemComponentStatusSchema = z.enum(['HEALTHY', 'DEGRADED', 'UNAVAILABLE']);
+export type AdminSystemComponentStatus = z.infer<typeof adminSystemComponentStatusSchema>;
+
+export const adminSystemComponentSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  status: adminSystemComponentStatusSchema,
+  latencyMs: z.number().nullable().optional(),
+  detail: z.string().nullable().optional(),
+});
+export type AdminSystemComponent = z.infer<typeof adminSystemComponentSchema>;
+
+export const adminSystemHealthResponseSchema = z.object({
+  overall: adminSystemComponentStatusSchema,
+  components: z.array(adminSystemComponentSchema),
+  providers: z.array(
+    z.object({
+      key: z.string(),
+      label: z.string(),
+      configured: z.boolean(),
+      mode: z.string().nullable(),
+    }),
+  ),
+  checkedAt: z.string().datetime(),
+});
+export type AdminSystemHealthResponse = z.infer<typeof adminSystemHealthResponseSchema>;
+
+export const adminAuditListQuerySchema = cursorPaginationQuerySchema.extend({
+  action: z.string().trim().max(120).optional(),
+  resourceType: z.string().trim().max(80).optional(),
+  actorUserPublicId: z
+    .string()
+    .regex(/^PS-USER-\d+$/)
+    .optional(),
+  organizationPublicId: z
+    .string()
+    .regex(/^PS-ORG-\d+$/)
+    .optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  securityOnly: z.coerce.boolean().optional().default(false),
+});
+export type AdminAuditListQuery = z.infer<typeof adminAuditListQuerySchema>;
+
+export const adminAuditEventSchema = z.object({
+  id: z.string(),
+  action: z.string(),
+  resourceType: z.string().nullable(),
+  resourceId: z.string().nullable(),
+  actorUserPublicId: z.string().nullable(),
+  organizationPublicId: z.string().nullable(),
+  requestId: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  metadataKeys: z.array(z.string()).default([]),
+});
+export type AdminAuditEvent = z.infer<typeof adminAuditEventSchema>;
+
+export const adminAuditListResponseSchema = z.object({
+  items: z.array(adminAuditEventSchema),
+  nextCursor: z.string().nullable(),
+});
+export type AdminAuditListResponse = z.infer<typeof adminAuditListResponseSchema>;
+
+export const adminAiGovernanceResponseSchema = z.object({
+  providerName: z.string(),
+  providerStatus: z.enum(['CONFIGURED', 'UNAVAILABLE']),
+  conversations: adminControlMetricSchema,
+  activeConversations: adminControlMetricSchema,
+  messages: adminControlMetricSchema,
+  toolInvocations: adminControlMetricSchema,
+  unavailableAssistantReplies: adminControlMetricSchema,
+  analyticsByType: z.array(adminNamedCountSchema),
+  note: z.string(),
+  generatedAt: z.string().datetime(),
+});
+export type AdminAiGovernanceResponse = z.infer<typeof adminAiGovernanceResponseSchema>;
