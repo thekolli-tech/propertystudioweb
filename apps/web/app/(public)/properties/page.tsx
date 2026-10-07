@@ -19,11 +19,17 @@ function first(value: string | string[] | undefined): string | undefined {
 
 export default async function PropertiesPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const sort =
+    (first(params.sort) as 'newest' | 'price_asc' | 'price_desc' | 'bedrooms_desc' | undefined) ??
+    'newest';
   const query = {
     city: first(params.city),
     locality: first(params.locality),
+    state: first(params.state),
+    q: first(params.q),
     propertyType: first(params.propertyType) as
       'APARTMENT' | 'VILLA' | 'PLOT' | 'OFFICE' | 'SHOP' | 'WAREHOUSE' | 'OTHER' | undefined,
+    listingType: first(params.listingType) as 'SALE' | 'RENT' | undefined,
     configuration: first(params.configuration) as
       | 'STUDIO'
       | 'ONE_BHK'
@@ -37,18 +43,26 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
     maxPriceMinor: first(params.maxPriceMinor) ? BigInt(first(params.maxPriceMinor)!) : undefined,
     availabilityStatus: first(params.availabilityStatus) as
       'AVAILABLE' | 'UNDER_OFFER' | 'SOLD' | 'UNAVAILABLE' | undefined,
+    sort,
+    includeFacets: true,
     limit: 24,
   };
 
   const list = await createServerApiClient()
-    .listPublicProperties(query)
-    .catch(() => ({ properties: [], nextCursor: null }));
+    .searchDiscoveryProperties(query)
+    .catch(() => ({
+      properties: [],
+      nextCursor: null,
+      totalEstimate: null,
+      facets: null,
+      sort,
+    }));
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-8 px-4 py-10 sm:px-6">
       <PageHeader
         title="Properties"
-        description="Discover published listings with live filters. Empty catalogs stay empty — no fabricated inventory."
+        description="Advanced discovery over published inventory — live filters, sort, and facets. Empty catalogs stay empty."
       />
       <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
         <PropertyFilterBar />

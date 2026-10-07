@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { IntegrationsModule } from '../integrations/integrations.module';
 import { CatalogAccessService } from './catalog-access.service';
 import { CommunitiesController } from './communities.controller';
 import { CommunitiesService } from './communities.service';
@@ -9,6 +10,7 @@ import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
 
 @Module({
+  imports: [IntegrationsModule],
   controllers: [ProjectsController, PropertiesController, CommunitiesController],
   providers: [CatalogAccessService, ProjectsService, PropertiesService, CommunitiesService],
   exports: [ProjectsService, PropertiesService, CommunitiesService, CatalogAccessService],

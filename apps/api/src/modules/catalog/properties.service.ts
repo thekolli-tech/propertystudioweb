@@ -15,6 +15,7 @@ import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { CatalogAccessService } from './catalog-access.service';
 import { decimalToNumber, decodeCursor, encodeCursor, toIso } from './catalog.util';
 
@@ -25,6 +26,7 @@ export class PropertiesService {
     private readonly publicIds: PublicIdService,
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
+    private readonly domainEvents: DomainEventBus,
   ) {}
 
   async create(actor: AuthActor, body: CreatePropertyRequest, request?: AuthenticatedRequest) {
@@ -303,6 +305,31 @@ export class PropertiesService {
         version: updated.version,
       },
     });
+
+    if (action === 'property.published') {
+      await this.domainEvents.emit({
+        eventType: 'property.published',
+        resourceType: 'property',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: {
+          propertyPublicId: updated.publicId,
+          publicationStatus: updated.publicationStatus,
+        },
+      });
+    } else if (action === 'property.updated' || action === 'property.availability_changed') {
+      await this.domainEvents.emit({
+        eventType: 'property.updated',
+        resourceType: 'property',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: {
+          propertyPublicId: updated.publicId,
+          publicationStatus: updated.publicationStatus,
+          availabilityStatus: updated.availabilityStatus,
+        },
+      });
+    }
 
     const [media, documents] = await Promise.all([
       this.listMedia(updated.id, false),
