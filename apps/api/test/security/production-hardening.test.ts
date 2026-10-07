@@ -357,11 +357,12 @@ describe('Phase 14E production hardening security', () => {
       .get('/api/v1/admin/dashboard')
       .set('Cookie', padmin.cookie)
       .expect(403);
+    // Org CRM is out of PROPERTY_ADMIN scope — NOT_FOUND when org membership is absent.
     await request(app.getHttpServer())
       .get('/api/v1/crm/contacts')
       .set('Cookie', padmin.cookie)
       .query({ organizationPublicId: org })
-      .expect(403);
+      .expect(404);
   });
 
   it('9. Admin boundary: ADMIN can read control center; seeker cannot', async () => {
@@ -575,7 +576,7 @@ describe('Phase 14E production hardening security', () => {
         fileSizeBytes: '100',
         visibility: 'PRIVATE',
       })
-      .expect(400);
+      .expect(422);
 
     const document = await request(app.getHttpServer())
       .post('/api/v1/properties/documents')

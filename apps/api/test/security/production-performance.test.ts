@@ -134,7 +134,7 @@ describe('Phase 14E performance regression (bounded queries)', () => {
     await request(app.getHttpServer())
       .get('/api/v1/public/properties')
       .query({ limit: 500 })
-      .expect(400);
+      .expect(422);
 
     const ok = await request(app.getHttpServer())
       .get('/api/v1/public/properties')
