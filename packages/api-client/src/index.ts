@@ -2482,7 +2482,6 @@ export class ApiClient {
     );
   }
 
-
   async getPartnerApiDocs(): Promise<PartnerApiDocsResponse> {
     return this.request('/api/v1/partner/docs', partnerApiDocsResponseSchema);
   }
