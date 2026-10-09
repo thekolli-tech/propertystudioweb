@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Button, EmptyState, PageHeader } from '@property-studio/ui';
 
+import { AgentWorkspaceBanner } from '@/components/agent-ops/agent-workspace-banner';
 import { AgentDashboardView, DeveloperDashboardView } from '@/components/dashboard/role-dashboard';
 import { ApiClientError, createServerApiClient } from '@/lib/api';
 import { getRequestCookieHeader } from '@/lib/auth';
@@ -53,15 +54,32 @@ export default async function OrganizationOverviewPage({ params }: PageProps) {
   }
 
   if (organization.type === 'AGENCY') {
+    let agentStatus: Awaited<ReturnType<typeof client.getAgentProfessionalStatus>> | null = null;
+    try {
+      agentStatus = await client.getAgentProfessionalStatus(orgPublicId);
+    } catch {
+      agentStatus = null;
+    }
+
     try {
       const dashboard = await client.getAgentDashboard(orgPublicId);
-      return <AgentDashboardView data={dashboard} />;
+      return (
+        <div className="space-y-6">
+          {agentStatus ? (
+            <AgentWorkspaceBanner orgPublicId={orgPublicId} status={agentStatus} />
+          ) : null}
+          <AgentDashboardView data={dashboard} />
+        </div>
+      );
     } catch (error) {
       if (error instanceof ApiClientError && error.status === 404) {
         notFound();
       }
       return (
         <div className="space-y-6">
+          {agentStatus ? (
+            <AgentWorkspaceBanner orgPublicId={orgPublicId} status={agentStatus} />
+          ) : null}
           <PageHeader title="Agency dashboard" description="Unable to load aggregates." />
           <EmptyState
             title="Dashboard unavailable"

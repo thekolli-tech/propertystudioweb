@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AgentAccessModule } from '../agent-ops/agent-access.module';
 import { CrmModule } from '../crm/crm.module';
 import { LeadAccessService } from './lead-access.service';
 import { LeadEligibilityService } from './lead-eligibility.service';
@@ -10,7 +11,7 @@ import { RequirementsController } from './requirements.controller';
 import { RequirementsService } from './requirements.service';
 
 @Module({
-  imports: [CrmModule],
+  imports: [CrmModule, AgentAccessModule],
   controllers: [RequirementsController, LeadsController],
   providers: [
     RequirementsService,

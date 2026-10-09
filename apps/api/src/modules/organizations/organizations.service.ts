@@ -212,6 +212,11 @@ export class OrganizationsService {
             headquartersState: emptyToNull(input.profile.headquartersState),
             operatingZones: input.profile.operatingZones ?? [],
             specialization: emptyToNull(input.profile.specialization),
+            propertyTypes: input.profile.propertyTypes ?? [],
+            configurations: input.profile.configurations ?? [],
+            priceRangeMinMinor: input.profile.priceRangeMinMinor ?? null,
+            priceRangeMaxMinor: input.profile.priceRangeMaxMinor ?? null,
+            reraNumber: emptyToNull(input.profile.reraNumber),
             verificationStatus: 'UNVERIFIED',
             status: 'ACTIVE',
             createdBy: actor.userId,
@@ -498,6 +503,15 @@ export class OrganizationsService {
         ...(input.specialization !== undefined
           ? { specialization: emptyToNull(input.specialization) }
           : {}),
+        ...(input.propertyTypes !== undefined ? { propertyTypes: input.propertyTypes } : {}),
+        ...(input.configurations !== undefined ? { configurations: input.configurations } : {}),
+        ...(input.priceRangeMinMinor !== undefined
+          ? { priceRangeMinMinor: input.priceRangeMinMinor }
+          : {}),
+        ...(input.priceRangeMaxMinor !== undefined
+          ? { priceRangeMaxMinor: input.priceRangeMaxMinor }
+          : {}),
+        ...(input.reraNumber !== undefined ? { reraNumber: emptyToNull(input.reraNumber) } : {}),
         ...(input.logoObjectKey !== undefined
           ? { logoObjectKey: emptyToNull(input.logoObjectKey) }
           : {}),
@@ -561,6 +575,11 @@ export class OrganizationsService {
       throw new AppError('NOT_FOUND', 'Resource not found.');
     }
 
+    const verifiedBadge = this.isVerifiedExpertBadge(
+      profile.verificationStatus,
+      profile.verificationExpiresAt,
+    );
+
     return {
       publicId: profile.publicId,
       organizationPublicId: profile.organization.publicId,
@@ -571,8 +590,19 @@ export class OrganizationsService {
       headquartersState: profile.headquartersState,
       operatingZones: profile.operatingZones,
       specialization: profile.specialization,
+      propertyTypes: profile.propertyTypes,
+      configurations: profile.configurations,
+      priceRangeMinMinor:
+        profile.priceRangeMinMinor !== null && profile.priceRangeMinMinor !== undefined
+          ? profile.priceRangeMinMinor.toString()
+          : null,
+      priceRangeMaxMinor:
+        profile.priceRangeMaxMinor !== null && profile.priceRangeMaxMinor !== undefined
+          ? profile.priceRangeMaxMinor.toString()
+          : null,
+      verificationExpiresAt: profile.verificationExpiresAt?.toISOString() ?? null,
       verificationStatus: profile.verificationStatus,
-      verifiedBadge: profile.verificationStatus === 'VERIFIED',
+      verifiedBadge,
     };
   }
 
@@ -881,6 +911,15 @@ export class OrganizationsService {
     };
   }
 
+  private isVerifiedExpertBadge(
+    verificationStatus: string,
+    verificationExpiresAt: Date | null | undefined,
+  ): boolean {
+    if (verificationStatus !== 'VERIFIED') return false;
+    if (verificationExpiresAt && verificationExpiresAt.getTime() <= Date.now()) return false;
+    return true;
+  }
+
   private toAgencyProfile(
     profile: {
       publicId: string;
@@ -895,17 +934,46 @@ export class OrganizationsService {
       headquartersState: string | null;
       operatingZones: string[];
       specialization: string | null;
-      verificationStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED';
+      propertyTypes?: string[];
+      configurations?: string[];
+      priceRangeMinMinor?: bigint | null;
+      priceRangeMaxMinor?: bigint | null;
+      reraNumber?: string | null;
+      verificationStatus: 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+      verifiedAt?: Date | null;
+      verificationExpiresAt?: Date | null;
+      suspendedAt?: Date | null;
+      suspensionReason?: string | null;
       status: 'ACTIVE' | 'DISABLED';
       createdAt: Date;
       updatedAt: Date;
     },
     organizationPublicId: string,
   ): AgencyProfile {
+    const base = this.toDeveloperProfile(profile, organizationPublicId);
     return {
-      ...this.toDeveloperProfile(profile, organizationPublicId),
+      ...base,
       specialization: profile.specialization,
+      propertyTypes: profile.propertyTypes ?? [],
+      configurations: profile.configurations ?? [],
+      priceRangeMinMinor:
+        profile.priceRangeMinMinor !== null && profile.priceRangeMinMinor !== undefined
+          ? profile.priceRangeMinMinor.toString()
+          : null,
+      priceRangeMaxMinor:
+        profile.priceRangeMaxMinor !== null && profile.priceRangeMaxMinor !== undefined
+          ? profile.priceRangeMaxMinor.toString()
+          : null,
+      reraNumber: profile.reraNumber ?? null,
       verificationStatus: profile.verificationStatus,
+      verifiedAt: profile.verifiedAt?.toISOString() ?? null,
+      verificationExpiresAt: profile.verificationExpiresAt?.toISOString() ?? null,
+      suspendedAt: profile.suspendedAt?.toISOString() ?? null,
+      suspensionReason: profile.suspensionReason ?? null,
+      verifiedBadge: this.isVerifiedExpertBadge(
+        profile.verificationStatus,
+        profile.verificationExpiresAt,
+      ),
     };
   }
 

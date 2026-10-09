@@ -193,7 +193,9 @@ const PHASE10_DELETE_ORDER = [
   'review_ratings',
   'reviews',
   'verification_documents',
+  'project_claims',
   'verification_cases',
+  'financial_transactions',
   'lead_access_grants',
   'content_reports',
 ] as const;
@@ -363,6 +365,18 @@ describe('Phase 10 trust verification communication security', () => {
       .expect(201);
 
     expect(submitted.body.status).toBe('SUBMITTED');
+
+    // Phase 15B: processing fee unlocks admin review eligibility (does not verify).
+    await request(app.getHttpServer())
+      .post('/api/v1/agent/verification/processing-fee')
+      .set('Cookie', agentCookie)
+      .send({
+        organizationPublicId: orgPublicId,
+        verificationCasePublicId: submitted.body.publicId,
+        idempotencyKey: `fee-${submitted.body.publicId}-${Date.now()}`,
+      })
+      .expect(201);
+
     return submitted.body.publicId as string;
   }
 

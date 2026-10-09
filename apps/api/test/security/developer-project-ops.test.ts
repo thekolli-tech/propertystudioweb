@@ -142,6 +142,9 @@ async function ensureProjectClaimEntitlement(prisma: PrismaService, orgPublicId:
 const CLEANUP = [
   'construction_updates',
   'project_claims',
+  'verification_documents',
+  'verification_cases',
+  'financial_transactions',
   'saved_search_matches',
   'saved_searches',
   'saved_properties',

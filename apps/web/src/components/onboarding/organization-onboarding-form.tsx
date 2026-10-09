@@ -96,6 +96,8 @@ export function OrganizationOnboardingForm() {
               profile: {
                 ...profileBase,
                 specialization: specialization.trim() || null,
+                propertyTypes: [],
+                configurations: [],
               },
             },
       );

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AgentAccessModule } from '../agent-ops/agent-access.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { CatalogAccessService } from './catalog-access.service';
 import { CommunitiesController } from './communities.controller';
@@ -10,7 +11,7 @@ import { PropertiesController } from './properties.controller';
 import { PropertiesService } from './properties.service';
 
 @Module({
-  imports: [IntegrationsModule],
+  imports: [IntegrationsModule, AgentAccessModule],
   controllers: [ProjectsController, PropertiesController, CommunitiesController],
   providers: [CatalogAccessService, ProjectsService, PropertiesService, CommunitiesService],
   exports: [ProjectsService, PropertiesService, CommunitiesService, CatalogAccessService],

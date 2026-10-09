@@ -287,6 +287,11 @@ import {
   projectWorkspaceResponseSchema,
   projectInventoryListQuerySchema,
   projectInventoryListResponseSchema,
+  agentProfessionalStatusSchema,
+  agentWorkspaceResponseSchema,
+  payAgentVerificationFeeRequestSchema,
+  payAgentVerificationFeeResponseSchema,
+  suspendAgentVerificationRequestSchema,
   type CreateApiClientRequest,
   type CreateApiClientResponse,
   type CreateAutomationRuleRequest,
@@ -520,6 +525,11 @@ import {
   type ProjectWorkspaceResponse,
   type ProjectInventoryListQuery,
   type ProjectInventoryListResponse,
+  type AgentProfessionalStatus,
+  type AgentWorkspaceResponse,
+  type PayAgentVerificationFeeRequest,
+  type PayAgentVerificationFeeResponse,
+  type SuspendAgentVerificationRequest,
   type EnsureCrmContactFromLeadResponse,
   type AiAssistantResponse,
   type AiDocumentAnalysisRequest,
@@ -1645,6 +1655,30 @@ export class ApiClient {
     const body = reviewVerificationCaseRequestSchema.parse(input);
     return this.request(
       `/api/v1/admin/verification/${encodeURIComponent(publicId)}/revoke`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminSuspendVerification(
+    publicId: string,
+    input: SuspendAgentVerificationRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = suspendAgentVerificationRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/suspend`,
+      verificationCaseDetailSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminReinstateVerification(
+    publicId: string,
+    input: ReviewVerificationCaseRequest = {},
+  ): Promise<VerificationCaseDetail> {
+    const body = reviewVerificationCaseRequestSchema.parse(input);
+    return this.request(
+      `/api/v1/admin/verification/${encodeURIComponent(publicId)}/reinstate`,
       verificationCaseDetailSchema,
       { method: 'POST', body: JSON.stringify(body) },
     );
@@ -2859,6 +2893,33 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  // --- Phase 15B: Agent verification & professional operations ---
+
+  async getAgentProfessionalStatus(orgPublicId: string): Promise<AgentProfessionalStatus> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/agent/status`,
+      agentProfessionalStatusSchema,
+    );
+  }
+
+  async getAgentWorkspace(orgPublicId: string): Promise<AgentWorkspaceResponse> {
+    return this.request(
+      `/api/v1/org/${encodeURIComponent(orgPublicId)}/agent/workspace`,
+      agentWorkspaceResponseSchema,
+    );
+  }
+
+  async payAgentVerificationFee(
+    input: PayAgentVerificationFeeRequest,
+  ): Promise<PayAgentVerificationFeeResponse> {
+    const body = payAgentVerificationFeeRequestSchema.parse(input);
+    return this.request(
+      '/api/v1/agent/verification/processing-fee',
+      payAgentVerificationFeeResponseSchema,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
   }
 
   async getProjectWorkspace(

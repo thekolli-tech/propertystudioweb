@@ -513,13 +513,49 @@ describe('Phase 7 demand marketplace security', () => {
 
     const agent = await register(app, 'agent-verified@example.com', []);
     const orgId = await onboardAgency(app, agent.cookie, 'Verified Agency');
-    await prisma.agencyProfile.update({
-      where: {
-        organizationId: (await prisma.organization.findFirstOrThrow({ where: { publicId: orgId } }))
-          .id,
-      },
-      data: { verificationStatus: 'VERIFIED' },
+    const organization = await prisma.organization.findFirstOrThrow({
+      where: { publicId: orgId },
     });
+    await prisma.agencyProfile.update({
+      where: { organizationId: organization.id },
+      data: {
+        verificationStatus: 'VERIFIED',
+        verifiedAt: new Date(),
+        verificationExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    // Phase 15B: verification + LEAD_MARKETPLACE_ACCESS entitlement are separate gates.
+    let plan = await prisma.subscriptionPlan.findFirst({ where: { code: 'PHASE15B_MARKET' } });
+    if (!plan) {
+      plan = await prisma.subscriptionPlan.create({
+        data: {
+          id: newUuid(),
+          publicId: `PS-PLAN-${Date.now().toString().slice(-6)}`,
+          name: 'Phase 15B Marketplace',
+          code: 'PHASE15B_MARKET',
+          billingInterval: 'MONTHLY',
+          priceMinor: 0n,
+          currency: 'INR',
+          active: true,
+          entitlements: {
+            create: [{ id: newUuid(), key: 'LEAD_MARKETPLACE_ACCESS', enabled: true }],
+          },
+        },
+      });
+    }
+    await prisma.organizationSubscription.create({
+      data: {
+        id: newUuid(),
+        publicId: `PS-SUB-${Date.now().toString().slice(-6)}`,
+        organizationId: organization.id,
+        planId: plan.id,
+        status: 'ACTIVE',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
+
     await switchOrg(app, agent.cookie, orgId);
 
     const lead = await request(app.getHttpServer())

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AgentAccessModule } from '../agent-ops/agent-access.module';
 import { MarketplaceModule } from '../marketplace/marketplace.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AdminBillingController, BillingController, WebhookController } from './billing.controller';
@@ -18,7 +19,7 @@ import { WalletService } from './wallet.service';
 import { WebhookService } from './webhook.service';
 
 @Module({
-  imports: [MarketplaceModule, NotificationsModule],
+  imports: [MarketplaceModule, NotificationsModule, AgentAccessModule],
   controllers: [BillingController, AdminBillingController, WebhookController],
   providers: [
     BillingAccessService,
@@ -39,6 +40,9 @@ import { WebhookService } from './webhook.service';
     SubscriptionService,
     LeadPurchaseService,
     PaymentService,
+    BillingAccessService,
+    PaymentProviderRegistry,
+    WebhookService,
   ],
 })
 export class BillingModule {}

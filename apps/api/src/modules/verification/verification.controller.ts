@@ -5,6 +5,7 @@ import {
   createVerificationCaseRequestSchema,
   reviewVerificationCaseRequestSchema,
   submitVerificationCaseRequestSchema,
+  suspendAgentVerificationRequestSchema,
   updateVerificationCaseRequestSchema,
   updateVerificationDocumentRequestSchema,
   verificationCaseListQuerySchema,
@@ -212,6 +213,38 @@ export class VerificationController {
       actor,
       publicId,
       body as Parameters<VerificationService['revoke']>[2],
+      request,
+    );
+  }
+
+  @Post('admin/verification/:publicId/suspend')
+  @RequirePermissions('verification:revoke')
+  suspend(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(suspendAgentVerificationRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.verification.suspend(
+      actor,
+      publicId,
+      body as Parameters<VerificationService['suspend']>[2],
+      request,
+    );
+  }
+
+  @Post('admin/verification/:publicId/reinstate')
+  @RequirePermissions('verification:approve')
+  reinstate(
+    @CurrentActor() actor: AuthActor,
+    @Param('publicId') publicId: string,
+    @Body(new ZodValidationPipe(reviewVerificationCaseRequestSchema)) body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.verification.reinstate(
+      actor,
+      publicId,
+      body as Parameters<VerificationService['reinstate']>[2],
       request,
     );
   }

@@ -71,7 +71,10 @@ export default async function OrganizationVerificationPage({
 
       {hasApproved ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm">
-          <VerifiedBadge verified />
+          <VerifiedBadge
+            verified
+            label={subjectType === 'AGENT' ? 'Verified Expert' : 'Verified'}
+          />
           <p className="text-muted-foreground">
             This organization has an approved verification case. The public verified badge is shown
             on published profiles and listings when trust status is VERIFIED.
@@ -103,6 +106,9 @@ export default async function OrganizationVerificationPage({
                       <th className="py-2 pr-3 font-medium">Case</th>
                       <th className="py-2 pr-3 font-medium">Type</th>
                       <th className="py-2 pr-3 font-medium">Status</th>
+                      {subjectType === 'AGENT' ? (
+                        <th className="py-2 pr-3 font-medium">Fee</th>
+                      ) : null}
                       <th className="py-2 pr-3 font-medium">Updated</th>
                       <th className="py-2 font-medium">Actions</th>
                     </tr>
@@ -115,6 +121,23 @@ export default async function OrganizationVerificationPage({
                         <td className="py-2 pr-3">
                           <StatusBadge tone={statusTone(item.status)}>{item.status}</StatusBadge>
                         </td>
+                        {subjectType === 'AGENT' ? (
+                          <td className="py-2 pr-3">
+                            <StatusBadge
+                              tone={
+                                item.processingFeeStatus === 'PAID' ||
+                                item.processingFeeStatus === 'WAIVED'
+                                  ? 'success'
+                                  : item.processingFeeStatus === 'REQUIRED' ||
+                                      item.processingFeeStatus === 'FAILED'
+                                    ? 'warning'
+                                    : 'neutral'
+                              }
+                            >
+                              {item.processingFeeStatus}
+                            </StatusBadge>
+                          </td>
+                        ) : null}
                         <td className="py-2 pr-3">
                           {new Date(item.updatedAt).toLocaleString('en-IN')}
                         </td>

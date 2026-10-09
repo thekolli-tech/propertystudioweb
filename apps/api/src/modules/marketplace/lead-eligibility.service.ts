@@ -5,25 +5,26 @@ import { type AuthenticatedRequest } from '../../common/auth/current-actor.decor
 import { AppError } from '../../common/errors/app-error';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 
 /**
  * Eligibility gate for marketplace lead receipt.
  *
- * Phase 7: role + verification only.
- * Later phases will plug subscription / wallet / credit checks here without
- * changing the marketplace lead creation call sites.
+ * Phase 7: role + verification.
+ * Phase 15B: agencies also require non-expired verification + LEAD_MARKETPLACE_ACCESS entitlement.
  */
 @Injectable()
 export class LeadEligibilityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly agentAccess: AgentProfessionalAccessService,
   ) {}
 
   /**
    * Returns whether the organization may receive marketplace requirements/leads.
    * Developers are eligible when the org is ACTIVE.
-   * Agencies require AgencyProfile.verificationStatus === VERIFIED.
+   * Agencies require Verified Expert professional access + marketplace entitlement.
    */
   async canReceiveMarketplaceLeads(organizationId: string): Promise<{
     eligible: boolean;
@@ -46,16 +47,7 @@ export class LeadEligibilityService {
     }
 
     if (organization.type === 'AGENCY') {
-      if (!organization.agencyProfile || organization.agencyProfile.status !== 'ACTIVE') {
-        return { eligible: false, reason: 'Agency profile is not active.' };
-      }
-      if (organization.agencyProfile.verificationStatus !== 'VERIFIED') {
-        return {
-          eligible: false,
-          reason: 'Agency must be verified to receive marketplace leads.',
-        };
-      }
-      return { eligible: true, reason: null };
+      return this.agentAccess.requireMarketplaceAccess(organizationId);
     }
 
     return { eligible: false, reason: 'Organization type is not eligible.' };

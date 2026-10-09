@@ -134,7 +134,12 @@ const PHASE10_DELETE_ORDER = [
   'review_ratings',
   'reviews',
   'verification_documents',
+  'project_claims',
   'verification_cases',
+  'financial_transactions',
+  'organization_subscriptions',
+  'plan_entitlements',
+  'subscription_plans',
   'lead_access_grants',
   'content_reports',
 ] as const;

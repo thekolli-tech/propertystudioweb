@@ -63,6 +63,17 @@ enum AgencyVerificationStatus {
   UNVERIFIED
   PENDING
   VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum ProcessingFeeStatus {
+  NOT_APPLICABLE
+  REQUIRED
+  PENDING
+  PAID
+  FAILED
+  WAIVED
 }
 
 enum ProjectType {
@@ -405,6 +416,7 @@ enum EntitlementKey {
   PREMIUM_PROJECT_COMMUNITY
   ANALYTICS
   EXPORTS
+  AGENT_PROFESSIONAL
 }
 
 enum WalletLedgerEntryType {
@@ -421,6 +433,7 @@ enum FinancialTransactionType {
   LEAD_PURCHASE
   REFUND
   ADJUSTMENT
+  AGENT_VERIFICATION_FEE
 }
 
 enum FinancialTransactionStatus {
@@ -558,6 +571,9 @@ enum NotificationType {
   VERIFICATION_REJECTED
   VERIFICATION_CHANGES_REQUESTED
   VERIFICATION_EXPIRING
+  VERIFICATION_SUSPENDED
+  VERIFICATION_REINSTATED
+  VERIFICATION_PAYMENT_RECEIVED
   NEW_LEAD
   LEAD_ASSIGNED
   LEAD_PURCHASED
@@ -887,31 +903,41 @@ model DeveloperProfile {
 }
 
 model AgencyProfile {
-  id                   String                   @id @db.Uuid
-  organizationId       String                   @unique @map("organization_id") @db.Uuid
-  publicId             String                   @unique @map("public_id") @db.VarChar(32)
-  legalName            String                   @map("legal_name") @db.VarChar(160)
-  displayName          String                   @map("display_name") @db.VarChar(120)
-  description          String?                  @db.VarChar(2000)
-  logoObjectKey        String?                  @map("logo_object_key") @db.VarChar(512)
-  website              String?                  @db.VarChar(320)
-  contactEmail         String?                  @map("contact_email") @db.Citext
-  contactPhone         String?                  @map("contact_phone") @db.VarChar(32)
-  headquartersCity     String?                  @map("headquarters_city") @db.VarChar(80)
-  headquartersState    String?                  @map("headquarters_state") @db.VarChar(80)
-  operatingZones       String[]                 @default([]) @map("operating_zones")
-  specialization       String?                  @db.VarChar(160)
-  verificationStatus   AgencyVerificationStatus @default(UNVERIFIED) @map("verification_status")
-  status               ProfileStatus            @default(ACTIVE)
-  createdAt            DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
-  createdBy            String?                  @map("created_by") @db.Uuid
-  updatedBy            String?                  @map("updated_by") @db.Uuid
+  id                     String                   @id @db.Uuid
+  organizationId         String                   @unique @map("organization_id") @db.Uuid
+  publicId               String                   @unique @map("public_id") @db.VarChar(32)
+  legalName              String                   @map("legal_name") @db.VarChar(160)
+  displayName            String                   @map("display_name") @db.VarChar(120)
+  description            String?                  @db.VarChar(2000)
+  logoObjectKey          String?                  @map("logo_object_key") @db.VarChar(512)
+  website                String?                  @db.VarChar(320)
+  contactEmail           String?                  @map("contact_email") @db.Citext
+  contactPhone           String?                  @map("contact_phone") @db.VarChar(32)
+  headquartersCity       String?                  @map("headquarters_city") @db.VarChar(80)
+  headquartersState      String?                  @map("headquarters_state") @db.VarChar(80)
+  operatingZones         String[]                 @default([]) @map("operating_zones")
+  specialization         String?                  @db.VarChar(160)
+  propertyTypes          String[]                 @default([]) @map("property_types")
+  configurations         String[]                 @default([]) @map("configurations")
+  priceRangeMinMinor     BigInt?                  @map("price_range_min_minor")
+  priceRangeMaxMinor     BigInt?                  @map("price_range_max_minor")
+  reraNumber             String?                  @map("rera_number") @db.VarChar(64)
+  verificationStatus     AgencyVerificationStatus @default(UNVERIFIED) @map("verification_status")
+  verifiedAt             DateTime?                @map("verified_at") @db.Timestamptz(3)
+  verificationExpiresAt  DateTime?                @map("verification_expires_at") @db.Timestamptz(3)
+  suspendedAt            DateTime?                @map("suspended_at") @db.Timestamptz(3)
+  suspensionReason       String?                  @map("suspension_reason") @db.VarChar(1000)
+  status                 ProfileStatus            @default(ACTIVE)
+  createdAt              DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy              String?                  @map("created_by") @db.Uuid
+  updatedBy              String?                  @map("updated_by") @db.Uuid
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([verificationStatus])
+  @@index([verificationExpiresAt])
   @@map("agency_profiles")
 }
 
@@ -1726,6 +1752,7 @@ model FinancialTransaction {
   refunds       Refund[]
   leadPurchases LeadPurchase[]
   invoices      Invoice[]
+  verificationFeeCases VerificationCase[]
 
   @@unique([organizationId, idempotencyKey])
   @@index([organizationId])
@@ -1864,33 +1891,36 @@ model LeadPurchase {
 }
 
 model VerificationCase {
-  id                 String                   @id @db.Uuid
-  publicId           String                   @unique @map("public_id") @db.VarChar(32)
-  organizationId     String?                  @map("organization_id") @db.Uuid
-  subjectType        VerificationSubjectType  @map("subject_type")
-  subjectId          String                   @map("subject_id") @db.Uuid
-  verificationType   VerificationSubjectType  @map("verification_type")
-  status             VerificationCaseStatus   @default(DRAFT)
-  reraNumber         String?                  @map("rera_number") @db.VarChar(64)
-  declarationAccepted Boolean                 @default(false) @map("declaration_accepted")
-  submittedByUserId  String?                  @map("submitted_by_user_id") @db.Uuid
-  reviewedByUserId   String?                  @map("reviewed_by_user_id") @db.Uuid
-  submittedAt        DateTime?                @map("submitted_at") @db.Timestamptz(3)
-  reviewedAt         DateTime?                @map("reviewed_at") @db.Timestamptz(3)
-  expiresAt          DateTime?                @map("expires_at") @db.Timestamptz(3)
-  rejectionReason    String?                  @map("rejection_reason") @db.VarChar(1000)
-  reviewerNotes      String?                  @map("reviewer_notes") @db.VarChar(2000)
-  version            Int                      @default(1)
-  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
-  createdBy          String?                  @map("created_by") @db.Uuid
-  updatedBy          String?                  @map("updated_by") @db.Uuid
+  id                          String                   @id @db.Uuid
+  publicId                    String                   @unique @map("public_id") @db.VarChar(32)
+  organizationId              String?                  @map("organization_id") @db.Uuid
+  subjectType                 VerificationSubjectType  @map("subject_type")
+  subjectId                   String                   @map("subject_id") @db.Uuid
+  verificationType            VerificationSubjectType  @map("verification_type")
+  status                      VerificationCaseStatus   @default(DRAFT)
+  reraNumber                  String?                  @map("rera_number") @db.VarChar(64)
+  declarationAccepted         Boolean                  @default(false) @map("declaration_accepted")
+  processingFeeStatus         ProcessingFeeStatus      @default(NOT_APPLICABLE) @map("processing_fee_status")
+  processingFeeTransactionId  String?                  @map("processing_fee_transaction_id") @db.Uuid
+  submittedByUserId           String?                  @map("submitted_by_user_id") @db.Uuid
+  reviewedByUserId            String?                  @map("reviewed_by_user_id") @db.Uuid
+  submittedAt                 DateTime?                @map("submitted_at") @db.Timestamptz(3)
+  reviewedAt                  DateTime?                @map("reviewed_at") @db.Timestamptz(3)
+  expiresAt                   DateTime?                @map("expires_at") @db.Timestamptz(3)
+  rejectionReason             String?                  @map("rejection_reason") @db.VarChar(1000)
+  reviewerNotes               String?                  @map("reviewer_notes") @db.VarChar(2000)
+  version                     Int                      @default(1)
+  createdAt                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdBy                   String?                  @map("created_by") @db.Uuid
+  updatedBy                   String?                  @map("updated_by") @db.Uuid
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  submittedBy  User?         @relation("VerificationSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
-  reviewedBy   User?         @relation("VerificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
-  documents    VerificationDocument[]
-  projectClaims ProjectClaim[]
+  organization              Organization?         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  submittedBy               User?                 @relation("VerificationSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewedBy                User?                 @relation("VerificationReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  processingFeeTransaction  FinancialTransaction? @relation(fields: [processingFeeTransactionId], references: [id], onDelete: SetNull)
+  documents                 VerificationDocument[]
+  projectClaims             ProjectClaim[]
 
   @@index([subjectType, subjectId, verificationType])
   @@index([organizationId])
@@ -1898,6 +1928,8 @@ model VerificationCase {
   @@index([status])
   @@index([submittedAt])
   @@index([expiresAt])
+  @@index([processingFeeStatus])
+  @@index([processingFeeTransactionId])
   @@map("verification_cases")
 }
 

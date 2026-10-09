@@ -5,6 +5,7 @@ import {
   type CreateVerificationCaseRequest,
   type ReviewVerificationCaseRequest,
   type SubmitVerificationCaseRequest,
+  type SuspendAgentVerificationRequest,
   type UpdateVerificationCaseRequest,
   type UpdateVerificationDocumentRequest,
   type VerificationCaseDetail,
@@ -25,6 +26,7 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { NotificationService } from '../notifications/notification.service';
 import { VerificationAccessService } from './verification-access.service';
 import {
@@ -41,6 +43,10 @@ type ResolvedSubject = {
   organizationId: string;
 };
 
+function isReviewEligible(feeStatus: string): boolean {
+  return feeStatus === 'PAID' || feeStatus === 'WAIVED' || feeStatus === 'NOT_APPLICABLE';
+}
+
 @Injectable()
 export class VerificationService {
   constructor(
@@ -50,6 +56,7 @@ export class VerificationService {
     private readonly access: VerificationAccessService,
     private readonly notifications: NotificationService,
     private readonly storage: ObjectStorageService,
+    private readonly domainEvents: DomainEventBus,
   ) {}
 
   async create(
@@ -85,12 +92,14 @@ export class VerificationService {
           status: 'DRAFT',
           reraNumber: body.reraNumber ?? null,
           declarationAccepted: body.declarationAccepted ?? false,
+          processingFeeStatus: body.subjectType === 'AGENT' ? 'REQUIRED' : 'NOT_APPLICABLE',
           createdBy: actor.userId,
           updatedBy: actor.userId,
         },
         include: {
           organization: true,
           documents: { include: { documentAsset: true } },
+          processingFeeTransaction: { select: { publicId: true } },
         },
       });
 
@@ -145,7 +154,10 @@ export class VerificationService {
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
-      include: { organization: true },
+      include: {
+        organization: true,
+        processingFeeTransaction: { select: { publicId: true } },
+      },
     });
     const page = rows.slice(0, query.limit);
     const summaries = await Promise.all(page.map((row) => this.toSummaryAsync(row)));
@@ -186,7 +198,10 @@ export class VerificationService {
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
-      include: { organization: true },
+      include: {
+        organization: true,
+        processingFeeTransaction: { select: { publicId: true } },
+      },
     });
     const page = rows.slice(0, query.limit);
     const summaries = await Promise.all(page.map((row) => this.toSummaryAsync(row)));
@@ -246,6 +261,7 @@ export class VerificationService {
       include: {
         organization: true,
         documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
       },
     });
 
@@ -285,6 +301,10 @@ export class VerificationService {
       throw new AppError('VALIDATION_ERROR', 'Declaration must be accepted before submit.');
     }
 
+    const keepFeePaidOrWaived =
+      verificationCase.processingFeeStatus === 'PAID' ||
+      verificationCase.processingFeeStatus === 'WAIVED';
+
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.verificationCase.update({
         where: { id: verificationCase.id },
@@ -293,15 +313,27 @@ export class VerificationService {
           declarationAccepted: true,
           submittedByUserId: actor.userId,
           submittedAt: new Date(),
+          ...(verificationCase.subjectType === 'AGENT' && !keepFeePaidOrWaived
+            ? { processingFeeStatus: 'REQUIRED' as const }
+            : {}),
           updatedBy: actor.userId,
           version: { increment: 1 },
         },
         include: {
           organization: true,
           documents: { include: { documentAsset: true } },
+          processingFeeTransaction: { select: { publicId: true } },
         },
       });
       await this.applySubjectPending(tx, row.subjectType, row.subjectId);
+
+      if (row.subjectType === 'AGENT' && row.reraNumber) {
+        await tx.agencyProfile.update({
+          where: { id: row.subjectId },
+          data: { reraNumber: row.reraNumber },
+        });
+      }
+
       return row;
     });
 
@@ -329,6 +361,23 @@ export class VerificationService {
       });
     }
 
+    if (updated.subjectType === 'AGENT') {
+      await this.domainEvents.emit({
+        eventType: 'agent.verification.submitted',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
+      });
+      await this.domainEvents.emit({
+        eventType: 'verification.updated',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
+      });
+    }
+
     const subjectPublicId = await this.resolveSubjectPublicId(
       updated.subjectType,
       updated.subjectId,
@@ -348,6 +397,7 @@ export class VerificationService {
       include: {
         organization: true,
         documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
       },
     });
     if (!verificationCase) {
@@ -355,6 +405,9 @@ export class VerificationService {
     }
     if (!['SUBMITTED', 'UNDER_REVIEW', 'CHANGES_REQUESTED'].includes(verificationCase.status)) {
       throw new AppError('CONFLICT', 'Case cannot be approved in its current status.');
+    }
+    if (!isReviewEligible(verificationCase.processingFeeStatus)) {
+      throw new AppError('CONFLICT', 'Processing fee must be paid before approval.');
     }
 
     const expiresAt = body.expiresAt ? new Date(body.expiresAt) : oneYearFromNow();
@@ -374,9 +427,13 @@ export class VerificationService {
         include: {
           organization: true,
           documents: { include: { documentAsset: true } },
+          processingFeeTransaction: { select: { publicId: true } },
         },
       });
-      await this.applySubjectVerified(tx, row.subjectType, row.subjectId);
+      await this.applySubjectVerified(tx, row.subjectType, row.subjectId, {
+        expiresAt: row.expiresAt,
+        reraNumber: row.reraNumber,
+      });
       return row;
     });
 
@@ -401,6 +458,23 @@ export class VerificationService {
         severity: 'SUCCESS',
         entityType: 'VERIFICATION_CASE',
         entityId: updated.id,
+      });
+    }
+
+    if (updated.subjectType === 'AGENT') {
+      await this.domainEvents.emit({
+        eventType: 'agent.verification.approved',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
+      });
+      await this.domainEvents.emit({
+        eventType: 'verification.updated',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
       });
     }
 
@@ -441,6 +515,7 @@ export class VerificationService {
       include: {
         organization: true,
         documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
       },
     });
     if (!verificationCase) {
@@ -450,6 +525,7 @@ export class VerificationService {
       throw new AppError('CONFLICT', 'Only approved cases can be revoked.');
     }
 
+    const suspensionReason = body.rejectionReason ?? body.reviewerNotes ?? null;
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.verificationCase.update({
         where: { id: verificationCase.id },
@@ -465,9 +541,12 @@ export class VerificationService {
         include: {
           organization: true,
           documents: { include: { documentAsset: true } },
+          processingFeeTransaction: { select: { publicId: true } },
         },
       });
-      await this.applySubjectRevoked(tx, row.subjectType, row.subjectId);
+      await this.applySubjectRevoked(tx, row.subjectType, row.subjectId, {
+        suspensionReason,
+      });
       return row;
     });
 
@@ -483,17 +562,288 @@ export class VerificationService {
     });
 
     if (updated.submittedByUserId) {
+      const isAgent = updated.subjectType === 'AGENT';
       await this.notifications.create({
         userId: updated.submittedByUserId,
         orgId: updated.organizationId,
-        type: 'VERIFICATION_REJECTED',
-        title: 'Verification revoked',
-        body: 'Your verification status was revoked.',
+        type: isAgent ? 'VERIFICATION_SUSPENDED' : 'VERIFICATION_REJECTED',
+        title: isAgent ? 'Verification suspended' : 'Verification revoked',
+        body: isAgent
+          ? 'Your agent verification was suspended.'
+          : 'Your verification status was revoked.',
         severity: 'WARNING',
         entityType: 'VERIFICATION_CASE',
         entityId: updated.id,
       });
     }
+
+    if (updated.subjectType === 'AGENT') {
+      await this.domainEvents.emit({
+        eventType: 'agent.verification.suspended',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
+      });
+    }
+
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
+    return this.toDetail(updated, subjectPublicId);
+  }
+
+  async suspend(
+    actor: AuthActor,
+    publicId: string,
+    body: SuspendAgentVerificationRequest,
+    request?: AuthenticatedRequest,
+  ): Promise<VerificationCaseDetail> {
+    this.requireAdminManage(actor);
+    const verificationCase = await this.prisma.verificationCase.findFirst({
+      where: { publicId },
+      include: {
+        organization: true,
+        documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
+      },
+    });
+    if (!verificationCase) {
+      return await this.access.deny(actor, publicId, request);
+    }
+    if (verificationCase.subjectType !== 'AGENT') {
+      throw new AppError('CONFLICT', 'Only agent verification cases can be suspended.');
+    }
+
+    const profile = await this.prisma.agencyProfile.findFirst({
+      where: { id: verificationCase.subjectId },
+    });
+    if (!profile) {
+      throw new AppError('NOT_FOUND', 'Resource not found.');
+    }
+
+    const eligible =
+      verificationCase.status === 'APPROVED' || profile.verificationStatus === 'VERIFIED';
+    if (!eligible) {
+      throw new AppError(
+        'CONFLICT',
+        'Only approved agent cases or verified agent profiles can be suspended.',
+      );
+    }
+
+    const suspensionReason = body.rejectionReason ?? body.reviewerNotes ?? null;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row =
+        verificationCase.status === 'APPROVED'
+          ? await tx.verificationCase.update({
+              where: { id: verificationCase.id },
+              data: {
+                status: 'REVOKED',
+                reviewedByUserId: actor.userId,
+                reviewedAt: new Date(),
+                reviewerNotes: body.reviewerNotes ?? null,
+                rejectionReason: body.rejectionReason ?? null,
+                updatedBy: actor.userId,
+                version: { increment: 1 },
+              },
+              include: {
+                organization: true,
+                documents: { include: { documentAsset: true } },
+                processingFeeTransaction: { select: { publicId: true } },
+              },
+            })
+          : await tx.verificationCase.findFirstOrThrow({
+              where: { id: verificationCase.id },
+              include: {
+                organization: true,
+                documents: { include: { documentAsset: true } },
+                processingFeeTransaction: { select: { publicId: true } },
+              },
+            });
+
+      await tx.agencyProfile.update({
+        where: { id: profile.id },
+        data: {
+          verificationStatus: 'SUSPENDED',
+          suspendedAt: new Date(),
+          suspensionReason,
+        },
+      });
+
+      return row;
+    });
+
+    await this.audit.write({
+      actorUserId: actor.userId,
+      sessionId: actor.sessionId,
+      organizationId: updated.organizationId,
+      action: 'verification.case.suspended',
+      resourceType: 'verification_case',
+      resourceId: updated.publicId,
+      requestId: request?.requestId,
+      after: { status: updated.status, verificationStatus: 'SUSPENDED' },
+    });
+
+    if (updated.submittedByUserId) {
+      await this.notifications.create({
+        userId: updated.submittedByUserId,
+        orgId: updated.organizationId,
+        type: 'VERIFICATION_SUSPENDED',
+        title: 'Verification suspended',
+        body: 'Your agent verification was suspended.',
+        severity: 'WARNING',
+        entityType: 'VERIFICATION_CASE',
+        entityId: updated.id,
+      });
+    }
+
+    await this.domainEvents.emit({
+      eventType: 'agent.verification.suspended',
+      resourceType: 'verification_case',
+      resourcePublicId: updated.publicId,
+      organizationId: updated.organizationId,
+      payload: { status: updated.status, subjectType: updated.subjectType },
+    });
+
+    const subjectPublicId = await this.resolveSubjectPublicId(
+      updated.subjectType,
+      updated.subjectId,
+    );
+    return this.toDetail(updated, subjectPublicId);
+  }
+
+  async reinstate(
+    actor: AuthActor,
+    publicId: string,
+    body: ReviewVerificationCaseRequest,
+    request?: AuthenticatedRequest,
+  ): Promise<VerificationCaseDetail> {
+    this.requireAdminManage(actor);
+    const verificationCase = await this.prisma.verificationCase.findFirst({
+      where: { publicId },
+      include: {
+        organization: true,
+        documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
+      },
+    });
+    if (!verificationCase) {
+      return await this.access.deny(actor, publicId, request);
+    }
+    if (verificationCase.subjectType !== 'AGENT') {
+      throw new AppError('CONFLICT', 'Only agent verification cases can be reinstated.');
+    }
+
+    const profile = await this.prisma.agencyProfile.findFirst({
+      where: { id: verificationCase.subjectId },
+    });
+    if (!profile) {
+      throw new AppError('NOT_FOUND', 'Resource not found.');
+    }
+    if (profile.verificationStatus !== 'SUSPENDED') {
+      throw new AppError('CONFLICT', 'Only suspended agent profiles can be reinstated.');
+    }
+
+    const reinstatable =
+      verificationCase.status === 'REVOKED' ||
+      (verificationCase.status === 'APPROVED' &&
+        isReviewEligible(verificationCase.processingFeeStatus));
+    if (!reinstatable) {
+      throw new AppError(
+        'CONFLICT',
+        'Case must be revoked or approved with a paid fee to reinstate.',
+      );
+    }
+
+    const expiresAt = body.expiresAt
+      ? new Date(body.expiresAt)
+      : (verificationCase.expiresAt ?? oneYearFromNow());
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const row =
+        verificationCase.status === 'REVOKED'
+          ? await tx.verificationCase.update({
+              where: { id: verificationCase.id },
+              data: {
+                status: 'APPROVED',
+                reviewedByUserId: actor.userId,
+                reviewedAt: new Date(),
+                expiresAt,
+                reviewerNotes: body.reviewerNotes ?? null,
+                rejectionReason: null,
+                updatedBy: actor.userId,
+                version: { increment: 1 },
+              },
+              include: {
+                organization: true,
+                documents: { include: { documentAsset: true } },
+                processingFeeTransaction: { select: { publicId: true } },
+              },
+            })
+          : await tx.verificationCase.update({
+              where: { id: verificationCase.id },
+              data: {
+                expiresAt,
+                reviewedByUserId: actor.userId,
+                reviewedAt: new Date(),
+                reviewerNotes: body.reviewerNotes ?? null,
+                updatedBy: actor.userId,
+                version: { increment: 1 },
+              },
+              include: {
+                organization: true,
+                documents: { include: { documentAsset: true } },
+                processingFeeTransaction: { select: { publicId: true } },
+              },
+            });
+
+      await tx.agencyProfile.update({
+        where: { id: profile.id },
+        data: {
+          verificationStatus: 'VERIFIED',
+          verifiedAt: new Date(),
+          verificationExpiresAt: expiresAt,
+          suspendedAt: null,
+          suspensionReason: null,
+          ...(row.reraNumber ? { reraNumber: row.reraNumber } : {}),
+        },
+      });
+
+      return row;
+    });
+
+    await this.audit.write({
+      actorUserId: actor.userId,
+      sessionId: actor.sessionId,
+      organizationId: updated.organizationId,
+      action: 'verification.case.reinstated',
+      resourceType: 'verification_case',
+      resourceId: updated.publicId,
+      requestId: request?.requestId,
+      after: { status: updated.status, verificationStatus: 'VERIFIED' },
+    });
+
+    if (updated.submittedByUserId) {
+      await this.notifications.create({
+        userId: updated.submittedByUserId,
+        orgId: updated.organizationId,
+        type: 'VERIFICATION_REINSTATED',
+        title: 'Verification reinstated',
+        body: 'Your agent verification was reinstated.',
+        severity: 'SUCCESS',
+        entityType: 'VERIFICATION_CASE',
+        entityId: updated.id,
+      });
+    }
+
+    await this.domainEvents.emit({
+      eventType: 'agent.verification.reinstated',
+      resourceType: 'verification_case',
+      resourcePublicId: updated.publicId,
+      organizationId: updated.organizationId,
+      payload: { status: updated.status, subjectType: updated.subjectType },
+    });
 
     const subjectPublicId = await this.resolveSubjectPublicId(
       updated.subjectType,
@@ -682,6 +1032,7 @@ export class VerificationService {
       include: {
         organization: true,
         documents: { include: { documentAsset: true } },
+        processingFeeTransaction: { select: { publicId: true } },
       },
     });
     if (!verificationCase) {
@@ -706,6 +1057,7 @@ export class VerificationService {
         include: {
           organization: true,
           documents: { include: { documentAsset: true } },
+          processingFeeTransaction: { select: { publicId: true } },
         },
       });
       if (status === 'REJECTED') {
@@ -741,6 +1093,16 @@ export class VerificationService {
         severity: 'WARNING',
         entityType: 'VERIFICATION_CASE',
         entityId: updated.id,
+      });
+    }
+
+    if (status === 'REJECTED' && updated.subjectType === 'AGENT') {
+      await this.domainEvents.emit({
+        eventType: 'agent.verification.rejected',
+        resourceType: 'verification_case',
+        resourcePublicId: updated.publicId,
+        organizationId: updated.organizationId,
+        payload: { status: updated.status, subjectType: updated.subjectType },
       });
     }
 
@@ -874,6 +1236,7 @@ export class VerificationService {
     tx: Prisma.TransactionClient,
     subjectType: VerificationSubjectType,
     subjectId: string,
+    options?: { expiresAt?: Date | null; reraNumber?: string | null },
   ) {
     if (subjectType === 'DEVELOPER') {
       await tx.developerProfile.update({
@@ -885,7 +1248,14 @@ export class VerificationService {
     if (subjectType === 'AGENT') {
       await tx.agencyProfile.update({
         where: { id: subjectId },
-        data: { verificationStatus: 'VERIFIED' },
+        data: {
+          verificationStatus: 'VERIFIED',
+          verifiedAt: new Date(),
+          verificationExpiresAt: options?.expiresAt ?? null,
+          suspendedAt: null,
+          suspensionReason: null,
+          ...(options?.reraNumber ? { reraNumber: options.reraNumber } : {}),
+        },
       });
       return;
     }
@@ -917,7 +1287,7 @@ export class VerificationService {
     if (subjectType === 'AGENT') {
       await tx.agencyProfile.update({
         where: { id: subjectId },
-        data: { verificationStatus: 'UNVERIFIED' },
+        data: { verificationStatus: 'REJECTED' },
       });
       return;
     }
@@ -938,6 +1308,7 @@ export class VerificationService {
     tx: Prisma.TransactionClient,
     subjectType: VerificationSubjectType,
     subjectId: string,
+    options?: { suspensionReason?: string | null },
   ) {
     if (subjectType === 'DEVELOPER') {
       await tx.developerProfile.update({
@@ -949,7 +1320,11 @@ export class VerificationService {
     if (subjectType === 'AGENT') {
       await tx.agencyProfile.update({
         where: { id: subjectId },
-        data: { verificationStatus: 'UNVERIFIED' },
+        data: {
+          verificationStatus: 'SUSPENDED',
+          suspendedAt: new Date(),
+          suspensionReason: options?.suspensionReason ?? null,
+        },
       });
       return;
     }
@@ -966,6 +1341,19 @@ export class VerificationService {
     });
   }
 
+  private async resolveProcessingFeeTransactionPublicId(
+    processingFeeTransactionId: string | null | undefined,
+    included?: { publicId: string } | null,
+  ): Promise<string | null> {
+    if (included?.publicId) return included.publicId;
+    if (!processingFeeTransactionId) return null;
+    const tx = await this.prisma.financialTransaction.findFirst({
+      where: { id: processingFeeTransactionId },
+      select: { publicId: true },
+    });
+    return tx?.publicId ?? null;
+  }
+
   private async toSummaryAsync(row: {
     publicId: string;
     organization?: { publicId: string } | null;
@@ -976,6 +1364,9 @@ export class VerificationService {
     status: VerificationCaseSummary['status'];
     reraNumber: string | null;
     declarationAccepted: boolean;
+    processingFeeStatus: VerificationCaseSummary['processingFeeStatus'];
+    processingFeeTransactionId?: string | null;
+    processingFeeTransaction?: { publicId: string } | null;
     submittedAt: Date | null;
     reviewedAt: Date | null;
     expiresAt: Date | null;
@@ -985,6 +1376,10 @@ export class VerificationService {
     updatedAt: Date;
   }): Promise<VerificationCaseSummary> {
     const subjectPublicId = await this.resolveSubjectPublicId(row.subjectType, row.subjectId);
+    const processingFeeTransactionPublicId = await this.resolveProcessingFeeTransactionPublicId(
+      row.processingFeeTransactionId,
+      row.processingFeeTransaction,
+    );
     return {
       publicId: row.publicId,
       organizationPublicId: row.organization?.publicId ?? null,
@@ -994,6 +1389,9 @@ export class VerificationService {
       status: row.status,
       reraNumber: row.reraNumber,
       declarationAccepted: row.declarationAccepted,
+      processingFeeStatus: row.processingFeeStatus,
+      processingFeeTransactionPublicId,
+      reviewEligible: isReviewEligible(row.processingFeeStatus),
       submittedAt: toIso(row.submittedAt),
       reviewedAt: toIso(row.reviewedAt),
       expiresAt: toIso(row.expiresAt),
@@ -1004,7 +1402,7 @@ export class VerificationService {
     };
   }
 
-  private toDetail(
+  private async toDetail(
     row: {
       publicId: string;
       organization?: { publicId: string } | null;
@@ -1015,6 +1413,9 @@ export class VerificationService {
       status: VerificationCaseSummary['status'];
       reraNumber: string | null;
       declarationAccepted: boolean;
+      processingFeeStatus: VerificationCaseSummary['processingFeeStatus'];
+      processingFeeTransactionId?: string | null;
+      processingFeeTransaction?: { publicId: string } | null;
       submittedAt: Date | null;
       reviewedAt: Date | null;
       expiresAt: Date | null;
@@ -1034,23 +1435,12 @@ export class VerificationService {
       }>;
     },
     subjectPublicId: string,
-  ): VerificationCaseDetail {
+  ): Promise<VerificationCaseDetail> {
+    const summary = await this.toSummaryAsync({ ...row, subjectId: row.subjectId });
+    // Prefer the already-resolved subjectPublicId from callers.
     return {
-      publicId: row.publicId,
-      organizationPublicId: row.organization?.publicId ?? null,
-      subjectType: row.subjectType,
+      ...summary,
       subjectPublicId,
-      verificationType: row.verificationType,
-      status: row.status,
-      reraNumber: row.reraNumber,
-      declarationAccepted: row.declarationAccepted,
-      submittedAt: toIso(row.submittedAt),
-      reviewedAt: toIso(row.reviewedAt),
-      expiresAt: toIso(row.expiresAt),
-      rejectionReason: row.rejectionReason,
-      reviewerNotes: row.reviewerNotes,
-      createdAt: toIso(row.createdAt)!,
-      updatedAt: toIso(row.updatedAt)!,
       documents: (row.documents ?? []).map((doc) => this.toDocumentSummary(doc)),
     };
   }

@@ -16,6 +16,7 @@ import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 import { DomainEventBus } from '../integrations/domain-event-bus.service';
 import { CatalogAccessService } from './catalog-access.service';
 import { decimalToNumber, decodeCursor, encodeCursor, toIso } from './catalog.util';
@@ -27,12 +28,13 @@ export class PropertiesService {
     private readonly publicIds: PublicIdService,
     private readonly audit: AuditService,
     private readonly access: CatalogAccessService,
+    private readonly agentAccess: AgentProfessionalAccessService,
     private readonly domainEvents: DomainEventBus,
     private readonly storage: ObjectStorageService,
   ) {}
 
   async create(actor: AuthActor, body: CreatePropertyRequest, request?: AuthenticatedRequest) {
-    const organization = await this.access.requireDeveloperOrganization(
+    const organization = await this.agentAccess.requireListingOrganization(
       actor,
       body.organizationPublicId,
       'property:create',
@@ -122,7 +124,7 @@ export class PropertiesService {
     }
 
     if (query.organizationPublicId) {
-      await this.access.requireDeveloperOrganization(
+      await this.access.requirePropertyOrganization(
         actor,
         query.organizationPublicId,
         'property:read',
@@ -209,10 +211,12 @@ export class PropertiesService {
     }
 
     const needsPublish = body.publicationStatus !== undefined;
-    await this.access.requirePropertyAccess(
+    const mutationPermission = needsPublish ? 'property:publish' : 'property:update';
+    await this.access.requirePropertyAccess(actor, property, mutationPermission, request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
       actor,
-      property,
-      needsPublish ? 'property:publish' : 'property:update',
+      property.organization,
+      mutationPermission,
       request,
     );
 
@@ -382,6 +386,12 @@ export class PropertiesService {
     }
 
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     await this.prisma.property.update({
       where: { id: property.id },
@@ -553,6 +563,12 @@ export class PropertiesService {
       return await this.access.deny(actor, body.entityPublicId, request);
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     const storageKey = this.storage.assertOrganizationScopedKey(
       body.storageKey,
@@ -616,6 +632,12 @@ export class PropertiesService {
       return await this.access.deny(actor, body.entityPublicId, request);
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     const storageKey = this.storage.assertOrganizationScopedKey(
       body.storageKey,

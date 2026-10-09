@@ -13,6 +13,7 @@ import { IdempotencyService } from '../../common/idempotency/idempotency.service
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 import { LeadAccessService } from '../marketplace/lead-access.service';
 import { NotificationService } from '../notifications/notification.service';
 import { BillingAccessService } from './billing-access.service';
@@ -33,6 +34,7 @@ export class LeadPurchaseService {
     private readonly config: AppConfigService,
     private readonly leadAccess: LeadAccessService,
     private readonly notifications: NotificationService,
+    private readonly agentAccess: AgentProfessionalAccessService,
   ) {}
 
   async purchase(
@@ -44,6 +46,13 @@ export class LeadPurchaseService {
       actor,
       body.organizationPublicId,
       'lead:purchases:create',
+      request,
+    );
+
+    await this.agentAccess.assertMarketplaceProfessionalAccess(
+      organization.id,
+      organization.publicId,
+      actor,
       request,
     );
 
