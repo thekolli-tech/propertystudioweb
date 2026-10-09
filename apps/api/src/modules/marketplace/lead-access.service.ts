@@ -9,6 +9,7 @@ import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 
 @Injectable()
 export class LeadAccessService {
@@ -16,6 +17,7 @@ export class LeadAccessService {
     private readonly prisma: PrismaService,
     private readonly publicIds: PublicIdService,
     private readonly audit: AuditService,
+    private readonly agentAccess: AgentProfessionalAccessService,
   ) {}
 
   canRevealBuyerContact(_input: { leadId: string; organizationId: string; actorUserId: string }): {
@@ -45,6 +47,13 @@ export class LeadAccessService {
       actor,
       leadPublicId,
       organizationPublicId,
+      request,
+    );
+
+    await this.agentAccess.assertMarketplaceProfessionalAccess(
+      organization.id,
+      organization.publicId,
+      actor,
       request,
     );
 
@@ -86,6 +95,13 @@ export class LeadAccessService {
       actor,
       leadPublicId,
       organizationPublicId,
+      request,
+    );
+
+    await this.agentAccess.assertMarketplaceProfessionalAccess(
+      organization.id,
+      organization.publicId,
+      actor,
       request,
     );
 

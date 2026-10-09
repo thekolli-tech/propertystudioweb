@@ -15,6 +15,7 @@ import { AppError } from '../../common/errors/app-error';
 import { PublicIdService } from '../../common/ids/public-id.service';
 import { PrismaService } from '../../common/prisma/prisma.module';
 import { actorHasPermission, type AuthActor } from '../../common/tenancy/access-scope';
+import { AgentProfessionalAccessService } from '../agent-ops/agent-professional-access.service';
 import { LeadTransitionService } from '../crm/lead-transition.service';
 import { LeadAccessService } from './lead-access.service';
 import { LeadEligibilityService } from './lead-eligibility.service';
@@ -31,6 +32,7 @@ export class LeadsService {
     private readonly matching: RequirementMatchingService,
     private readonly leadAccess: LeadAccessService,
     private readonly transitions: LeadTransitionService,
+    private readonly agentAccess: AgentProfessionalAccessService,
   ) {}
 
   /**
@@ -214,12 +216,16 @@ export class LeadsService {
       throw new AppError('VALIDATION_ERROR', 'organizationPublicId is required.');
     }
 
-    const { organization } = await this.eligibility.requireEligibleOrganization(
+    const { organization, eligibility } = await this.eligibility.requireEligibleOrganization(
       actor,
       query.organizationPublicId,
       'lead:read',
       request,
     );
+
+    if (!eligibility.eligible && !actorHasPermission(actor, 'platform:admin')) {
+      throw new AppError('FORBIDDEN', eligibility.reason ?? 'Organization is not eligible.');
+    }
 
     const where: Record<string, unknown> = {
       recipientOrganizationId: organization.id,
@@ -321,6 +327,12 @@ export class LeadsService {
       if (!membership || !actorHasPermission(actor, 'lead:read')) {
         return await this.deny(actor, publicId, request);
       }
+      await this.agentAccess.assertMarketplaceProfessionalAccess(
+        lead.recipientOrganizationId,
+        lead.recipientOrganization.publicId,
+        actor,
+        request,
+      );
     }
 
     if (lead.firstViewedAt === null && !isAdmin) {
@@ -373,6 +385,12 @@ export class LeadsService {
       if (!membership || !actorHasPermission(actor, 'lead:update')) {
         return await this.deny(actor, publicId, request);
       }
+      await this.agentAccess.assertMarketplaceProfessionalAccess(
+        lead.recipientOrganizationId,
+        lead.recipientOrganization.publicId,
+        actor,
+        request,
+      );
     }
 
     if (body.expectedVersion !== undefined && body.expectedVersion !== lead.version) {

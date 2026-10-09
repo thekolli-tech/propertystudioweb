@@ -211,10 +211,12 @@ export class PropertiesService {
     }
 
     const needsPublish = body.publicationStatus !== undefined;
-    await this.access.requirePropertyAccess(
+    const mutationPermission = needsPublish ? 'property:publish' : 'property:update';
+    await this.access.requirePropertyAccess(actor, property, mutationPermission, request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
       actor,
-      property,
-      needsPublish ? 'property:publish' : 'property:update',
+      property.organization,
+      mutationPermission,
       request,
     );
 
@@ -384,6 +386,12 @@ export class PropertiesService {
     }
 
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     await this.prisma.property.update({
       where: { id: property.id },
@@ -555,6 +563,12 @@ export class PropertiesService {
       return await this.access.deny(actor, body.entityPublicId, request);
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     const storageKey = this.storage.assertOrganizationScopedKey(
       body.storageKey,
@@ -618,6 +632,12 @@ export class PropertiesService {
       return await this.access.deny(actor, body.entityPublicId, request);
     }
     await this.access.requirePropertyAccess(actor, property, 'property:update', request);
+    await this.agentAccess.assertAgencyMemberListingMutation(
+      actor,
+      property.organization,
+      'property:update',
+      request,
+    );
 
     const storageKey = this.storage.assertOrganizationScopedKey(
       body.storageKey,

@@ -205,6 +205,95 @@ export class AgentProfessionalAccessService {
     return { eligible: true, reason: null };
   }
 
+  /**
+   * Gate agency-member listing mutations (update/publish/media/docs/delete).
+   * Developers and platform admins are unaffected.
+   * PROPERTY_ADMIN assignment-scoped actors (no org membership) remain assignment-gated only.
+   */
+  async assertAgencyMemberListingMutation(
+    actor: AuthActor,
+    organization: { id: string; type: string; publicId: string },
+    permission: 'property:create' | 'property:update' | 'property:publish' | 'property:read',
+    request?: AuthenticatedRequest,
+  ): Promise<void> {
+    if (organization.type !== 'AGENCY') {
+      return;
+    }
+    if (actorHasPermission(actor, 'platform:admin')) {
+      return;
+    }
+
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: {
+        organizationId: organization.id,
+        userId: actor.userId,
+        status: 'ACTIVE',
+      },
+    });
+    if (!membership) {
+      // PROPERTY_ADMIN (or other assignment-scoped actor) — no professional gate here.
+      return;
+    }
+
+    const evaluation = await this.evaluateAgency(organization.id);
+    if (evaluation.eligible) {
+      return;
+    }
+
+    await this.audit.write({
+      actorUserId: actor.userId,
+      sessionId: actor.sessionId,
+      organizationId: organization.id,
+      action: 'agent.listing.denied',
+      resourceType: 'organization',
+      resourceId: organization.publicId,
+      requestId: request?.requestId,
+      metadata: { reason: evaluation.reason, permission, path: 'mutation' },
+    });
+    throw new AppError(
+      'FORBIDDEN',
+      evaluation.reason ?? 'Verified Expert status required for professional listings.',
+    );
+  }
+
+  /** Throws FORBIDDEN when an agency org lacks professional + marketplace eligibility. */
+  async assertMarketplaceProfessionalAccess(
+    organizationId: string,
+    organizationPublicId: string,
+    actor: AuthActor,
+    request?: AuthenticatedRequest,
+  ): Promise<void> {
+    const organization = await this.prisma.organization.findFirst({
+      where: { id: organizationId },
+    });
+    if (!organization || organization.type !== 'AGENCY') {
+      return;
+    }
+    if (actorHasPermission(actor, 'platform:admin')) {
+      return;
+    }
+
+    const marketplace = await this.requireMarketplaceAccess(organizationId);
+    if (marketplace.eligible) {
+      return;
+    }
+
+    await this.audit.write({
+      actorUserId: actor.userId,
+      sessionId: actor.sessionId,
+      organizationId,
+      action: 'agent.marketplace.denied',
+      resourceType: 'organization',
+      resourceId: organizationPublicId,
+      requestId: request?.requestId,
+      metadata: { reason: marketplace.reason },
+    });
+    throw new AppError(
+      'FORBIDDEN',
+      marketplace.reason ?? 'Verified Expert and marketplace entitlement required.',
+    );
+  }
+
   private async deny(
     actor: AuthActor,
     resourcePublicId: string,
