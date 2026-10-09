@@ -536,11 +536,7 @@ describe('Phase 15B agent verification & professional operations', () => {
       'Suspend Mutate Agency',
     );
     await switchOrg(app, agent.cookie, orgPublicId);
-    const { casePublicId, admin } = await verifyAgency(
-      agent.cookie,
-      orgPublicId,
-      agencyPublicId,
-    );
+    const { casePublicId, admin } = await verifyAgency(agent.cookie, orgPublicId, agencyPublicId);
 
     const listing = await request(app.getHttpServer())
       .post('/api/v1/properties')
@@ -661,11 +657,7 @@ describe('Phase 15B agent verification & professional operations', () => {
       'Staff Restriction Agency',
     );
     await switchOrg(app, owner.cookie, orgPublicId);
-    const { casePublicId, admin } = await verifyAgency(
-      owner.cookie,
-      orgPublicId,
-      agencyPublicId,
-    );
+    const { casePublicId, admin } = await verifyAgency(owner.cookie, orgPublicId, agencyPublicId);
 
     await request(app.getHttpServer())
       .post(`/api/v1/organizations/${orgPublicId}/members`)
@@ -739,7 +731,11 @@ describe('Phase 15B agent verification & professional operations', () => {
 
   it('sec-4. forged fee status and duplicate fee webhook cannot unlock or double-apply', async () => {
     const agent = await register(app, `agent-fee-forge-${Date.now()}@example.com`);
-    const { orgPublicId, agencyPublicId } = await onboardAgency(app, agent.cookie, 'Fee Forge Agency');
+    const { orgPublicId, agencyPublicId } = await onboardAgency(
+      app,
+      agent.cookie,
+      'Fee Forge Agency',
+    );
     await switchOrg(app, agent.cookie, orgPublicId);
     const caseBody = await createAndSubmitAgentCase(app, agent.cookie, orgPublicId, agencyPublicId);
 
@@ -893,7 +889,13 @@ describe('Phase 15B agent verification & professional operations', () => {
     await switchOrg(app, agent.cookie, orgPublicId);
     const { casePublicId } = await verifyAgency(agent.cookie, orgPublicId, agencyPublicId);
 
-    for (const action of ['approve', 'reject', 'request-changes', 'suspend', 'reinstate'] as const) {
+    for (const action of [
+      'approve',
+      'reject',
+      'request-changes',
+      'suspend',
+      'reinstate',
+    ] as const) {
       await request(app.getHttpServer())
         .post(`/api/v1/admin/verification/${casePublicId}/${action}`)
         .set('Cookie', agent.cookie)
@@ -945,11 +947,7 @@ describe('Phase 15B agent verification & professional operations', () => {
       'Lead Gate Agency',
     );
     await switchOrg(app, agent.cookie, orgPublicId);
-    const { casePublicId, admin } = await verifyAgency(
-      agent.cookie,
-      orgPublicId,
-      agencyPublicId,
-    );
+    const { casePublicId, admin } = await verifyAgency(agent.cookie, orgPublicId, agencyPublicId);
 
     const organization = await prisma.organization.findFirstOrThrow({
       where: { publicId: orgPublicId },
@@ -990,9 +988,7 @@ describe('Phase 15B agent verification & professional operations', () => {
       .expect(403);
 
     await request(app.getHttpServer())
-      .get(
-        `/api/v1/leads/${lead.body.publicId}/access?organizationPublicId=${orgPublicId}`,
-      )
+      .get(`/api/v1/leads/${lead.body.publicId}/access?organizationPublicId=${orgPublicId}`)
       .set('Cookie', agent.cookie)
       .expect(403);
 
